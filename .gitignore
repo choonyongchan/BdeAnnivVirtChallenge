@@ -1,0 +1,15 @@
+# Environment
+.env
+.venv/
+
+# Sensitive roster data — never commit, inject via NOMINAL_ROLL_B64 secret in CI
+src/nominal_roll.csv
+NOMINAL_ROLL_B64.txt
+
+# Python
+__pycache__/
+*.pyc
+
+# Claude Code
+.claude/
+CLAUDE.md

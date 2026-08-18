@@ -1,0 +1,101 @@
+name: Update and Deploy Strava Dashboard
+
+on:
+  schedule:
+    # Every 5 minutes — GitHub Actions' minimum supported cron granularity.
+    # Timing isn't guaranteed even at this cadence (runs can queue during
+    # high load), but this shrinks the club-activities overflow window from
+    # 60 min to 5 min (see src/strava_client.py fetch_club_activities).
+    - cron: '*/5 * * * *'
+  workflow_dispatch:   # Manual trigger via GitHub UI
+  push:
+    branches: ["main"]
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      changed: ${{ steps.commit.outputs.changes_detected }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Restore nominal roll (sensitive — never committed)
+        env:
+          NOMINAL_ROLL_B64: ${{ secrets.NOMINAL_ROLL_B64 }}
+        run: echo "$NOMINAL_ROLL_B64" | base64 -d > src/nominal_roll.csv
+
+      - name: Generate index.html
+        env:
+          STRAVA_CLIENT_ID:     ${{ secrets.STRAVA_CLIENT_ID }}
+          STRAVA_CLIENT_SECRET: ${{ secrets.STRAVA_CLIENT_SECRET }}
+          STRAVA_REFRESH_TOKEN: ${{ secrets.STRAVA_REFRESH_TOKEN }}
+          STRAVA_CLUB_ID:       ${{ secrets.STRAVA_CLUB_ID }}
+          CLUB_NAME:            ${{ secrets.CLUB_NAME }}
+          WEATHER_LAT:          ${{ secrets.WEATHER_LAT }}
+          WEATHER_LON:          ${{ secrets.WEATHER_LON }}
+          TIMEZONE:             ${{ secrets.TIMEZONE }}
+          START_DATE:           ${{ secrets.START_DATE }}
+        run: python3 src/generate.py
+
+      - name: Commit and push
+        id: commit
+        uses: stefanzweifel/git-auto-commit-action@v7
+        with:
+          commit_user_name: github-actions[bot]
+          commit_user_email: github-actions[bot]@users.noreply.github.com
+          commit_message: '🏃 Dashboard update ${{ github.run_id }}'
+          file_pattern: 'index.html src/activity-ledger.json src/activity-ledger-clean.json src/members-ledger.json'
+          branch: main
+
+      - name: Upload site artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: index.html
+
+  deploy:
+    needs: generate
+    if: needs.generate.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Stage site (index.html only — src/ has roster/ledger data, not public)
+        uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: _site
+
+      - name: Upload Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './_site'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
