@@ -262,6 +262,13 @@ thead th.sortable:hover::after { opacity: 0.3; }
 thead th.sort-asc::after  { content: ' ↑'; opacity: 1 !important; color: #FC4C02; }
 thead th.sort-desc::after { content: ' ↓'; opacity: 1 !important; color: #FC4C02; }
 
+/* The leaderboard is the only table that's both wider than its card and
+   hundreds of rows tall. Without a height cap the horizontal scrollbar sits
+   ~20000px down the page, out of reach with a mouse. Cap the pane and let
+   the header stick to its top while scrolling. */
+#leaderboard-section .table-wrap { max-height: calc(100vh - 140px); overflow: auto; }
+#leaderboard-section thead th { position: sticky; top: 0; z-index: 2; }
+
 /* Mobile table — tighter, wrapped headers (scroll is handled by .table-wrap above) */
 @media(max-width:700px) {
   /* Let long headers ("Avg Speed", "Elevation") wrap so column width
