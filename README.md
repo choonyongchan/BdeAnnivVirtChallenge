@@ -20,7 +20,7 @@ A Strava-powered fitness dashboard built for the **8SAB 50th Anniversary Virtual
 
 Members are grouped two ways:
 
-- **Unit / Company** — every athlete is looked up against `src/nominal_roll.csv` and shown with their formal name, unit, and company. This roll is also what powers the Unit Rankings and Company Rankings tables.
+- **Unit / Company** — every athlete is looked up against `data/nominal_roll.csv` and shown with their formal name, unit, and company. This roll is also what powers the Unit Rankings and Company Rankings tables.
 - **NSF / NSMen** — units are additionally bucketed into two dashboard-wide groups, configured via `NSF_UNITS` in `src/generate.py`:
   - **NSF**: roll members whose `Unit` is `8SAB`, `40SAR`, or `41SAR`.
   - **NSMen**: roll members whose `Unit` is anything else.
@@ -32,7 +32,7 @@ Strava often truncates a member's display name (e.g. `"Siva R."`). `src/nominal_
 
 ### Maintaining the roster
 
-To add, remove, or re-assign a member, edit `src/nominal_roll.csv`. Each row is:
+To add, remove, or re-assign a member, edit `data/nominal_roll.csv`. Each row is:
 
 ```
 Name,Unit,Company,Type of service,STRAVA username
@@ -67,7 +67,7 @@ src/activity-ledger.json / activity-ledger-clean.json → activity log (source o
 - **On demand** — via **Actions → Update Strava Dashboard → Run workflow**
 - **On every push to `main`**
 
-Only `index.html` is published to GitHub Pages — the roster (`src/nominal_roll.csv`) and ledger files stay in the repo but are not deployed publicly.
+Only `index.html` is published to GitHub Pages — the roster (`data/nominal_roll.csv`) and ledger files stay in the repo but are not deployed publicly.
 
 **Key design decisions:**
 - **No server needed** — generates a single static HTML file
@@ -139,11 +139,12 @@ Update `.env` (local) and the `STRAVA_REFRESH_TOKEN` GitHub Secret (deployed) wi
 │   ├── strava_client.py       # Strava API client (OAuth + data fetch)
 │   ├── report_generator.py    # Statistics engine (all computations)
 │   ├── nominal_roll.py        # Matches Strava names to the roster
-│   ├── nominal_roll.csv       # Roster: name, unit, company, service type, Strava username
 │   ├── config.py              # Configuration from .env / GitHub Secrets
 │   ├── setup_strava.py        # OAuth setup/token-rotation wizard
 │   ├── activity-ledger.json       # OUTPUT — raw activity log (source of truth)
 │   └── activity-ledger-clean.json # OUTPUT — deduped activity log, used for all stats
+├── data/
+│   └── nominal_roll.csv       # Roster: name, unit, company, service type, Strava username
 ├── requirements.txt           # Python dependencies
 └── .github/workflows/
     └── update.yml              # Hourly auto-update via GitHub Actions
@@ -171,7 +172,7 @@ Update `.env` (local) and the `STRAVA_REFRESH_TOKEN` GitHub Secret (deployed) wi
 → The Client ID or Client Secret is incorrect. Double-check them at [strava.com/settings/api](https://www.strava.com/settings/api).
 
 **A member's stats aren't showing up / show under the wrong unit**
-→ Check that their Strava display name matches the `STRAVA username` column in `src/nominal_roll.csv`. Strava can truncate names differently than expected.
+→ Check that their Strava display name matches the `STRAVA username` column in `data/nominal_roll.csv`. Strava can truncate names differently than expected.
 
 **Weather not showing**
 → Check `WEATHER_LAT`/`WEATHER_LON`. Weather is optional — the dashboard works without it.

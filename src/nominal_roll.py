@@ -28,7 +28,7 @@ class NominalRoll:
         unit_company_map: {FULL_NAME: {unit, company}}
         """
         if path is None:
-            path = Path(__file__).parent / "nominal_roll.csv"
+            path = Path(__file__).parent.parent / "data" / "nominal_roll.csv"
         name_map = {}
         unit_company_map = {}
         try:

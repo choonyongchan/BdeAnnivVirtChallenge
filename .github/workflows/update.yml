@@ -39,7 +39,9 @@ jobs:
       - name: Restore nominal roll (sensitive — never committed)
         env:
           NOMINAL_ROLL_B64: ${{ secrets.NOMINAL_ROLL_B64 }}
-        run: echo "$NOMINAL_ROLL_B64" | base64 -d > src/nominal_roll.csv
+        run: |
+          mkdir -p data
+          echo "$NOMINAL_ROLL_B64" | base64 -d > data/nominal_roll.csv
 
       - name: Generate index.html
         env:
