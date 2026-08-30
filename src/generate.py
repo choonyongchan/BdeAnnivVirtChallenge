@@ -442,8 +442,12 @@ thead th.sort-desc::after { content: ' ↓'; opacity: 1 !important; color: #FC4C
 .filter-menu-item.active { color: #FC4C02; font-weight: 700; }
 
 /* GROUP RANKINGS */
-.group-rankings { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-@media(max-width:600px){ .group-rankings { grid-template-columns: 1fr; } }
+/* Registration + Unit + Company tables sit side by side, wrapping when they
+   don't fit; each card already hugs its own table (see .table-wrap). */
+.group-rankings { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px; margin-bottom: 24px; }
+/* min-width:0 lets a column shrink on a narrow screen so its .table-wrap
+   scrolls instead of pushing the page wide. */
+.group-rankings > div { min-width: 0; }
 
 /* TREND */
 .trend-toggle { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -598,12 +602,11 @@ thead th.sort-desc::after { content: ' ↓'; opacity: 1 !important; color: #FC4C
     <div id="devices" style="display:flex;gap:8px;flex-wrap:wrap"></div>
   </div>
 
-  <div id="registration-section">
-    <div class="section-title">Registration</div>
-    <div class="table-wrap" id="registration-tree"></div>
-  </div>
-
   <div id="group-rankings-section" class="group-rankings">
+    <div>
+      <div class="section-title">Registration</div>
+      <div class="table-wrap" id="registration-tree"></div>
+    </div>
     <div>
       <div class="section-title">Unit Rankings</div>
       <div class="table-wrap" id="unit-rankings"></div>
@@ -1029,7 +1032,6 @@ function render() {
   }
   esEl.style.display = isEmpty ? '' : 'none';
   document.getElementById('totals-section').style.display         = isEmpty ? 'none' : '';
-  document.getElementById('registration-section').style.display   = isEmpty ? 'none' : '';
   document.getElementById('awards-section').style.display         = isEmpty ? 'none' : '';
   document.getElementById('leaderboard-section').style.display    = isEmpty ? 'none' : '';
   document.getElementById('group-rankings-section').style.display = isEmpty ? 'none' : '';
@@ -1227,7 +1229,7 @@ function showPrevWeek() {
 }
 
 const MAIN_SECTION_IDS = ['empty-state', 'totals-section', 'awards-section', 'fun-section',
-  'device-section', 'registration-section', 'group-rankings-section', 'leaderboard-section'];
+  'device-section', 'group-rankings-section', 'leaderboard-section'];
 
 function setMainSectionsVisible(visible) {
   MAIN_SECTION_IDS.forEach(id => { document.getElementById(id).style.display = visible ? '' : 'none'; });
