@@ -229,10 +229,13 @@ nav {
   background: white; border-radius: 12px;
   box-shadow: 0 1px 4px rgba(0,0,0,.07);
   margin-bottom: 24px;
+  /* Hug the table so a small table gets a small card, not a wide empty one.
+     Wide tables fall back to the container width and then scroll. */
+  width: fit-content;
+  max-width: 100%;
   overflow-x: auto;
 }
-/* width: auto -> columns size to their content; the wrap scrolls when the
-   table is wider than its card (the leaderboard, mostly). */
+/* width: auto -> columns size to their content. */
 table { width: auto; border-collapse: collapse; font-size: .87rem; }
 thead th {
   background: #fafafa; color: #777;
