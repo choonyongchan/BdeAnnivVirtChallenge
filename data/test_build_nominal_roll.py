@@ -1,8 +1,8 @@
-"""Table-driven checks for resolve(); run with `python data/test_build_nominal_roll.py`.
+"""Table-driven checks for resolve(); run with `pytest data/test_build_nominal_roll.py`.
 
 Every case is a real (Unit, Company) pair from the FormSG export.
 """
-import sys
+import pytest
 
 from build_nominal_roll import dedupe, resolve
 
@@ -59,7 +59,7 @@ CASES = [
 ]
 
 
-# (key, order, valid, row) in file order -> the names kept, in order
+# (description, (key, order, valid, row) in file order, the names kept in order)
 DEDUPE_CASES = [
     ("the latest of two valid entries wins",
      [("S1", 1, True, ["ANN", "41SAR"]), ("S1", 2, True, ["ANN", "40SAR"])],
@@ -79,42 +79,39 @@ DEDUPE_CASES = [
      [["ANN", "41SAR"], ["BOB", "40SAR"]]),
 ]
 
+DEDUPE_PARAMS = [pytest.param(entries, expected, id=description)
+                 for description, entries, expected in DEDUPE_CASES]
+# The first three cases are the ones where a duplicate is actually dropped.
+DEDUPE_DROP_PARAMS = DEDUPE_PARAMS[:3]
+
 
 def levels(notes):
     return {level for level, _ in notes}
 
 
-def main():
-    failures = []
-    for (raw_unit, raw_company), expected in CASES:
-        unit, company, _ = resolve(raw_unit, raw_company)
-        if (unit, company) != expected:
-            failures.append(f"  ({raw_unit!r}, {raw_company!r}) -> "
-                            f"{(unit, company)!r}, expected {expected!r}")
-
-    # An unresolvable row must be flagged, not silently blanked.
-    if "WARN" not in levels(resolve("Singapore", "Nil")[2]):
-        failures.append("  ('Singapore', 'Nil') was blanked without a WARN")
-    # A clean row must be quiet.
-    if resolve("41 SAR", "Hawk")[2]:
-        failures.append("  ('41 SAR', 'Hawk') produced notes but is unambiguous")
-
-    for description, entries, expected in DEDUPE_CASES:
-        rows, _ = dedupe(entries)
-        if rows != expected:
-            failures.append(f"  dedupe: {description}: got {rows!r}, expected {expected!r}")
-
-    # Dropping a duplicate must be reported, whichever of the two entries won.
-    for description, entries, _ in DEDUPE_CASES[:3]:
-        if not dedupe(entries)[1]:
-            failures.append(f"  dedupe: {description}: dropped an entry without a note")
-
-    if failures:
-        print(f"FAIL: {len(failures)} of {len(CASES) + len(DEDUPE_CASES) + 5} checks\n" + "\n".join(failures))
-        return 1
-    print(f"ok: {len(CASES) + len(DEDUPE_CASES) + 5} checks passed")
-    return 0
+@pytest.mark.parametrize("raw,expected", [pytest.param(raw, expected, id=f"{raw[0]}|{raw[1]}")
+                                          for raw, expected in CASES])
+def test_resolve(raw, expected):
+    unit, company, _ = resolve(*raw)
+    assert (unit, company) == expected
 
 
-if __name__ == "__main__":
-    sys.exit(main())
+def test_unresolvable_row_is_flagged():
+    """An unresolvable row must be flagged, not silently blanked."""
+    assert "WARN" in levels(resolve("Singapore", "Nil")[2])
+
+
+def test_clean_row_is_quiet():
+    assert resolve("41 SAR", "Hawk")[2] == []
+
+
+@pytest.mark.parametrize("entries,expected", DEDUPE_PARAMS)
+def test_dedupe(entries, expected):
+    rows, _ = dedupe(entries)
+    assert rows == expected
+
+
+@pytest.mark.parametrize("entries,expected", DEDUPE_DROP_PARAMS)
+def test_dedupe_reports_dropped_entry(entries, expected):
+    """Dropping a duplicate must be reported, whichever of the two entries won."""
+    assert dedupe(entries)[1]

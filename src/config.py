@@ -20,7 +20,7 @@ class Config:
         self.club_name = os.getenv("CLUB_NAME", "8SAB 50th Anniversary Virtual Challenge")
         self.weather_lat = os.getenv("WEATHER_LAT", "1.3835")
         self.weather_lon = os.getenv("WEATHER_LON", "103.7478")
-        self.timezone = os.getenv("TIMEZONE", "Asia/Singapore")
+        self.timezone = os.getenv("TIMEZONE") or "Asia/Singapore"
         self.start_date = os.getenv("START_DATE", "")
 
     def _validate(self):
