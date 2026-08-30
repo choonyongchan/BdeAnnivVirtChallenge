@@ -2,6 +2,9 @@
 import csv
 from pathlib import Path
 
+# Employers people typed into the Company field instead of their sub-unit.
+JUNK_COMPANIES = {"fabrica robotics", "aia"}
+
 
 class NominalRoll:
     """Maps Strava's (often truncated) display names to full formal names,
@@ -27,7 +30,8 @@ class NominalRoll:
         """Returns (name_map, unit_company_map) from a single read of nominal_roll.csv.
 
         name_map: {truncated_strava_name: FULL_NAME}
-        unit_company_map: {FULL_NAME: {unit, company, service}}
+        unit_company_map: {FULL_NAME: {unit, company, service}}, company
+        unit-qualified ("40SAR/Cougar") and blank when the roll names none.
         """
         name_map = {}
         unit_company_map = {}
@@ -40,9 +44,13 @@ class NominalRoll:
                         for key in self._all_truncations(strava):
                             name_map[key] = full
                     if full:
+                        unit = row.get("Unit", "").strip()
+                        company = row.get("Company", "").strip()
+                        if company.lower() in JUNK_COMPANIES:
+                            company = ""
                         unit_company_map[full] = {
-                            "unit":    row.get("Unit", "").strip(),
-                            "company": row.get("Company", "").strip(),
+                            "unit":    unit,
+                            "company": f"{unit}/{company}" if unit and company else company,
                             "service": row.get("Type of service", "").strip().upper(),
                         }
         except FileNotFoundError:
