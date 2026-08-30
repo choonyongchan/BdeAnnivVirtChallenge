@@ -6,7 +6,7 @@
 | `nominal_roll.csv` | The roster the dashboard reads: name, unit, company, service type, Strava name. Generated — do not hand-edit. |
 | `NOMINAL_ROLL_B64.txt` | The roster, base64-encoded, ready to paste into the GitHub secret. Generated. |
 | `8th Brigade ... Registration Form-*.csv` | Raw FormSG export of the registration form. The source of truth. Never commit it (see [Privacy](#privacy)). |
-| `../src/activity-ledger.json`, `../src/members-ledger.json` | Cached Strava activity and member data, written by the hourly job. |
+| `../src/activity-ledger.json`, `../src/members-ledger.json` | Cached Strava activity and member data, written by the scheduled job (every 5 minutes). |
 
 Both `nominal_roll.csv` and `NOMINAL_ROLL_B64.txt` are gitignored — they hold personal data
 and are injected into CI from a GitHub secret instead.
@@ -19,22 +19,22 @@ and are injected into CI from a GitHub secret instead.
 **2. Run the converter** from the repo root:
 
 ```bash
-python data/build_nominal_roll.py "data/8th Brigade 50th Anniversary Virtual Challenge Registration Form-CAA160826.csv"
+python data/build_nominal_roll.py "data/<INSERT RAW NOMINAL ROLL>.csv"
 ```
 
 This rewrites `data/nominal_roll.csv` and `data/NOMINAL_ROLL_B64.txt`, and prints a report:
 
 ```
 INFO: TAN JIA HAO: unit "Keat Hong camp" backfilled from company "Glory" -> 41SAR
-WARN: NG JUN RONG, COLIN: unit "HQ1784" could not be normalised
+WARN: NG JUN RONG: unit "HQ1784" could not be normalised
 --- 131 rows written, 9 flagged ---
 ```
 
 `INFO` lines are corrections it made and is confident about. `WARN` lines need you.
 
 **3. Fix every WARN at the source.** A flagged Unit is written to the CSV as the person typed
-it, which means they will not appear in the dashboard's NSF/NSMen tabs. Correct the answer in
-the form response itself, re-export, and re-run step 2. **Do not hand-edit
+it, which means they will be missing from the dashboard's Unit and Company rankings. Correct the
+answer in the form response itself, re-export, and re-run step 2. **Do not hand-edit
 `nominal_roll.csv`** — the next run overwrites it.
 
 If a WARN is actually a legitimate unit the script doesn't know yet, add it to

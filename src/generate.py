@@ -1,24 +1,26 @@
 """
 Generate a static index.html from current Strava club data.
-Run locally or via GitHub Actions (hourly cron).
+Run locally or via GitHub Actions (cron, every 5 minutes).
 
 Usage:
   python3 src/generate.py
 """
-import json, math
+import html
+import json
+from datetime import date, datetime, timezone
 from pathlib import Path
-from datetime import datetime, timezone
-from dotenv import load_dotenv
+from zoneinfo import ZoneInfo
 
-load_dotenv()
-
+# config loads .env on import, before anything reads a setting.
 from config import config
 from strava_client import StravaClient
 from nominal_roll import NominalRoll
+from ledger_generator import Ledger, MembersLedger
 import report_generator
 
-# NSF group = these units. NSMen group = any roll unit outside this set.
-NSF_UNITS = {"8SAB", "40SAR", "41SAR"}
+# Dashboard group tabs, decided by the roll's "Type of service" (upper-cased).
+SERVING_TYPES = {"NSF", "REGULAR"}
+ALUMNI_TYPES = {"NSMAN", "ALUMNI"}
 
 # ---------------------------------------------------------------------------
 # Weather — Open-Meteo (no API key needed)
@@ -38,7 +40,7 @@ WEATHER_CODES = {
 def fetch_weather(config) -> dict:
     """Fetch current weather from Open-Meteo API."""
     try:
-        import requests
+        import requests  # only needed on this path; absent in no-network runs
         url = (
             "https://api.open-meteo.com/v1/forecast"
             f"?latitude={config.weather_lat}&longitude={config.weather_lon}"
@@ -68,70 +70,39 @@ def fetch_weather(config) -> dict:
 def now_tz(config) -> datetime:
     """Return current time in configured timezone, falling back to UTC."""
     try:
-        import pytz
-        return datetime.now(pytz.timezone(config.timezone))
+        return datetime.now(ZoneInfo(config.timezone))
     except Exception:
         return datetime.now(timezone.utc)
 
 
-def now_label(config) -> tuple:
-    """Return (iso_str, human_label) in configured timezone."""
-    now = now_tz(config)
-    iso = now.strftime("%Y-%m-%dT%H:%M")
-    human = f"{now.day}.{now.month}.{now.year} {now.hour:02}:{now.minute:02}"
-    return iso, human
-
-
-def make_json_safe(stats: dict) -> dict:
-    """Convert stats dict to JSON-serializable object (handle NaN/Inf)."""
-    def fix(obj):
-        if isinstance(obj, dict):
-            return {k: fix(v) for k, v in obj.items()}
-        if isinstance(obj, list):
-            return [fix(i) for i in obj]
-        if isinstance(obj, float):
-            return 0.0 if math.isnan(obj) or math.isinf(obj) else obj
-        return obj
-    return fix(stats)
+def day_label(d: date) -> str:
+    """The dashboard's date format: 5.9.2026."""
+    return f"{d.day}.{d.month}.{d.year}"
 
 
 def build_grouped_data(acts: list, members: list, label: str, roll: NominalRoll = None) -> dict:
-    """Split acts/members into 'all'/'nsf'/'nsmen' stats.
+    """Split acts/members into 'all'/'serving'/'alumni' stats.
 
-    nsf: roll members whose unit is in NSF_UNITS.
-    nsmen: roll members whose unit is set but not in NSF_UNITS.
-    Roll members with no unit on file land in neither group (still counted in 'all').
+    serving: roll members whose type of service is in SERVING_TYPES.
+    alumni: roll members whose type of service is in ALUMNI_TYPES.
+    Anyone off the roll, or with no recognised type on file, lands in neither group
+    (still counted in 'all').
     """
-    def unit_of(name):
-        return roll.unit_company(name).get("unit", "") if roll else ""
-
-    def in_roll(name):
-        return roll.is_member(name) if roll else False
-
-    def act_name(a):
-        ath = a.get("athlete", {})
-        raw = NominalRoll.full_name(ath, default_firstname="?")
-        return roll.resolve(raw) if roll else raw
-
-    def member_name(m):
-        raw = NominalRoll.full_name(m)
-        return roll.resolve(raw) if roll else raw
+    def service_of(person):
+        """The person's "Type of service", via their canonical roster name."""
+        return roll.service(report_generator.resolved_name(person, roll)) if roll else ""
 
     def stats_for(filtered_acts, filtered_members):
-        s = report_generator.compute_stats(filtered_acts, members=filtered_members, roll=roll)
-        s["label"] = label
-        s["count"] = len(filtered_acts)
-        return make_json_safe(s)
+        """One group's ReportStats as a JSON-safe dict, tagged with the label."""
+        stats = report_generator.compute_stats(filtered_acts, members=filtered_members, roll=roll)
+        return {**stats.to_dict(), "label": label}
 
     result = {"all": stats_for(acts, members)}
-    result["nsf"] = stats_for(
-        [a for a in acts if unit_of(act_name(a)) in NSF_UNITS],
-        [m for m in (members or []) if unit_of(member_name(m)) in NSF_UNITS],
-    )
-    result["nsmen"] = stats_for(
-        [a for a in acts if in_roll(act_name(a)) and unit_of(act_name(a)) not in NSF_UNITS],
-        [m for m in (members or []) if in_roll(member_name(m)) and unit_of(member_name(m)) not in NSF_UNITS],
-    )
+    for group, types in (("serving", SERVING_TYPES), ("alumni", ALUMNI_TYPES)):
+        result[group] = stats_for(
+            [a for a in acts if service_of(a.get("athlete", {})) in types],
+            [m for m in (members or []) if service_of(m) in types],
+        )
     return result
 
 
@@ -232,15 +203,6 @@ nav {
 
 /* GROUP TABS */
 .group-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
-.group-tab {
-  padding: 7px 14px; border-radius: 8px;
-  font-size: .82rem; font-weight: 600;
-  border: 1.5px solid #ddd; background: white;
-  color: #666; cursor: pointer; transition: all .15s;
-  white-space: nowrap;
-}
-.group-tab.active { background: #FC4C02; color: white; border-color: #FC4C02; }
-.group-tab:not(.active):hover { border-color: #bbb; color: #333; }
 .breadcrumb { font-size: .78rem; color: #999; margin-bottom: 10px; }
 .breadcrumb .crumb-group { font-weight: 700; color: #FC4C02; }
 .breadcrumb .crumb-sub { font-weight: 600; color: #666; }
@@ -251,19 +213,19 @@ nav {
   gap: 10px; margin-bottom: 18px; flex-wrap: wrap;
 }
 .toggle { display: flex; gap: 6px; flex-wrap: wrap; }
-.tab {
+.tab, .group-tab {
   padding: 7px 14px; border-radius: 8px;
   font-size: .82rem; font-weight: 600;
   border: 1.5px solid #ddd; background: white;
   color: #666; cursor: pointer; transition: all .15s;
   white-space: nowrap;
 }
-.tab.active { background: #FC4C02; color: white; border-color: #FC4C02; }
-.tab:not(.active):hover { border-color: #bbb; color: #333; }
+.tab.active, .group-tab.active { background: #FC4C02; color: white; border-color: #FC4C02; }
+.tab:not(.active):hover, .group-tab:not(.active):hover { border-color: #bbb; color: #333; }
 
 
 /* TOTALS */
-.totals { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 22px; }
+.totals { display: grid; grid-template-columns: repeat(5,1fr); gap: 10px; margin-bottom: 22px; }
 .total-card {
   background: white; border-radius: 12px;
   padding: 16px 10px; text-align: center;
@@ -298,14 +260,8 @@ nav {
   border-radius: 6px; line-height: 1;
 }
 .history-picker-close:hover { background: #f5f5f5; color: #555; }
-.hist-year-label {
-  font-size: .72rem; font-weight: 700; color: #555;
-  margin: 10px 0 6px; letter-spacing: .04em;
-}
-.hist-year-label:first-of-type { margin-top: 0; }
-.hist-grid {
-  display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px;
-}
+/* Column count comes from .hist-cal-grid — the only user is the calendar. */
+.hist-grid { display: grid; gap: 4px; }
 .hist-cal-header {
   display: flex; align-items: center; justify-content: space-between;
   margin-bottom: 8px;
@@ -340,8 +296,6 @@ nav {
 .hist-cell.has-data:hover { background: #FC4C02; color: white; border-color: #FC4C02; }
 .hist-cell.active { background: #FC4C02 !important; color: white !important; border-color: #FC4C02 !important; }
 .hist-cell.active:hover { background: #e04300 !important; border-color: #e04300 !important; }
-.hist-cell.current { background: #f5f5f5; color: #bbb; cursor: pointer; }
-.hist-cell.current:hover { background: #eaeaea; color: #aaa; }
 .hist-cell.empty { color: #e0e0e0; }
 
 /* SECTION TITLE */
@@ -367,7 +321,6 @@ nav {
 .award-title { font-size: .72rem; color: #888; text-transform: uppercase; letter-spacing: .06em; }
 .award-name { font-weight: 700; font-size: .95rem; margin: 1px 0; }
 .award-val { font-size: .83rem; font-weight: 600; color: #FC4C02; }
-.award-val.muted { color: #888; }
 
 /* FUN STATS */
 .fun-cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 24px; }
@@ -452,7 +405,7 @@ thead th.sort-desc::after { content: ' ↓'; opacity: 1 !important; color: #FC4C
 }
 .hist-backdrop.open { display: block; }
 @media (max-width: 640px) {
-  .hist-grid { grid-template-columns: repeat(9, 1fr); gap: 5px; }
+  .hist-grid { gap: 5px; }
   .hist-cell { font-size: .68rem; }
 }
 
@@ -510,7 +463,6 @@ thead th.sort-desc::after { content: ' ↓'; opacity: 1 !important; color: #FC4C
 .line-chart-legend { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px; font-size: .74rem; color: #666; }
 .line-chart-legend .lg-item { display: flex; align-items: center; gap: 5px; }
 .line-chart-legend .lg-swatch { width: 14px; height: 2px; border-radius: 1px; display: inline-block; }
-.line-chart-legend .lg-swatch.dashed { background: none !important; border-top: 2px dashed; height: 0; }
 .line-chart-tooltip {
   position: fixed; background: #1c1c1e; color: white;
   border-radius: 8px; padding: 8px 12px; font-size: .74rem;
@@ -568,6 +520,9 @@ thead th.sort-desc::after { content: ' ↓'; opacity: 1 !important; color: #FC4C
   .nav-title { display: none; }
 }
 
+/* 5 total cards: 5 across, then 3+2, then 2+2+1 */
+@media(max-width:900px){ .totals { grid-template-columns: repeat(3,1fr); } }
+
 @media(max-width:600px){
   .totals { grid-template-columns: repeat(2,1fr); }
   .total-card { padding: 12px 8px; }
@@ -602,8 +557,8 @@ thead th.sort-desc::after { content: ' ↓'; opacity: 1 !important; color: #FC4C
 
   <div class="group-tabs" id="group-tabs">
     <button class="group-tab active" onclick="setGroup('all', this)">All</button>
-    <button class="group-tab" onclick="setGroup('nsf', this)">NSF</button>
-    <button class="group-tab" onclick="setGroup('nsmen', this)">NSMen</button>
+    <button class="group-tab" onclick="setGroup('serving', this)">NSF/Regular</button>
+    <button class="group-tab" onclick="setGroup('alumni', this)">NSMan/Alumni</button>
   </div>
   <div class="breadcrumb" id="breadcrumb"></div>
 
@@ -724,7 +679,7 @@ thead th.sort-desc::after { content: ' ↓'; opacity: 1 !important; color: #FC4C
     <div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:10px">
       <div class="trend-toggle" id="trend-runner-toggle" style="margin-bottom:0">
         <button class="tab active" onclick="setTrendRunnerView('all', this)">All</button>
-        <button class="tab" onclick="setTrendRunnerView('nsf-nsmen', this)">NSF / NSMen</button>
+        <button class="tab" onclick="setTrendRunnerView('serving-alumni', this)">NSF/Regular / NSMan/Alumni</button>
         <button class="tab" onclick="setTrendRunnerView('unit', this)">Unit</button>
         <button class="tab" onclick="setTrendRunnerView('company', this)">Company</button>
       </div>
@@ -758,7 +713,7 @@ thead th.sort-desc::after { content: ' ↓'; opacity: 1 !important; color: #FC4C
   <div class="line-chart-tooltip" id="line-chart-tooltip"></div>
 
   <div class="footer">
-    Updated hourly &nbsp;·&nbsp; last update __UPDATED_HUMAN__ &nbsp;·&nbsp;
+    Updated every 5 min &nbsp;·&nbsp; last update __UPDATED_HUMAN__ &nbsp;·&nbsp;
     <a href="https://www.strava.com/clubs/__CLUB_ID__" target="_blank">Strava Club</a>
     &nbsp;·&nbsp;
     <a href="https://github.com/DatabenderSK/strava-club-dashboard" target="_blank">Get your own dashboard</a>
@@ -770,13 +725,13 @@ const DATA = __DATA__;
 const DAILY   = __DAILY_DATA__;
 const MEDALS = ['🥇','🥈','🥉'];
 const AWARDS = [
-  { key:'king_km',      emoji:'👑', title:'Distance King',   muted:false },
-  { key:'king_elev',    emoji:'🏔️', title:'Climbing King',   muted:false },
-  { key:'marathoner',   emoji:'⏱️', title:'Marathoner',       muted:false },
-  { key:'fastest',      emoji:'⚡', title:'Fastest',          muted:false },
-  { key:'longest',      emoji:'📏', title:'Longest Run',      muted:false },
-  { key:'climber',      emoji:'🐐', title:'Mountain Goat',    muted:false },
-  { key:'flatrunner',   emoji:'🛣️', title:'Flat Runner',      muted:false },
+  { key:'king_km',      emoji:'👑', title:'Distance King' },
+  { key:'king_elev',    emoji:'🏔️', title:'Climbing King' },
+  { key:'marathoner',   emoji:'⏱️', title:'Marathoner' },
+  { key:'fastest',      emoji:'⚡', title:'Fastest' },
+  { key:'longest',      emoji:'📏', title:'Longest Run' },
+  { key:'climber',      emoji:'🐐', title:'Mountain Goat' },
+  { key:'flatrunner',   emoji:'🛣️', title:'Flat Runner' },
 ];
 const FUN = [
   { key:'breaks',   emoji:'🛋️', title:'Break King',       desc:"Coffee breaks don't take themselves." },
@@ -793,6 +748,32 @@ const EMPTY_MSGS = [
 ];
 
 function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// Local-date -> 'YYYY-MM-DD'. Must not go through toISOString(), which
+// converts to UTC and shifts the date back a day for any positive offset.
+const isoDate = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const isoMonth = d => isoDate(d).slice(0, 7);
+
+// One formatter, reused: constructing an Intl.NumberFormat per call is the
+// expensive part, and this runs per row of the trend table.
+const NUM = new Intl.NumberFormat('en');
+const fmtInt = v => NUM.format(Math.round(v));
+
+// Historical snapshots ship each zero-activity row as {name,unit,company} only
+// — every other field is a fixed zero, and the shared "gap" string sits on the
+// bucket as zero_gap (see _slim_leaderboard in generate.py). Rehydrate on first
+// render so every consumer downstream sees uniform, fully-populated rows.
+const ZERO_ROW = { km: 0, elev: 0, time: '0h 0m', time_s: 0, acts: 0,
+                   avg_speed: '–', avg_speed_ms: 0, longest: 0, elev_per_km: null };
+
+function expandBucket(bucket) {
+  if (!bucket || bucket._expanded) return bucket;
+  const gap = bucket.zero_gap || 'leader';
+  bucket.leaderboard = (bucket.leaderboard || []).map(
+    r => r.acts === undefined ? { ...ZERO_ROW, ...r, gap } : r);
+  bucket._expanded = true;
+  return bucket;
+}
 
 class Dashboard {
   constructor() {
@@ -813,7 +794,7 @@ class Dashboard {
 
   data() {
     const bucket = this.currentBucket();
-    return bucket[this.currentGroup] || bucket['all'];
+    return expandBucket(bucket[this.currentGroup] || bucket['all']);
   }
 
   setGroup(g) {
@@ -844,12 +825,12 @@ class Dashboard {
   changeCalendarMonth(delta) {
     const [y, m] = this.calendarMonth.split('-').map(Number);
     const nd = new Date(y, m - 1 + delta, 1);
-    this.calendarMonth = `${nd.getFullYear()}-${String(nd.getMonth() + 1).padStart(2, '0')}`;
+    this.calendarMonth = isoMonth(nd);
   }
 
   ensureCalendarMonth(dailyKeys) {
     if (!this.calendarMonth) {
-      this.calendarMonth = (dailyKeys.length ? dailyKeys.sort().at(-1) : new Date().toISOString()).slice(0, 7);
+      this.calendarMonth = dailyKeys.length ? dailyKeys.sort().at(-1).slice(0, 7) : isoMonth(new Date());
     }
   }
 
@@ -874,17 +855,8 @@ class Dashboard {
 
 const dashboard = new Dashboard();
 
-const GROUP_LABELS = { all: 'All', nsf: 'NSF', nsmen: 'NSMen' };
+const GROUP_LABELS = { all: 'All', serving: 'NSF/Regular', alumni: 'NSMan/Alumni' };
 const SUB_LABELS    = { leaderboard: 'Leaderboard', '7days': 'Last Week', history: 'History', trend: 'Trend' };
-
-function fmtTime(s) {
-  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
-  return `${h}h ${m < 10 ? '0' : ''}${m}m`;
-}
-
-function currentBucket() {
-  return dashboard.currentBucket();
-}
 
 function d() {
   return dashboard.data();
@@ -986,10 +958,10 @@ function render() {
   }
 
   document.getElementById('totals').innerHTML = [
-    { v: Math.round(data.total_km).toLocaleString('en'), l: 'total km' },
-    { v: Math.round(data.total_elev).toLocaleString('en'), l: 'elevation (m)' },
+    { v: fmtInt(data.total_km), l: 'total km' },
+    { v: fmtInt(data.total_elev), l: 'elevation (m)' },
     { v: data.run_count, l: 'activities' },
-    { v: (data.leaderboard || []).filter(r => r.acts > 0).length, l: 'active runners' },
+    { v: activeCount(data), l: 'active runners' },
     { v: data.athlete_count, l: 'runners' },
   ].map(t => `<div class="total-card fade">
     <div class="val">${t.v}</div><div class="lbl">${t.l}</div>
@@ -1004,7 +976,7 @@ function render() {
       <div>
         <div class="award-title">${def.title}</div>
         <div class="award-name">${esc(a.name)}</div>
-        <div class="award-val ${def.muted?'muted':''}">${esc(a.value)}</div>
+        <div class="award-val">${esc(a.value)}</div>
       </div>
     </div>`;
   }).join('');
@@ -1050,7 +1022,7 @@ function render() {
       ? `Check out <a onclick="showPrevWeek()">last week's results</a> or <a onclick="toggleHistoryPicker(event)">older archives</a>.`
       : '';
     msg = EMPTY_MSGS[daySeed % EMPTY_MSGS.length];
-    bottomHtml = `<div class="es-divider"></div>${archiveHtml ? `<div class="es-action">${archiveHtml}</div>` : ''}<div class="es-hint">This page updates every hour.</div>`;
+    bottomHtml = `<div class="es-divider"></div>${archiveHtml ? `<div class="es-action">${archiveHtml}</div>` : ''}<div class="es-hint">This page refreshes every few minutes.</div>`;
     esEl.innerHTML = `<h2><span class="es-emoji">${msg.emoji}</span>${msg.title}</h2><p>${msg.body}</p>${bottomHtml}`;
   }
   esEl.style.display = isEmpty ? '' : 'none';
@@ -1135,8 +1107,8 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFilterM
 
 function renderLeaderboard(data) {
   const all = data.leaderboard || [];
-  const activeCount = all.filter(r => r.acts > 0).length;
-  document.getElementById('leaderboard-count').textContent = `(${activeCount} active / ${data.athlete_count} total)`;
+  const active = activeCount(data);
+  document.getElementById('leaderboard-count').textContent = `(${active} active / ${data.athlete_count} total)`;
   // self-heal: reset filter if its value no longer exists in current dataset
   const units     = new Set(all.map(r => r.unit).filter(Boolean));
   const companies = new Set(all.map(r => r.company).filter(Boolean));
@@ -1181,30 +1153,21 @@ function groupBy(data, key) {
   return Object.values(map).sort((a, b) => b.km - a.km);
 }
 
-function unitCompanyRows(leaderboard) {
+function unitRows(leaderboard) {
   const units = {};
   for (const r of (leaderboard || [])) {
     if (!r.unit) continue;
-    if (!units[r.unit]) units[r.unit] = { name: r.unit, total: 0, companies: {} };
-    units[r.unit].total++;
-    const c = r.company || 'Unassigned';
-    units[r.unit].companies[c] = (units[r.unit].companies[c] || 0) + 1;
+    units[r.unit] = (units[r.unit] || 0) + 1;
   }
-  const rows = [];
-  Object.values(units).sort((a, b) => b.total - a.total).forEach(u => {
-    rows.push({ level: 'unit', name: u.name, count: u.total });
-    Object.entries(u.companies).sort((a, b) => b[1] - a[1]).forEach(([name, count]) => {
-      rows.push({ level: 'company', name, count });
-    });
-  });
-  return rows;
+  return Object.entries(units).sort((a, b) => b[1] - a[1])
+    .map(([name, count]) => ({ level: 'unit', name, count }));
 }
 
 function renderRegistrationTree(bucket, currentGroup) {
   const rowHtml = r => {
-    const pad = { total: 16, branch: 32, unit: 52, company: 72 }[r.level];
+    const pad = { total: 16, branch: 32, unit: 52 }[r.level];
     const weight = (r.level === 'total' || r.level === 'branch') ? 700 : 400;
-    const color = r.level === 'company' ? '#999' : (r.level === 'unit' ? '#555' : '#FC4C02');
+    const color = r.level === 'unit' ? '#555' : '#FC4C02';
     return `<tr>
       <td style="text-align:left;padding-left:${pad}px;font-weight:${weight}">${esc(r.name)}</td>
       <td style="font-weight:${weight};color:${color}">${r.count}</td>
@@ -1214,19 +1177,19 @@ function renderRegistrationTree(bucket, currentGroup) {
   if (currentGroup === 'all') {
     const all = bucket.all;
     rows.push({ level: 'total', name: 'All Registered', count: all.athlete_count });
-    [['NSF', 'nsf'], ['NSMen', 'nsmen']].forEach(([label, key]) => {
+    [['NSF/Regular', 'serving'], ['NSMan/Alumni', 'alumni']].forEach(([label, key]) => {
       const b = bucket[key];
       const count = (b && b.athlete_count) || 0;
       rows.push({ level: 'branch', name: label, count });
-      if (b && b.leaderboard) rows = rows.concat(unitCompanyRows(b.leaderboard));
+      if (b && b.leaderboard) rows = rows.concat(unitRows(b.leaderboard));
     });
     const unmatched = (all.leaderboard || []).filter(r => !r.unit).length;
     rows.push({ level: 'branch', name: 'Unmatched', count: unmatched });
   } else {
     const b = bucket[currentGroup];
     const count = (b && b.athlete_count) || 0;
-    rows.push({ level: 'total', name: currentGroup === 'nsf' ? 'NSF Registered' : 'NSMen Registered', count });
-    if (b && b.leaderboard) rows = rows.concat(unitCompanyRows(b.leaderboard));
+    rows.push({ level: 'total', name: currentGroup === 'serving' ? 'NSF/Regular Registered' : 'NSMan/Alumni Registered', count });
+    if (b && b.leaderboard) rows = rows.concat(unitRows(b.leaderboard));
   }
   document.getElementById('registration-tree').innerHTML =
     '<table><thead><tr><th style="text-align:left">Group</th><th style="text-align:right">Runners</th></tr></thead><tbody>' +
@@ -1253,7 +1216,7 @@ function showPrevWeek() {
   const now = new Date();
   const daysSinceSat = (now.getDay() + 1) % 7;
   const sat = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysSinceSat);
-  const satStr = `${sat.getFullYear()}-${String(sat.getMonth() + 1).padStart(2, '0')}-${String(sat.getDate()).padStart(2, '0')}`;
+  const satStr = isoDate(sat);
   const key = Object.keys(DAILY).sort().filter(k => k <= satStr).at(-1);
   if (!key) return;
   showDailySnapshot(key);
@@ -1323,29 +1286,24 @@ function activeCount(bucket) {
   return ((bucket && bucket.leaderboard) || []).filter(r => r.acts > 0).length;
 }
 
-function trendSeries(group, metric) {
-  return sortedDates().map(date => {
-    const bucket = DAILY[date][group];
-    return { x: DAILY[date].label, y: (bucket && bucket[metric]) || 0 };
-  });
+// One point per date; valueFn pulls the y value out of that date's bucket.
+function trendSeries(group, valueFn) {
+  return sortedDates().map(date => (
+    { x: DAILY[date].label, y: valueFn(DAILY[date][group] || {}) }
+  ));
 }
 
-function trendParticipationSeries(group) {
-  return sortedDates().map(date => {
-    const bucket = DAILY[date][group];
-    const total = (bucket && bucket.athlete_count) || 0;
-    const active = activeCount(bucket);
-    return { x: DAILY[date].label, y: total ? Math.round((active / total) * 1000) / 10 : 0 };
-  });
+const metricOf = metric => bucket => bucket[metric] || 0;
+const participationOf = bucket => pct(activeCount(bucket), bucket.athlete_count || 0);
+const avgKmOf = bucket => round1((bucket.total_km || 0) / activeCount(bucket));
+
+// Percentage to one decimal, 0 when the denominator is empty.
+function pct(part, total) {
+  return total ? Math.round((part / total) * 1000) / 10 : 0;
 }
 
-function trendAvgKmSeries(group) {
-  return sortedDates().map(date => {
-    const bucket = DAILY[date][group];
-    const active = activeCount(bucket);
-    const km = (bucket && bucket.total_km) || 0;
-    return { x: DAILY[date].label, y: active ? Math.round((km / active) * 10) / 10 : 0 };
-  });
+function round1(v) {
+  return Number.isFinite(v) ? Math.round(v * 10) / 10 : 0;
 }
 
 function sundaySnapshots(group) {
@@ -1356,19 +1314,18 @@ function sundaySnapshots(group) {
   first.setDate(first.getDate() + ((7 - first.getDay()) % 7)); // roll to first Sunday
   const rows = [];
   for (let d = new Date(first); d <= last; d.setDate(d.getDate() + 7)) {
-    const iso = d.toISOString().slice(0, 10);
+    const iso = isoDate(d);
     const snapDate = [...dates].reverse().find(dt => dt <= iso);
     if (!snapDate) continue;
     const bucket = DAILY[snapDate][group] || {};
-    const active = activeCount(bucket);
-    const registered = bucket.athlete_count || 0;
     rows.push({
       weekOf: d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
       km: bucket.total_km || 0,
       acts: bucket.run_count || 0,
-      active, registered,
-      participation: registered ? Math.round((active / registered) * 1000) / 10 : 0,
-      avgKm: active ? Math.round(((bucket.total_km || 0) / active) * 10) / 10 : 0,
+      active: activeCount(bucket),
+      registered: bucket.athlete_count || 0,
+      participation: participationOf(bucket),
+      avgKm: avgKmOf(bucket),
       elev: bucket.total_elev || 0,
     });
   }
@@ -1405,14 +1362,14 @@ function runnerSeriesBySubgroup(view, kind) {
 
   if (view === 'all') {
     return [
-      { label: kind === 'registered' ? 'Registered' : 'Active', dashed: false, colorIdx: 0,
+      { label: kind === 'registered' ? 'Registered' : 'Active', colorIdx: 0,
         points: dates.map((date, i) => ({ x: labels[i], y: countFor(DAILY[date].all) })) },
     ];
   }
-  if (view === 'nsf-nsmen') {
-    const groups = [{ key: 'nsf', label: 'NSF', colorIdx: 0 }, { key: 'nsmen', label: 'NSMen', colorIdx: 1 }];
+  if (view === 'serving-alumni') {
+    const groups = [{ key: 'serving', label: 'NSF/Regular', colorIdx: 0 }, { key: 'alumni', label: 'NSMan/Alumni', colorIdx: 1 }];
     return groups.map(g => ({
-      label: g.label, dashed: false, colorIdx: g.colorIdx,
+      label: g.label, colorIdx: g.colorIdx,
       points: dates.map((date, i) => ({ x: labels[i], y: countFor(DAILY[date][g.key]) })),
     }));
   }
@@ -1423,7 +1380,7 @@ function runnerSeriesBySubgroup(view, kind) {
   const perDate = dates.map(date => countsBySubgroup(DAILY[date].all.leaderboard, field, keys));
   const bucketKey = kind === 'registered' ? 'registered' : 'active';
   return keys.map((k, ki) => ({
-    label: k, dashed: false, colorIdx: ki,
+    label: k, colorIdx: ki,
     points: dates.map((date, i) => ({ x: labels[i], y: perDate[i][bucketKey][k] })),
   }));
 }
@@ -1438,7 +1395,7 @@ class LineChart {
     this.opts = Object.assign({
       width: 600, height: 220,
       padding: { top: 14, right: 40, bottom: 26, left: 46 },
-      yFormat: v => Math.round(v).toLocaleString('en'),
+      yFormat: fmtInt,
     }, opts || {});
     this.tooltip = document.getElementById('line-chart-tooltip');
   }
@@ -1479,8 +1436,7 @@ class LineChart {
     s.forEach(ser => {
       const color = LINE_COLORS[ser.colorIdx % LINE_COLORS.length];
       const pts = ser.points.map((p, i) => `${xAt(i)},${yAt(p.y)}`).join(' ');
-      const dash = ser.dashed ? ' stroke-dasharray="5,4"' : '';
-      marksSvg += `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2"${dash} stroke-linejoin="round" stroke-linecap="round"/>`;
+      marksSvg += `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
       const last = ser.points[ser.points.length - 1];
       marksSvg += `<circle cx="${xAt(n - 1)}" cy="${yAt(last.y)}" r="4" fill="${color}" stroke="#fff" stroke-width="2"/>`;
     });
@@ -1505,8 +1461,7 @@ class LineChart {
   _legendHtml(s) {
     return `<div class="line-chart-legend">${s.map(ser => {
       const color = LINE_COLORS[ser.colorIdx % LINE_COLORS.length];
-      const style = ser.dashed ? `border-color:${color}` : `background:${color}`;
-      return `<span class="lg-item"><span class="lg-swatch${ser.dashed ? ' dashed' : ''}" style="${style}"></span>${esc(ser.label)}</span>`;
+      return `<span class="lg-item"><span class="lg-swatch" style="background:${color}"></span>${esc(ser.label)}</span>`;
     }).join('')}</div>`;
   }
 
@@ -1545,13 +1500,13 @@ let trendCharts = null;
 function ensureTrendCharts() {
   if (trendCharts) return trendCharts;
   trendCharts = {
-    distance:      new LineChart('trend-distance-chart',      { yFormat: v => Math.round(v).toLocaleString('en') }),
-    activities:    new LineChart('trend-activities-chart',    { yFormat: v => Math.round(v).toLocaleString('en') }),
-    activeRunners:    new LineChart('trend-active-runners-chart',    { yFormat: v => Math.round(v).toLocaleString('en') }),
-    registeredRunners: new LineChart('trend-registered-runners-chart', { yFormat: v => Math.round(v).toLocaleString('en') }),
+    distance:      new LineChart('trend-distance-chart'),
+    activities:    new LineChart('trend-activities-chart'),
+    activeRunners:    new LineChart('trend-active-runners-chart'),
+    registeredRunners: new LineChart('trend-registered-runners-chart'),
     participation: new LineChart('trend-participation-chart', { yFormat: v => v + '%' }),
     avgkm:         new LineChart('trend-avgkm-chart',         { yFormat: v => v + ' km' }),
-    elevation:     new LineChart('trend-elevation-chart',     { yFormat: v => Math.round(v).toLocaleString('en') + ' m' }),
+    elevation:     new LineChart('trend-elevation-chart',     { yFormat: v => fmtInt(v) + ' m' }),
   };
   return trendCharts;
 }
@@ -1570,8 +1525,8 @@ function renderTrendWeeklyTable() {
   }
   rows.forEach(r => {
     const tr = document.createElement('tr');
-    [r.weekOf, r.km.toLocaleString('en'), r.acts.toLocaleString('en'), r.active, r.registered,
-     r.participation + '%', r.avgKm + ' km', r.elev.toLocaleString('en')]
+    [r.weekOf, fmtInt(r.km), NUM.format(r.acts), r.active, r.registered,
+     r.participation + '%', r.avgKm + ' km', fmtInt(r.elev)]
       .forEach((val, i) => {
         const td = document.createElement('td');
         if (i > 0) td.style.textAlign = 'right';
@@ -1587,11 +1542,11 @@ function renderTrend() {
   const g = dashboard.currentGroup;
   const label = GROUP_LABELS[g];
   renderTrendWeeklyTable();
-  charts.distance.render([{ label, dashed: false, colorIdx: 0, points: trendSeries(g, 'total_km') }]);
-  charts.activities.render([{ label, dashed: false, colorIdx: 0, points: trendSeries(g, 'run_count') }]);
-  charts.participation.render([{ label, dashed: false, colorIdx: 0, points: trendParticipationSeries(g) }]);
-  charts.avgkm.render([{ label, dashed: false, colorIdx: 0, points: trendAvgKmSeries(g) }]);
-  charts.elevation.render([{ label, dashed: false, colorIdx: 0, points: trendSeries(g, 'total_elev') }]);
+  charts.distance.render([{ label, colorIdx: 0, points: trendSeries(g, metricOf('total_km')) }]);
+  charts.activities.render([{ label, colorIdx: 0, points: trendSeries(g, metricOf('run_count')) }]);
+  charts.participation.render([{ label, colorIdx: 0, points: trendSeries(g, participationOf) }]);
+  charts.avgkm.render([{ label, colorIdx: 0, points: trendSeries(g, avgKmOf) }]);
+  charts.elevation.render([{ label, colorIdx: 0, points: trendSeries(g, metricOf('total_elev')) }]);
   renderTrendRunners();
 }
 
@@ -1620,204 +1575,8 @@ showLeaderboard();
 # Generation
 # ---------------------------------------------------------------------------
 
-LEDGER_PATH = Path(__file__).parent / "activity-ledger.json"
-CLEAN_LEDGER_PATH = Path(__file__).parent / "activity-ledger-clean.json"
-
-
-class Ledger:
-    """The raw (append-only) activity ledger plus its deduped "clean" derivative.
-
-    ponytail: no activity id/timestamp in Strava's club feed, so new entries
-    are found by anchoring on the ledger's recent entries inside the fresh
-    fetch. Strava can revise a logged activity's own fields after the fact
-    (elevation correction), so a single mutated entry shouldn't sink the
-    whole anchor: match each of the last ANCHOR_WINDOW ledger entries
-    independently and require only ANCHOR_MIN_MATCHES of them to be found.
-    Matches must also land in the same relative order as the ledger entries
-    they came from (both are newest-first) — two unrelated activities from
-    the same runner's routine loop can coincidentally share a content key,
-    and without an order check that coincidence alone could satisfy
-    ANCHOR_MIN_MATCHES and pick a wrong cut point. Anchor still misses if
-    too few match or matches are out of order (>197 new activities in an
-    hour, or multiple anchored activities edited/deleted) -> append
-    everything, accept occasional double-count.
-    """
-
-    ANCHOR_WINDOW = 8
-    ANCHOR_MIN_MATCHES = 2
-
-    def __init__(self, path: Path, clean_path: Path):
-        self.path = path
-        self.clean_path = clean_path
-        self.activities = self._load(path)
-        self.anchor_missed = False
-
-    @staticmethod
-    def _load(path: Path) -> list:
-        if not path.exists():
-            return []
-        return json.loads(path.read_text(encoding="utf-8"))
-
-    @staticmethod
-    def _save(path: Path, ledger: list) -> None:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(ledger, ensure_ascii=False), encoding="utf-8")
-
-    @staticmethod
-    def _activity_key(act: dict) -> tuple:
-        """Content key used for both anchor matching and dedup.
-
-        total_elevation_gain is excluded — Strava revises it after the fact
-        (elevation correction), which would otherwise change an already-
-        ledgered activity's key and let it slip past the existing_keys dedup
-        as a "new" entry, double-counting it.
-        """
-        athlete = act.get("athlete") or {}
-        name = (athlete.get("firstname", ""), athlete.get("lastname", ""))
-        return (
-            name,
-            act.get("name"),
-            act.get("distance"),
-            act.get("moving_time"),
-            act.get("elapsed_time"),
-            act.get("device_name"),
-        )
-
-    def merge(self, fresh: list, now_iso: str) -> int:
-        """Merge freshly fetched activities (newest-first) into self.activities
-        (newest-first), in place. Returns the count of new entries.
-
-        The anchor match is only a fast path for finding new activities — Strava's
-        club feed has no activity id/timestamp, so the anchor can legitimately miss
-        (>197 new activities in an hour, or too many anchored activities
-        edited/deleted). Content-key dedup below is the actual correctness
-        guarantee: it runs unconditionally, so a missed or stale anchor can
-        degrade to "append everything" but can never reintroduce an activity
-        already in the ledger.
-        """
-        ledger = self.activities
-        if not ledger:
-            new_entries, self.anchor_missed = fresh, False
-            print("  Ledger empty — no anchor to match, treating full fetch as new.")
-        else:
-            candidates = ledger[:self.ANCHOR_WINDOW]
-            fresh_index = {}
-            for i, a in enumerate(fresh):
-                fresh_index.setdefault(self._activity_key(a), i)
-
-            # candidates and fresh are both newest-first, so genuine matches
-            # must appear in fresh in the same relative order as in candidates.
-            matched_at = [fresh_index[self._activity_key(a)] for a in candidates
-                          if self._activity_key(a) in fresh_index]
-            ordered = all(a < b for a, b in zip(matched_at, matched_at[1:]))
-            required = min(self.ANCHOR_MIN_MATCHES, len(candidates))
-            self.anchor_missed = len(matched_at) < required or not ordered
-
-            if self.anchor_missed:
-                new_entries = fresh
-                if ordered:
-                    print(f"  Anchor NOT found: only {len(matched_at)}/{required} of last "
-                          f"{len(candidates)} ledger entries matched in fresh fetch.")
-                else:
-                    print(f"  Anchor REJECTED: {len(matched_at)} matches found but out of "
-                          f"order ({matched_at}) — likely a coincidental content-key collision.")
-            else:
-                cut_at = min(matched_at)
-                new_entries = fresh[:cut_at]
-                print(f"  Anchor found: {len(matched_at)}/{len(candidates)} of last "
-                      f"{len(candidates)} ledger entries matched, cutting at fresh[{cut_at}].")
-
-        existing_keys = {self._activity_key(a) for a in ledger}
-        new_entries = [a for a in new_entries if self._activity_key(a) not in existing_keys]
-
-        stamped = [{**a, "ingested_at": now_iso} for a in new_entries]
-        self.activities = stamped + ledger
-        return len(new_entries)
-
-    def save(self):
-        self._save(self.path, self.activities)
-
-    @staticmethod
-    def _same_upload_batch(a: dict, b: dict) -> bool:
-        aa, bb = a.get("athlete") or {}, b.get("athlete") or {}
-        return (a.get("ingested_at") == b.get("ingested_at")
-                and aa.get("firstname") == bb.get("firstname")
-                and aa.get("lastname") == bb.get("lastname"))
-
-    @classmethod
-    def dedup_consecutive(cls, entries: list) -> list:
-        """Collapse runs of *consecutive* same-athlete activities ingested in the
-        same batch (e.g. multiple runs uploaded together) into the single
-        longest-distance entry, preserving order."""
-        result, group = [], []
-        for act in entries:
-            if group and not cls._same_upload_batch(group[-1], act):
-                result.append(max(group, key=lambda a: a.get("distance") or 0))
-                group = []
-            group.append(act)
-        if group:
-            result.append(max(group, key=lambda a: a.get("distance") or 0))
-        return result
-
-    def build_clean(self, new_count: int) -> list:
-        """Update and persist the clean (deduped) ledger given how many new
-        raw entries were just merged in by merge()."""
-        if self.clean_path.exists():
-            clean_ledger = self.dedup_consecutive(self.activities[:new_count]) + self._load(self.clean_path)
-        else:
-            # bootstrap: no prior clean ledger, dedup the whole history at once
-            clean_ledger = self.dedup_consecutive(self.activities)
-        self._save(self.clean_path, clean_ledger)
-        return clean_ledger
-
-
-MEMBERS_LEDGER_PATH = Path(__file__).parent / "members-ledger.json"
-
-
-class MembersLedger:
-    """Append-only ledger of club members, structured like the activity
-    Ledger. Each entry is a raw member dict (as fetched from Strava) plus
-    'ingested_at' — stamped only the first time that member is seen, so it
-    doubles as a proxy "registration date" (Strava's club API exposes none).
-    Existing entries are never rewritten, matching how the activity ledger
-    treats ingested_at as immutable once stamped.
-    """
-
-    def __init__(self, path: Path):
-        self.path = path
-        # [{...raw member fields, "ingested_at": iso}, ...] — loaded inline,
-        # unlike Ledger._load this isn't reused elsewhere in the class.
-        self.members = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
-
-    @staticmethod
-    def _member_key(m: dict):
-        """id when Strava provides one, else the raw name pair — mirrors
-        Ledger._activity_key's role as a stable identity for dedup."""
-        if m.get("id") is not None:
-            return m["id"]
-        return (m.get("firstname"), m.get("lastname"))
-
-    def merge(self, fresh: list, now_iso: str) -> int:
-        """Append only members not already in the ledger, stamped with
-        now_iso. Returns the count of newly-registered members."""
-        existing_keys = {self._member_key(m) for m in self.members}
-        new_entries = [m for m in fresh if self._member_key(m) not in existing_keys]
-        stamped = [{**m, "ingested_at": now_iso} for m in new_entries]
-        self.members = stamped + self.members
-        return len(new_entries)
-
-    def save(self) -> None:
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.path.write_text(json.dumps(self.members, ensure_ascii=False), encoding="utf-8")
-
-    def members_for_date(self, date_str: str) -> list:
-        """Every member whose first-seen date is on or before date_str —
-        i.e. who was already registered as of that date."""
-        return [m for m in self.members if m.get("ingested_at", "")[:10] <= date_str]
-
-
 def build_daily_history(clean_ledger: list, members_ledger: MembersLedger, roll: NominalRoll = None) -> dict:
-    """Derive {date: {date, label, all, nsf, nsmen}} for every date that ever
+    """Derive {date: {date, label, all, serving, alumni}} for every date that ever
     saw a new ledger entry, by re-running build_grouped_data() against the
     ledger cumulative up to and including that date.
 
@@ -1834,19 +1593,43 @@ def build_daily_history(clean_ledger: list, members_ledger: MembersLedger, roll:
     result = {}
     for date_str in dates:
         subset = [a for a in clean_ledger if a.get("ingested_at", "")[:10] <= date_str]
-        y, m, d = (int(p) for p in date_str.split("-"))
-        label = f"{d}.{m}.{y}"
+        label = day_label(date.fromisoformat(date_str))
         day_members = members_ledger.members_for_date(date_str)
-        result[date_str] = {"date": date_str, "label": label,
-                             **build_grouped_data(subset, day_members, label, roll)}
+        groups = build_grouped_data(subset, day_members, label, roll)
+        for bucket in groups.values():
+            _slim_leaderboard(bucket)
+        result[date_str] = {"date": date_str, "label": label, **groups}
     return result
 
 
-ANNOUNCEMENT_PATH = Path(__file__).parent.parent / "annoucement.md"
+def _slim_leaderboard(bucket: dict) -> None:
+    """Strip the all-constant fields off a bucket's zero-activity rows, in place.
+
+    ~69% of the rows across every historical snapshot are members who hadn't
+    run yet, and every field on such a row is fixed except "gap" — which is
+    the same string for every zero row in the bucket, so it is hoisted to
+    "zero_gap" and stored once. Only name/unit/company carry per-row
+    information. expandBucket() in the page reverses this at render time.
+
+    This is ~65% of the page payload: it keeps index.html near 1 MB
+    instead of 2.3 MB, on a file that is regenerated and committed every
+    5 minutes.
+    """
+    rows = bucket["leaderboard"]
+    zero_gap = next((r["gap"] for r in rows if not r["acts"]), None)
+    if zero_gap is not None:
+        bucket["zero_gap"] = zero_gap
+    bucket["leaderboard"] = [
+        r if r["acts"] else {"name": r["name"], "unit": r["unit"], "company": r["company"]}
+        for r in rows
+    ]
+
+
+ANNOUNCEMENT_PATH = Path(__file__).parent.parent / "data" / "announcement.md"
 
 
 def build_announcement_html() -> str:
-    """Read annoucement.md (# Title, then body text) into a dismissible banner.
+    """Read announcement.md (# Title, then body text) into a dismissible banner.
 
     Returns '' if the file is missing or has no title, hiding the banner.
     """
@@ -1859,9 +1642,8 @@ def build_announcement_html() -> str:
     body = "\n".join(lines[1:]).strip()
     if not title:
         return ""
-    import html as html_lib
-    title_html = html_lib.escape(title)
-    body_html = html_lib.escape(body)
+    title_html = html.escape(title)
+    body_html = html.escape(body)
     return (
         '<div class="announcement" id="announcement">'
         f'<div class="announcement-title">{title_html}</div>'
@@ -1874,8 +1656,8 @@ def build_announcement_html() -> str:
 def run():
     """A full fetch -> merge -> compute -> render -> write pass."""
     roll = NominalRoll()
-    ledger = Ledger(LEDGER_PATH, CLEAN_LEDGER_PATH)
-    members_ledger = MembersLedger(MEMBERS_LEDGER_PATH)
+    ledger = Ledger()
+    members_ledger = MembersLedger()
     strava_client = StravaClient(config)
 
     print("Fetching data from Strava...")
@@ -1906,7 +1688,7 @@ def run():
         clean_ledger = [a for a in clean_ledger
                          if a.get("ingested_at", "")[:10] >= cutoff]
 
-    date_label = f"{now_dt.day}.{now_dt.month}.{now_dt.year}"
+    date_label = day_label(now_dt)
     # clean_ledger entries are all ingested_at <= now, so this *is* the
     # cumulative-to-date total — no per-week/per-day filtering needed.
     today_data = build_grouped_data(clean_ledger, members, date_label, roll)
@@ -1914,7 +1696,7 @@ def run():
 
     data = {"today": today_data}
 
-    _, human_label = now_label(config)
+    human_label = f"{date_label} {now_dt.hour:02}:{now_dt.minute:02}"
 
     weather = fetch_weather(config)
     if weather["ok"]:
@@ -1935,22 +1717,25 @@ def run():
 
     announcement_html = build_announcement_html()
 
-    html = TEMPLATE
-    html = html.replace("__DATA__", json.dumps(data, ensure_ascii=False))
-    html = html.replace("__DAILY_DATA__", json.dumps(daily_snapshots, ensure_ascii=False))
-    html = html.replace("__UPDATED_HUMAN__", human_label)
-    html = html.replace("__WEATHER__", weather_html)
-    html = html.replace("__ANNOUNCEMENT__", announcement_html)
-    html = html.replace("__CLUB_NAME__", club_name)
-    html = html.replace("__CLUB_SHORT__", club_short)
-    html = html.replace("__CLUB_ID__", config.strava_club_id)
+    page = TEMPLATE
+    for placeholder, value in (
+        ("__DATA__", json.dumps(data, ensure_ascii=False)),
+        ("__DAILY_DATA__", json.dumps(daily_snapshots, ensure_ascii=False)),
+        ("__UPDATED_HUMAN__", human_label),
+        ("__WEATHER__", weather_html),
+        ("__ANNOUNCEMENT__", announcement_html),
+        ("__CLUB_NAME__", club_name),
+        ("__CLUB_SHORT__", club_short),
+        ("__CLUB_ID__", config.strava_club_id),
+    ):
+        page = page.replace(placeholder, value)
 
     out_path = Path(__file__).parent.parent / "index.html"
-    out_path.write_text(html, encoding="utf-8")
+    out_path.write_text(page, encoding="utf-8")
 
     w = data["today"]["all"]
-    print(f"Generated: {out_path}")
-    print(f"  Cumulative: {w.get('count', 0)} activities, {w.get('athlete_count', 0)} runners")
+    print(f"Generated: {out_path} ({out_path.stat().st_size / 1e6:.2f} MB)")
+    print(f"  Cumulative: {w.get('run_count', 0)} activities, {w.get('athlete_count', 0)} runners")
 
 
 if __name__ == "__main__":

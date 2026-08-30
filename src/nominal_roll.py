@@ -7,8 +7,10 @@ class NominalRoll:
     """Maps Strava's (often truncated) display names to full formal names,
     and full names to their unit/company."""
 
-    def __init__(self, csv_path: Path = None):
-        self.name_map, self.unit_company_map = self._load(csv_path)
+    CSV_PATH = Path(__file__).parent.parent / "data" / "nominal_roll.csv"
+
+    def __init__(self):
+        self.name_map, self.unit_company_map = self._load(self.CSV_PATH)
 
     @staticmethod
     def _all_truncations(strava_name: str):
@@ -25,10 +27,8 @@ class NominalRoll:
         """Returns (name_map, unit_company_map) from a single read of nominal_roll.csv.
 
         name_map: {truncated_strava_name: FULL_NAME}
-        unit_company_map: {FULL_NAME: {unit, company}}
+        unit_company_map: {FULL_NAME: {unit, company, service}}
         """
-        if path is None:
-            path = Path(__file__).parent.parent / "data" / "nominal_roll.csv"
         name_map = {}
         unit_company_map = {}
         try:
@@ -43,15 +43,16 @@ class NominalRoll:
                         unit_company_map[full] = {
                             "unit":    row.get("Unit", "").strip(),
                             "company": row.get("Company", "").strip(),
+                            "service": row.get("Type of service", "").strip().upper(),
                         }
         except FileNotFoundError:
             pass
         return name_map, unit_company_map
 
     @staticmethod
-    def full_name(person: dict, default_firstname: str = "") -> str:
+    def full_name(person: dict) -> str:
         """Build a raw display name from a Strava athlete/member dict."""
-        return f"{person.get('firstname', default_firstname)} {person.get('lastname', '')}".strip()
+        return f"{person.get('firstname', '')} {person.get('lastname', '')}".strip()
 
     def resolve(self, raw_name: str) -> str:
         """Map a raw Strava display name to its canonical roster name, if known."""
@@ -60,5 +61,6 @@ class NominalRoll:
     def unit_company(self, name: str) -> dict:
         return self.unit_company_map.get(name, {})
 
-    def is_member(self, name: str) -> bool:
-        return name in self.unit_company_map
+    def service(self, name: str) -> str:
+        """Roll's "Type of service", upper-cased: NSF / REGULAR / NSMAN / ALUMNI."""
+        return self.unit_company_map.get(name, {}).get("service", "")

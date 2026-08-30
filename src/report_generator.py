@@ -1,4 +1,6 @@
 """Statistics computation engine for Strava club activities."""
+import math
+from collections import Counter
 from dataclasses import asdict, dataclass, field
 
 from nominal_roll import NominalRoll
@@ -9,7 +11,6 @@ class AthleteStats:
     """Accumulated per-athlete totals for one report period."""
 
     name: str
-    athlete_id: int | None = None
     unit: str = ""
     company: str = ""
 
@@ -28,8 +29,7 @@ class AthleteStats:
     break_time: float = 0.0
 
     def add_activity(self, act: dict) -> tuple:
-        """Accumulate one activity's stats. Returns (dist_km, elev) for the
-        caller's running club-wide totals."""
+        """Accumulate one activity, returning (dist_km, elev) for club totals."""
         dist_km = act.get("distance", 0) / 1000
         elev = act.get("total_elevation_gain", 0)
         time_s = act.get("moving_time", 0)
@@ -47,7 +47,7 @@ class AthleteStats:
             self.speeds.append(speed)
         if dev:
             self.devices.add(dev)
-        if dist_km >= 5 and dist_km > 0 and (elev / dist_km) >= 8:
+        if dist_km >= 5 and (elev / dist_km) >= 8:
             self.climber_run_elev += elev
             self.climber_run_km += dist_km
 
@@ -57,222 +57,243 @@ class AthleteStats:
 
     @property
     def avg_speed(self):
+        """Mean speed in m/s across qualifying activities, or None."""
         return sum(self.speeds) / len(self.speeds) if self.speeds else None
 
     @staticmethod
     def fmt_time(seconds: float) -> str:
-        h = int(seconds // 3600)
-        m = int((seconds % 3600) // 60)
-        return f"{h}h {m}m"
+        """Format a duration as ``"2h 5m"``."""
+        h, rem = divmod(int(seconds), 3600)
+        return f"{h}h {rem // 60}m"
 
     @staticmethod
     def spd_kmh(ms: float) -> str:
+        """Format a m/s speed as ``"12.3 km/h"``."""
         return f"{ms * 3.6:.1f} km/h"
 
     def to_leaderboard_entry(self, leader_km: float) -> dict:
+        """Render these totals as one display-ready leaderboard row."""
         gap = leader_km - self.km
         avg_speed = self.avg_speed
-        entry = LeaderboardEntry(
-            name=self.name,
-            athlete_id=self.athlete_id,
-            km=round(self.km, 1),
-            elev=round(self.elev),
-            time=self.fmt_time(self.time_s),
-            time_s=int(self.time_s),
-            acts=self.count_acts,
-            avg_speed=self.spd_kmh(avg_speed) if avg_speed is not None else "–",
-            avg_speed_ms=round(avg_speed, 4) if avg_speed is not None else 0,
-            longest=round(self.longest, 1),
-            gap=f"–{gap:.1f}" if gap > 0 else "leader",
-            elev_per_km=round(self.elev / self.km, 1) if self.km > 0 else None,
-            unit=self.unit,
-            company=self.company,
-        )
-        return asdict(entry)
+        return {
+            "name": self.name,
+            "km": round(self.km, 1),
+            "elev": round(self.elev),
+            "time": self.fmt_time(self.time_s),
+            "time_s": int(self.time_s),
+            "acts": self.count_acts,
+            "avg_speed": self.spd_kmh(avg_speed) if avg_speed is not None else "–",
+            "avg_speed_ms": round(avg_speed, 4) if avg_speed is not None else 0,
+            "longest": round(self.longest, 1),
+            "gap": f"–{gap:.1f}" if gap > 0 else "leader",
+            "elev_per_km": round(self.elev / self.km, 1) if self.km > 0 else None,
+            "unit": self.unit,
+            "company": self.company,
+        }
 
 
 @dataclass
-class LeaderboardEntry:
-    name: str
-    athlete_id: int | None
-    km: float
-    elev: float
-    time: str
-    time_s: int
-    acts: int
-    avg_speed: str
-    avg_speed_ms: float
-    longest: float
-    gap: str
-    elev_per_km: float | None
-    unit: str
-    company: str
+class ReportStats:
+    """Everything one reporting period contributes to the dashboard.
 
+    Every field defaults to its empty value, so a period with no activities
+    and no members is a plain ``ReportStats()`` rather than a special case.
+    Each award is None when nobody qualified for it.
 
-@dataclass
-class Award:
-    name: str
-    athlete_id: int | None
-    value: str
-
-
-@dataclass
-class FunStat:
-    name: str
-    value: str
-
-
-def compute_stats(activities: list, members: list = None, roll: NominalRoll = None) -> dict:
+    Callers serialise with ``dataclasses.asdict`` at the JSON boundary.
     """
-    Compute all statistics from club activities.
-    members: optional member list (for building Strava profile links).
-    roll: optional NominalRoll for name resolution + unit/company lookup.
-    """
-    # Build name -> athlete id map from members (if available)
-    member_map = {}
-    if members:
-        for m in members:
-            key = NominalRoll.full_name(m).lower()
-            if m.get("id"):
-                member_map[key] = m["id"]
-    if not activities and not members:
-        return {}
 
+    total_km: float = 0.0
+    total_elev: float = 0.0
+    run_count: int = 0
+    athlete_count: int = 0
+    leaderboard: list = field(default_factory=list)
+    fun_stats: dict = field(default_factory=dict)
+    king_km: dict | None = None
+    king_elev: dict | None = None
+    marathoner: dict | None = None
+    fastest: dict | None = None
+    longest: dict | None = None
+    climber: dict | None = None
+    flatrunner: dict | None = None
+    device_stats: list = field(default_factory=list)
+
+    def to_dict(self) -> dict:
+        """Serialise to a plain dict that json.dumps can always emit.
+
+        Strava occasionally reports a distance or elapsed time that makes a
+        derived average NaN or infinite. Standard JSON has no literal for
+        either, so they are flattened to 0.0 here rather than left for the
+        caller to trip over.
+        """
+        return _json_safe(asdict(self))
+
+
+def _json_safe(obj):
+    """Recursively replace NaN and Inf floats with 0.0."""
+    if isinstance(obj, dict):
+        return {k: _json_safe(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_json_safe(i) for i in obj]
+    if isinstance(obj, float) and not math.isfinite(obj):
+        return 0.0
+    return obj
+
+
+def _device_sort(item):
+    """Sort key placing real hardware ahead of virtual platforms.
+
+    Hardware first (by descending runner count), then Zwift, Rouvy, and
+    finally Strava's own manual entries.
+    """
+    d, c = item
+    dl = d.lower()
+    if "strava" in dl:
+        return (3, 0, dl)
+    if "rouvy" in dl:
+        return (2, 0, dl)
+    if "zwift" in dl:
+        return (1, 0, dl)
+    return (0, -c, dl)
+
+
+def _new_athlete(name: str, roll: NominalRoll) -> AthleteStats:
+    """Empty accumulator with unit/company filled in from the roll."""
+    uc = roll.unit_company(name) if roll else {}
+    return AthleteStats(
+        name,
+        unit=uc.get("unit", ""),
+        company=uc.get("company", ""),
+    )
+
+
+def resolved_name(person: dict, roll: NominalRoll) -> str:
+    """Canonical roster name for a Strava athlete/member dict."""
+    raw = NominalRoll.full_name(person)
+    return roll.resolve(raw) if roll else raw
+
+
+def _accumulate_athletes(activities: list, roll: NominalRoll) -> tuple:
+    """Fold every activity into per-athlete accumulators.
+
+    Returns (athletes, total_km, total_elev), athletes keyed by resolved name.
+    """
+    athletes: dict = {}
     total_km = 0.0
     total_elev = 0.0
-    athletes: dict = {}
-
-    def get_athlete(name):
-        if name not in athletes:
-            uc = roll.unit_company(name) if roll else {}
-            athletes[name] = AthleteStats(name, unit=uc.get("unit", ""), company=uc.get("company", ""))
-        return athletes[name]
 
     for act in activities:
-        athlete_dict = act.get("athlete", {})
-        raw_name = NominalRoll.full_name(athlete_dict, default_firstname="?")
-        name = roll.resolve(raw_name) if roll else raw_name
+        name = resolved_name(act.get("athlete", {}), roll)
+        if name not in athletes:
+            athletes[name] = _new_athlete(name, roll)
 
-        stats = get_athlete(name)
-        if stats.athlete_id is None and raw_name.lower() in member_map:
-            stats.athlete_id = member_map[raw_name.lower()]
-
-        dist_km, elev = stats.add_activity(act)
+        dist_km, elev = athletes[name].add_activity(act)
         total_km += dist_km
         total_elev += elev
 
-    def top(d, reverse=True):
-        return sorted(d.items(), key=lambda x: x[1], reverse=reverse)
+    return athletes, total_km, total_elev
 
-    # Device stats — count unique runners per device
-    device_athlete_count: dict = {}
-    for a in athletes.values():
-        for dev in a.devices:
-            device_athlete_count[dev] = device_athlete_count.get(dev, 0) + 1
 
-    def _device_sort(item):
-        d, c = item
-        dl = d.lower()
-        if "strava" in dl:
-            return (3, 0, dl)
-        if "rouvy" in dl:
-            return (2, 0, dl)
-        if "zwift" in dl:
-            return (1, 0, dl)
-        return (0, -c, dl)
-
-    device_stats = [
+def _build_device_stats(athletes: dict) -> list:
+    """Count distinct runners per recording device, unnamed devices dropped."""
+    counts = Counter(dev for a in athletes.values() for dev in a.devices)
+    return [
         {"device": d, "count": c}
-        for d, c in sorted(device_athlete_count.items(), key=_device_sort)
+        for d, c in sorted(counts.items(), key=_device_sort)
         if d
     ]
 
-    km_rank = top({a.name: a.km for a in athletes.values()})
 
-    # Award rankings
-    award_km_rank = top({a.name: a.km for a in athletes.values() if a.count_acts > 0})
-    award_elev_rank = top({a.name: a.elev for a in athletes.values() if a.count_acts > 0})
-    award_time_rank = top({a.name: a.time_s for a in athletes.values() if a.count_acts > 0})
-    award_fast_rank = top({a.name: a.avg_speed for a in athletes.values() if a.avg_speed is not None})
-    award_long_rank = top({a.name: a.longest for a in athletes.values() if a.count_acts > 0})
+def _build_leaderboard(athletes: dict, members: list, roll: NominalRoll) -> list:
+    """The full leaderboard, km-ranked, with every non-running member appended
+    as a zero row so the table shows the whole unit."""
+    ranked = sorted(athletes.values(), key=lambda a: a.km, reverse=True)
+    leader_km = ranked[0].km if ranked else 0
+    leaderboard = [a.to_leaderboard_entry(leader_km) for a in ranked]
 
-    # Leaderboard — all runners sorted by km
-    leader_km = km_rank[0][1] if km_rank else 0
-    leaderboard = [athletes[name].to_leaderboard_entry(leader_km) for name, _km in km_rank]
+    listed = set(athletes.keys())
+    for m in members or []:
+        name = resolved_name(m, roll)
+        if name and name not in listed:
+            leaderboard.append(_new_athlete(name, roll).to_leaderboard_entry(leader_km))
+            listed.add(name)
 
-    # Add zero-row entries for members with no activities this period
-    active_names = set(athletes.keys())
-    if members:
-        for m in members:
-            name = NominalRoll.full_name(m)
-            if roll:
-                name = roll.resolve(name)
-            if name and name not in active_names:
-                uc = roll.unit_company(name) if roll else {}
-                zero_stats = AthleteStats(
-                    name,
-                    athlete_id=member_map.get(name.lower()),
-                    unit=uc.get("unit", ""),
-                    company=uc.get("company", ""),
-                )
-                leaderboard.append(zero_stats.to_leaderboard_entry(leader_km))
-                active_names.add(name)
+    return leaderboard
 
-    def award(rank, val_fn):
-        if not rank:
-            return None
-        name, val = rank[0]
-        return asdict(Award(name=name, athlete_id=athletes[name].athlete_id, value=val_fn(val)))
 
-    # Climber — avg m+/km from runs with >= 8 m+/km, at least 30 km total
-    elev_per_km = {
+def _award(values: dict, val_fn, pick=max) -> dict | None:
+    """Winner of one category, or None when nobody qualified.
+
+    values maps athlete name to the numeric value being ranked; pick is max
+    for "highest wins" and min for "lowest wins".
+    """
+    if not values:
+        return None
+    name = pick(values, key=values.get)
+    return {"name": name, "value": val_fn(values[name])}
+
+
+def _compute_awards(athletes: dict) -> dict:
+    """Pick the winner of every award category.
+
+    Climber and flat runner carry qualifying thresholds, so either may be
+    absent even when runners exist.
+    """
+    active = [a for a in athletes.values() if a.count_acts > 0]
+
+    # Climber — avg m+/km over hilly runs only, needing 30 km of them and an
+    # average above 5 m+/km.
+    climber = {
         a.name: a.climber_run_elev / a.climber_run_km
         for a in athletes.values()
-        if a.climber_run_km >= 30
+        if a.climber_run_km >= 30 and a.climber_run_elev / a.climber_run_km > 5
     }
-
-    break_rank = top({a.name: a.break_time for a in athletes.values()})
-    climber_rank = top(elev_per_km)
-
-    def fun(name, value):
-        return asdict(FunStat(name=name, value=value))
-
-    fun_stats = {
-        "breaks": fun(
-            break_rank[0][0],
-            f"{int(break_rank[0][1] // 60)} min of rest",
-        ) if break_rank and break_rank[0][1] > 60 else None,
-    }
-
-    climber_award = None
-    if climber_rank and climber_rank[0][1] > 5:
-        name, val = climber_rank[0]
-        climber_award = asdict(Award(name=name, athlete_id=athletes[name].athlete_id, value=f"{val:.1f} m+/km"))
-
-    # Flat runner — lowest m+/km, at least 50 km
-    flatrunner_rank = top(
-        {a.name: a.elev / a.km for a in athletes.values() if a.km >= 50},
-        reverse=False
-    )
-    flatrunner_award = None
-    if flatrunner_rank:
-        name, val = flatrunner_rank[0]
-        flatrunner_award = asdict(Award(name=name, athlete_id=athletes[name].athlete_id, value=f"{val:.1f} m+/km"))
+    # Flat runner — lowest m+/km over at least 50 km.
+    flat = {a.name: a.elev / a.km for a in athletes.values() if a.km >= 50}
 
     return {
-        "total_km": total_km,
-        "total_elev": total_elev,
-        "run_count": len(activities),
-        "athlete_count": len(members or []),
-        "leaderboard": leaderboard,
-        "fun_stats": fun_stats,
-        # Main awards
-        "king_km":     award(award_km_rank,    lambda v: f"{v:.1f} km"),
-        "king_elev":   award(award_elev_rank,  lambda v: f"{v:,.0f} m elevation".replace(",", " ")),
-        "marathoner":  award(award_time_rank,  lambda v: AthleteStats.fmt_time(v)),
-        "fastest":     award(award_fast_rank,  lambda v: AthleteStats.spd_kmh(v)),
-        "longest":     award(award_long_rank,  lambda v: f"{v:.1f} km"),
-        "climber":     climber_award,
-        "flatrunner":  flatrunner_award,
-        "device_stats": device_stats,
+        "king_km":    _award({a.name: a.km for a in active}, lambda v: f"{v:.1f} km"),
+        "king_elev":  _award({a.name: a.elev for a in active},
+                             lambda v: f"{v:,.0f} m elevation".replace(",", " ")),
+        "marathoner": _award({a.name: a.time_s for a in active}, AthleteStats.fmt_time),
+        "fastest":    _award({a.name: a.avg_speed for a in athletes.values()
+                              if a.avg_speed is not None}, AthleteStats.spd_kmh),
+        "longest":    _award({a.name: a.longest for a in active}, lambda v: f"{v:.1f} km"),
+        "climber":    _award(climber, lambda v: f"{v:.1f} m+/km"),
+        "flatrunner": _award(flat, lambda v: f"{v:.1f} m+/km", pick=min),
     }
+
+
+def _compute_fun_stats(athletes: dict) -> dict:
+    """Novelty statistics shown alongside the main awards. Each is None when
+    nobody cleared its threshold."""
+    breaks = None
+    times = {a.name: a.break_time for a in athletes.values()}
+    if times:
+        name = max(times, key=times.get)
+        if times[name] > 60:
+            breaks = {"name": name, "value": f"{int(times[name] // 60)} min of rest"}
+    return {"breaks": breaks}
+
+
+def compute_stats(activities: list, members: list = None, roll: NominalRoll = None) -> ReportStats:
+    """Compute all leaderboard, award, and fun statistics for one period.
+
+    members is used to add zero rows for club members who did not run.
+    All-zero when there are neither activities nor members.
+    """
+    if not activities and not members:
+        return ReportStats()
+
+    athletes, total_km, total_elev = _accumulate_athletes(activities, roll)
+
+    return ReportStats(
+        total_km=total_km,
+        total_elev=total_elev,
+        run_count=len(activities),
+        athlete_count=len(members or []),
+        leaderboard=_build_leaderboard(athletes, members, roll),
+        fun_stats=_compute_fun_stats(athletes),
+        device_stats=_build_device_stats(athletes),
+        **_compute_awards(athletes),
+    )

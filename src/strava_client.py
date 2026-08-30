@@ -1,4 +1,4 @@
-"""Strava OAuth token refresh + club API calls, on top of stravalib."""
+"""Strava OAuth token refresh + club API calls, on top of stravalib. Fetch activities and member information."""
 from stravalib import Client, exc
 
 
@@ -46,12 +46,12 @@ class StravaClient:
     # which Strava sends but doesn't document). Use the untyped transport so raw
     # dicts with every field survive into the ledger untouched.
 
-    def fetch_club_activities(self, per_page: int = 200) -> list:
+    def fetch_club_activities(self) -> list:
         """Fetch the first page of club activities — Strava's own pagination is
         unreliable past page 1, so only that page is fetched."""
         client = Client(access_token=self.access_token, refresh_token=self._config.strava_refresh_token)
         path = CLUB_ACTIVITIES_PATH.format(club_id=self._config.strava_club_id)
-        return client.protocol.get(path, page=1, per_page=per_page) or []
+        return client.protocol.get(path, page=1, per_page=200) or []
 
     def fetch_club_members(self) -> list:
         """Fetch club member list (firstname, lastname, id)."""

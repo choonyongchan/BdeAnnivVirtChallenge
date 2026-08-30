@@ -17,8 +17,6 @@ from pathlib import Path
 UNIT_COMPANIES = {
     "40SAR": ["Archer", "Braves", "Cougar", "Stallion", "Hercules"],  # Hercules = HQ coy
     "41SAR": ["Falcon", "Glory", "Hawk", "Shrike", "Heron"],          # Heron    = HQ coy
-    "8SAB":  [],   # brigade HQ — no company
-    "SBW":   [],   # Supply Base West — no company
 }
 HQ_COMPANY = {"40SAR": "Hercules", "41SAR": "Heron"}
 COMPANIES = {c.lower(): (c, u) for u, coys in UNIT_COMPANIES.items() for c in coys}
