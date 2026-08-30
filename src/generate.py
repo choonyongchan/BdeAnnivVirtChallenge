@@ -749,6 +749,12 @@ const EMPTY_MSGS = [
 
 function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
+// Company is stored unit-qualified ("40SAR/Cougar") so same-named companies in
+// different units stay apart. The leaderboard's Company cell sits right next to
+// the Unit column, so the prefix is dropped there — and only there.
+const shortCompany = r =>
+  r.company && r.company.startsWith(r.unit + '/') ? r.company.slice(r.unit.length + 1) : (r.company || '');
+
 // Local-date -> 'YYYY-MM-DD'. Must not go through toISOString(), which
 // converts to UTC and shifts the date back a day for any positive offset.
 const isoDate = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -1129,7 +1135,7 @@ function renderLeaderboard(data) {
       <td>${isByKm && MEDALS[i] ? MEDALS[i] : '<span style="color:#ccc;font-size:.75rem">'+(i+1)+'</span>'}</td>
       <td>${esc(r.name)}</td>
       <td>${esc(r.unit||'')}</td>
-      <td>${esc(r.company||'')}</td>
+      <td>${esc(shortCompany(r))}</td>
       <td class="km-cell">${r.km}</td>
       <td class="gap-cell ${r.gap==='leader'?'leader':''}">${r.gap}</td>
       <td>${r.elev} m</td>
