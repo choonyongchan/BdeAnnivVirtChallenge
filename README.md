@@ -2,120 +2,95 @@
 
 **→ [View the live dashboard](https://choonyongchan.github.io/BdeAnnivVirtChallenge/)**
 
-A Strava-powered fitness dashboard for the **8SAB 50th Anniversary Virtual Challenge**. It pulls
-activity data from a Strava club, matches members against a unit nominal roll, and publishes a live
-leaderboard — broken down by unit and company — as a static site on GitHub Pages. GitHub Actions
-regenerates it every 5 minutes.
+A live leaderboard for the 8SAB 50th Anniversary Virtual Challenge. A scheduled job
+reads the challenge's Strava club, matches each athlete against the unit nominal
+roll, and writes the whole dashboard into one static `index.html` on GitHub Pages.
+It refreshes every hour. There is no server and no database: every sort, filter,
+chart, and history view runs in your browser off data baked into the page.
 
-![The dashboard: totals, awards and fun stats](docs/dashboard-overview.png)
-
-**What's on the dashboard:**
-
-- **Totals** — distance, elevation, activities, active runners, registered runners
-- **Awards** — Distance King, Climbing King, Marathoner, Fastest, Longest Run, Mountain Goat, Flat Runner
-- **Fun stats** — Break King
-- **Runner leaderboard** with sortable columns and unit/company filters
-- **Unit Rankings** and **Company Rankings**, driven by the nominal roll
-- **Group tabs** — **All**, **NSF/Regular**, or **NSMan/Alumni**
-- **History** — any past date, via a calendar picker
-- **Trend** — cumulative charts, a weekly Sunday snapshot table, and per-unit/company runner charts
-- Device breakdown, local weather, a dismissible announcement banner
-- Fully responsive; no database, no server — one self-contained HTML file
+![The dashboard: totals, awards and fun stats](src/docs/dashboard-overview.png)
 
 ---
 
-## Contents
+## For users
 
-- [How the dashboard is organized](#how-the-dashboard-is-organized)
-- [Maintaining the roster](#maintaining-the-roster)
-- [How it updates](#how-it-updates)
-- [Running it locally](#running-it-locally)
-- [Deploying your own copy](#deploying-your-own-copy)
-- [Getting or rotating a Strava refresh token](#getting-or-rotating-a-strava-refresh-token)
-- [The start anchor](#the-start-anchor)
-- [The announcement banner](#the-announcement-banner)
-- [File structure](#file-structure)
-- [Development](#development)
-- [Troubleshooting](#troubleshooting)
+Open [the dashboard](https://choonyongchan.github.io/BdeAnnivVirtChallenge/) in any
+browser. Nothing to install, no login.
 
----
+The top of the page shows club totals (distance, elevation, activities, active
+runners, registered runners) and award cards: Distance King, Climbing King,
+Marathoner, Fastest, Longest Run, Mountain Goat, Flat Runner, and Break King for
+the most time spent stopped mid-activity. A card appears only once someone
+qualifies.
 
-## How the dashboard is organized
+Below that is the runner leaderboard. It lists every registered runner, including
+those who haven't run yet. Click a column to sort; use the Unit and Company menus
+to filter. Alongside it sit unit rankings, company rankings, and a registration
+tree, all built from the roll. Three tabs (All, NSF/Regular, NSMan/Alumni) split
+everyone by `Type of service`.
 
-Members are grouped two ways:
+The History picker opens a calendar for any past date's cumulative standings, with
+a shortcut to last week. The Trend view adds a weekly Sunday snapshot table and
+cumulative charts for distance, activities, runners, participation rate, and
+elevation, with a breakdown by group, unit, or company.
 
-- **Unit / Company** — every athlete is looked up against `data/nominal_roll.csv` and shown with
-  their formal name, unit, and company. This roll also powers the Unit and Company Rankings.
-- **NSF/Regular vs NSMan/Alumni** — members are bucketed by their `Type of service` in the roll,
-  configured via `SERVING_TYPES` / `ALUMNI_TYPES` in `src/generate.py`:
-  - **NSF/Regular**: `Type of service` is `NSF` or `REGULAR`
-  - **NSMan/Alumni**: `Type of service` is `NSman` or `Alumni`
-  - Anyone off the roll, or with no recognised `Type of service`, appears only in **All**
+A recording-device breakdown, local weather, and a dismissible announcement banner
+round out the page.
 
-Strava often truncates a member's display name (e.g. `"Siva R."`). `src/nominal_roll.py` matches
-these truncated forms back to the full name in the roll so stats land on the right person.
+![Runner leaderboard with unit and company columns](src/docs/dashboard-leaderboard.png)
 
-![Runner leaderboard with unit and company columns](docs/dashboard-leaderboard.png)
-
-### Maintaining the roster
-
-> [!IMPORTANT]
-> **Do not hand-edit `data/nominal_roll.csv`.** It is generated from the FormSG registration export
-> and is overwritten on every run of the converter. It is also gitignored — it holds personal data
-> and reaches CI through the `NOMINAL_ROLL_B64` secret, not the repo.
-
-To add, remove, or re-assign a member, correct the response in the registration form, then
-re-run the converter. The full procedure — including what it auto-corrects, how to read its
-`INFO`/`WARN` output, and how to push the result live — is in **[`data/README.md`](data/README.md)**.
+![Trend view: weekly snapshot table and cumulative charts](src/docs/dashboard-trend.png)
 
 ---
 
-## How it updates
+## How it works
+
+Strava shut off its public club API in 2026, so the pipeline drives a logged-in
+browser instead. One `python -m src.main` run does five things in order:
 
 ```
-Strava API
-    ↓
-src/strava_client.py      → OAuth token refresh + fetch club activities/members
-    ↓
-src/ledger_generator.py   → Append to the activity + member ledgers (the history store)
-    ↓
-src/nominal_roll.py       → Match Strava names to the roster (unit/company)
-    ↓
-src/report_generator.py   → Compute statistics, awards, leaderboard
-    ↓
-src/generate.py           → Build grouped data, render the HTML template
-    ↓
-index.html                → Static file, published to GitHub Pages
+python -m src.main
+  ├─ check_auth()                 src/main.py          is src/auth_state.json a valid session?
+  ├─ ActivityScraper().scrape()   src/activities/      fetch the club feed in a real browser
+  │                                                    → append new rows to activities.csv
+  ├─ MemberScraper().scrape()     src/members/         page through the club member list
+  │                                                    → upsert members.csv (first_seen / last_seen)
+  ├─ generate.run()               src/dashboard/       load the 3 CSVs + config.yaml + weather
+  │      stats.py   → totals, awards, leaderboard, devices
+  │      names.py   → match truncated Strava names to the roll (unit / company / service)
+  │      renderer.py→ substitute into template.html
+  │                                                    → write index.html
+  └─ publish_dashboard()          src/main.py          commit and push index.html
 ```
 
-`.github/workflows/update.yml` runs this pipeline:
+Both scrapers share one Playwright session (`src/strava_session.py`). It spoofs a
+normal browser's user-agent, locale, and timezone, and retries a failed fetch
+twice with a 30s then 60s backoff. The session cookies live in
+`src/auth_state.json`, which is gitignored and restored in CI from a secret. There
+is no OAuth and there are no API tokens.
 
-- **On a schedule** — every 5 minutes (`*/5 * * * *`), GitHub's minimum cron granularity. Strava's
-  club feed only exposes one page of recent activities, so a short interval keeps activities from
-  overflowing out of view before they are recorded.
-- **On demand** — **Actions → Update and Deploy Strava Dashboard → Run workflow**
-- **On every push to `main`**
+Three CSVs feed the generator:
 
-Only `index.html` is deployed to GitHub Pages. The roster and the ledger JSON files stay in the
-repository and are never published.
+| File | Shape |
+|---|---|
+| `src/activities/activities.csv` | Append-only, one row per Strava `activity_id`. The real activity time is `start_date_utc`; per-day history is replayed from that at generation time, not stored. |
+| `src/members/members.csv` | One row per `athlete_id` ever seen, with `first_seen` / `last_seen`. Rewritten each run; rows are never deleted. |
+| `src/nominal_roll/nominal_roll.csv` | The formal roster: name, unit, company, type of service, Strava username. Holds personal data, so it is gitignored and injected in CI. |
 
-**Key design decisions:**
+Strava truncates club-feed names like `"Siva R."`. `NominalRoll` in
+`src/dashboard/names.py` precomputes every truncation of each roster username
+ahead of time, so a shortened name still resolves to one person and their unit.
 
-- **No server, no database** — the output is a single self-contained HTML file.
-- **Append-only ledgers** — every activity ever fetched is appended to `src/activity-ledger.json`
-  and deduped into `src/activity-ledger-clean.json`. Strava's club feed carries no activity id or
-  timestamp, so the ledger's `ingested_at` (scrape time) is the only timeline signal; per-date
-  history is replayed from it at generation time.
-- **Two anchors, two jobs** — both find a run of activities inside a newest-first list using the
-  same content key, but they answer different questions. The **append anchor** is recomputed every
-  run and searched inside the *fresh fetch*: "which of the 200 fetched activities are new?" The
-  **start anchor** (`data/start_anchor.json`) is written by hand once and searched inside the
-  *stored ledger*: "which ledgered activities count for the challenge?" See
-  [The start anchor](#the-start-anchor).
-- **Payload kept small** — historical snapshots omit the all-zero fields of members who hadn't run
-  yet and rebuild them in the browser, which roughly halves the page.
+An activity counts only if its local start date is on or after `challenge_start`
+in `src/config.yaml`. The CSV timestamps are real, so that plain date filter is
+the whole cutoff; there is no positional anchor.
 
-![Trend view: weekly snapshot table and cumulative charts](docs/dashboard-trend.png)
+`renderer.render()` then does eight string substitutions on
+`src/dashboard/template.html`. Two of them inject `DATA` and `DAILY` as JSON
+blobs; every stat, table, award, and chart is computed client-side from those, and
+old snapshots ship slimmed and are rehydrated in the page. `index.html` is
+generated output: change `src/dashboard/template.html` and regenerate, because
+direct edits are overwritten.
 
 ---
 
@@ -125,257 +100,156 @@ repository and are never published.
 git clone https://github.com/choonyongchan/BdeAnnivVirtChallenge.git
 cd BdeAnnivVirtChallenge
 pip install -r requirements.txt
+python -m playwright install msedge      # add --with-deps on Linux
 ```
 
-Create a `.env` file in the project root:
+1. Log in once. `python -m src.login` opens a visible browser. Sign in to Strava;
+   when it lands on your dashboard it writes `src/auth_state.json`. Every scraper
+   reuses that session.
+2. Build the roster. `python -m src.nominal_roll.parse_nominal_roll "<raw FormSG export.csv>"`
+   cleans the registration export into `src/nominal_roll/nominal_roll.csv`. It
+   autocorrects free-text unit and company answers and prints `INFO` / `WARN`
+   lines for anything it had to guess or couldn't place. Without this file the
+   dashboard still builds, but nobody gets a unit, company, or full name.
+3. Run it. `python -m src.main` scrapes, generates, and pushes.
 
-```env
-# Required
-STRAVA_CLIENT_ID=your_id
-STRAVA_CLIENT_SECRET=your_secret
-STRAVA_REFRESH_TOKEN=your_token
-STRAVA_CLUB_ID=your_club_id
+To rebuild the page from the CSVs you already have, without scraping or touching
+git, run `python -m src.dashboard.generate`:
 
-# Optional — these are the defaults
-CLUB_NAME=8SAB 50th Anniversary Virtual Challenge
-WEATHER_LAT=1.3835
-WEATHER_LON=103.7478
-TIMEZONE=Asia/Singapore
-START_DATE=            # YYYY-MM-DD; if set, ignores activities ingested before this date
-                       # coarse pre-filter only — see 'The start anchor' for the exact cutover
+```
+Loaded 115 activities (>= 2026-09-01), 664 members.
+Generated: .../index.html (0.44 MB)
+  Cumulative: 115 activities, 664 members, 471 km
 ```
 
-Only the four Strava values are required. `.env` is for local runs only — GitHub Actions reads the
-same names from repository secrets.
+`index.html` is self-contained. Open the file directly; no local server.
 
-You also need a roster at `data/nominal_roll.csv` before the first run. Without it the dashboard
-still generates, but nobody gets a unit, company, or full name — see
-[`data/README.md`](data/README.md) to create it.
+Settings live in `src/config.yaml` and nowhere else. There is no `.env` and the
+code reads no environment variables; CI supplies secrets separately.
 
-Then generate and open the result:
+| Key | Default | Purpose |
+|---|---|---|
+| `club.name` | `8SAB 50th Anniversary Virtual Challenge` | Dashboard title |
+| `club.id` | `2211123` | Strava club the scrapers read |
+| `challenge_start` | `2026-09-01` | Activities before this local date don't count (code default is `2026-09-14`; the yaml value wins) |
+| `timezone` | `Asia/Singapore` | Display timezone for the dashboard |
+| `weather.latitude` / `weather.longitude` | `1.3835` / `103.7478` | Weather widget location |
+| `announcement_path` | `src/announcement.md` | Banner source file |
+| `browser.channel` | `msedge` | Installed browser Playwright drives (`chrome` also works) |
+| `browser.headless` | `true` | Set `false` to watch a scrape |
+
+To show the banner, put a title on the first line of `src/announcement.md` (a
+leading `#` is stripped) and the body below it. An empty or missing file hides it.
+Content is HTML-escaped.
+
+---
+
+## How it deploys
+
+Two workflows run it. `.github/workflows/update.yml` builds the dashboard on the
+hour (`cron: '0 * * * *'`; GitHub can delay a scheduled run 5–20 minutes) and on
+demand from **Actions → Update and Deploy Strava Dashboard → Run workflow**. Each
+run checks out, sets up Python 3.13, installs the requirements and Edge for
+Playwright, decodes the two secrets into `src/auth_state.json` and
+`src/nominal_roll/nominal_roll.csv`, runs `python -m src.main`, then commits
+`activities.csv`, `members.csv`, and `index.html` back to `main`.
+
+| Secret | Contents |
+|---|---|
+| `AUTH_STATE` | Base64 of `src/auth_state.json`. Refresh with `python -m src.login`, then re-encode. |
+| `NOMINAL_ROLL` | Base64 of `src/nominal_roll/nominal_roll.csv`. |
+
+`.github/workflows/pages.yml` handles deployment. It fires on any push to `main`
+that touches `index.html`, copies that one file into `_site/`, and publishes it
+with `actions/deploy-pages`. `index.html` is the entire site. The CSV ledgers are
+committed for history; `auth_state.json` and `nominal_roll.csv` never are.
+
+---
+
+## Project layout
+
+```
+index.html                       generated dashboard; don't edit
+requirements.txt
+src/
+  main.py                        pipeline entry point (scrape → generate → publish)
+  login.py                       one-off manual Strava login → src/auth_state.json
+  strava_session.py              shared Playwright session + retry/backoff
+  config.py / config.yaml        settings (no secrets, no env vars)
+  announcement.md                optional banner text
+  auth_state.json                session cookies (gitignored; from AUTH_STATE)
+  activities/
+    activities.py                scrape club feed → append-only ledger
+    activities.csv               activity ledger (committed)
+  members/
+    members.py                   scrape member list → upsert ledger
+    members.csv                  member ledger (committed)
+  nominal_roll/
+    parse_nominal_roll.py        raw FormSG export → cleaned roster
+    nominal_roll.csv             roster (gitignored; from NOMINAL_ROLL)
+  dashboard/
+    generate.py                  load CSVs → compute → render → write index.html
+    stats.py                     statistics engine (totals, awards, leaderboard)
+    names.py                     NominalRoll, truncated-name resolution
+    renderer.py                  token substitution into template.html
+    weather.py                   Open-Meteo current weather (optional)
+    template.html                dashboard markup, styles, and JS; edit this
+  docs/                          README screenshots
+test/                            pytest suite (unit / integration / e2e)
+.github/workflows/
+  update.yml                     hourly scrape + generate + commit
+  pages.yml                      deploy index.html to GitHub Pages on push
+```
+
+---
+
+## Contributing
+
+You need Python 3.10 or newer (the code uses `X | None` annotations; CI pins
+3.13), a Strava account in the club, and the club set to show member activity.
+
+Run the tests from the repo root:
 
 ```bash
-python3 src/generate.py
+python -m pytest test/ -q          # or test/unit, test/integration, test/e2e
 ```
 
-```
-Fetching data from Strava...
-  Fetching latest club activities...
-  Append anchor found: 8/8 of last 8 ledger entries matched, cutting at fresh[4].
-  4 new activities appended to ledger.
-  11 new members registered.
-  Start anchor matched: keeping 42 of 590 activities.
-Generated: .../index.html (1.28 MB)
-  Cumulative: 526 activities, 610 runners
-```
-
-`index.html` is entirely self-contained — no build step, no local server. Just open it in a browser.
-
-> `index.html` is generated output. To change the dashboard's markup, styles, or JavaScript, edit
-> the `TEMPLATE` string in `src/generate.py` and regenerate; edits to `index.html` are overwritten.
-
----
-
-## Deploying your own copy
-
-1. **Enable Pages**: **Settings → Pages → Source: GitHub Actions**. The workflow's `deploy` job
-   fails without this.
-2. **Add the secrets** under **Settings → Secrets and variables → Actions**:
-
-   | Secret | Required | Purpose |
-   |---|---|---|
-   | `STRAVA_CLIENT_ID` | yes | Strava API app |
-   | `STRAVA_CLIENT_SECRET` | yes | Strava API app |
-   | `STRAVA_REFRESH_TOKEN` | yes | See [token rotation](#getting-or-rotating-a-strava-refresh-token) |
-   | `STRAVA_CLUB_ID` | yes | The club to report on |
-   | `NOMINAL_ROLL_B64` | yes | The roster, base64-encoded. CI decodes it to `data/nominal_roll.csv`. Without it, no member gets a unit or full name. See [`data/README.md`](data/README.md) |
-   | `CLUB_NAME` | no | Dashboard title |
-   | `WEATHER_LAT` / `WEATHER_LON` | no | Weather widget location |
-   | `TIMEZONE` | no | IANA name, e.g. `Asia/Singapore` |
-   | `START_DATE` | no | Ignore activities ingested before this date. Coarse pre-filter — must be on or before the start anchor's ingest date |
-
-3. Push to `main`, or trigger the workflow manually.
-
----
-
-## Getting or rotating a Strava refresh token
-
-Strava refresh tokens can expire or be revoked. To get a new one:
-
-```bash
-python3 src/setup_strava.py
-```
-
-The wizard will:
-
-1. Ask for the Client ID and Client Secret (from [strava.com/settings/api](https://www.strava.com/settings/api))
-2. Give you a URL to open in your browser
-3. You authorize the app on Strava
-4. Your browser redirects to `localhost` (the page won't load — that's expected)
-5. Copy the full redirected URL and paste it back into the wizard
-6. It prints a new `STRAVA_REFRESH_TOKEN`
-
-Update `.env` (local) and the `STRAVA_REFRESH_TOKEN` secret (deployed) with the new value.
-
----
-
-## The start anchor
-
-The challenge begins **14 September 2026**, but `ingested_at` records *scrape* time, not activity
-time — the scrape just after midnight carries activities actually performed on the 13th. No date
-filter can split that batch. So the cutover is marked **positionally** instead.
-
-`data/start_anchor.json` holds a handful of activities copied verbatim from the ledger — the last
-ones of 13 September. Everything **newer** than them counts; the anchor itself and everything older
-is ignored. An empty array (the default) or a missing file switches the feature off.
-
-Because the ledgers are stored **newest-first**, "newer than the anchor" means *above* it in the
-file — the cut is `entries[:anchor_index]`. Matching is tolerant: it needs 2 of the anchor's entries
-found in the same relative order, so one revised or collapsed activity doesn't break the cut.
-
-**To set it, at the cutover:**
-
-1. Let the scheduled job run once more, then `git pull` so the ledger is current.
-2. Copy the **first 3 objects** of `src/activity-ledger-clean.json` into `data/start_anchor.json` as
-   a JSON array:
-
-   ```json
-   [{"resource_state": 2, "athlete": {"resource_state": 2, "firstname": "Lee", "lastname": "X."},
-     "name": "Morning Walk", "distance": 1168.6, "moving_time": 753, "elapsed_time": 891,
-     "total_elevation_gain": 31.8, "type": "Walk", "sport_type": "Walk",
-     "device_name": "Samsung Health", "ingested_at": "2026-08-31T09:32"}]
-   ```
-
-   Copy from `activity-ledger-clean.json`, **not** `activity-ledger.json` — the clean ledger is what
-   the cut runs against, and it collapses same-athlete/same-scrape runs, so a raw entry may not
-   exist there. Only the athlete name, activity name, distance, moving/elapsed time and device are
-   compared; `total_elevation_gain` and `ingested_at` are ignored, because Strava revises elevation
-   after the fact.
-3. Set `START_DATE=2026-09-13` — **not** the 14th. `START_DATE` filters first, and setting it past
-   the anchor's own ingest date removes the anchor before it can be found, which aborts generation.
-4. Commit and push both. The next run publishes a leaderboard starting from zero.
-
-The ledger files themselves are never trimmed — this is a read-time filter, so the cut stays
-reversible and the anchor stays verifiable. If the anchor can't be found, generation stops and
-leaves the previous `index.html` deployed rather than publishing a wrong leaderboard.
-
----
-
-## The announcement banner
-
-Create `data/announcement.md` to show a dismissible banner at the top of the dashboard:
-
-```markdown
-# Welcome Commander!
-This live data exist for testing purposes. Data will be refreshed on 14th Sept 00:00.
-```
-
-The first line is the title (leading `#` is stripped); everything after is the body. Delete the
-file, or leave it empty, to hide the banner. Content is HTML-escaped.
-
----
-
-## File structure
-
-```
-├── index.html                     # OUTPUT — the dashboard (generated; don't edit)
-├── docs/                          # README screenshots
-├── src/
-│   ├── generate.py                # Entry point: builds grouped data + the HTML template
-│   ├── strava_client.py           # Strava API client (OAuth + data fetch)
-│   ├── ledger_generator.py        # Append-only activity and member ledgers
-│   ├── report_generator.py        # Statistics engine (leaderboard, awards)
-│   ├── nominal_roll.py            # Matches Strava names to the roster
-│   ├── config.py                  # Configuration from .env / GitHub Secrets
-│   ├── setup_strava.py            # OAuth setup / token-rotation wizard
-│   ├── test_ledger_generator.py   # Tests for the start-anchor cut
-│   ├── activity-ledger.json       # OUTPUT — raw activity log (source of truth)
-│   ├── activity-ledger-clean.json # OUTPUT — deduped activity log, used for all stats
-│   └── members-ledger.json        # OUTPUT — members + first-seen date
-├── data/
-│   ├── README.md                  # How to build and publish the roster — read this first
-│   ├── build_nominal_roll.py      # FormSG export  →  nominal_roll.csv
-│   ├── test_build_nominal_roll.py # Tests for the converter
-│   ├── announcement.md            # Optional banner text
-│   ├── start_anchor.json          # Challenge cutover marker — see 'The start anchor'
-│   ├── nominal_roll.csv           # Roster (gitignored — personal data)
-│   └── NOMINAL_ROLL_B64.txt       # Roster, base64 for the secret (gitignored)
-├── requirements.txt
-└── .github/workflows/
-    └── update.yml                 # Update + deploy, every 5 minutes
-```
-
----
-
-## Development
-
-**Requirements**
-
-- Python 3.10+ (CI runs 3.14). 3.10 is the floor because the code uses `X | None` type syntax.
-- A Strava account that is a member of the club
-- The club must allow member activity visibility
-
-**Tests** cover the roster converter. `pytest` is a development-only dependency and is deliberately
-not in `requirements.txt`, so install it separately:
-
-```bash
-pip install pytest
-pytest data/test_build_nominal_roll.py
-```
-
-Note that CI runs no test step — the scheduled workflow only generates and deploys.
+`pytest` is in `requirements.txt`. Every fixture is synthetic; the real roster and
+the real FormSG export are never read. CI runs no test step. It only scrapes,
+generates, and deploys, so run the suite before you push.
 
 ---
 
 ## Troubleshooting
 
-**"STRAVA AUTH ERROR: refresh token is likely expired"**
-→ Run `python3 src/setup_strava.py` for a new token, then update `.env` and/or the
-`STRAVA_REFRESH_TOKEN` secret.
+**"STRAVA RE-AUTH REQUIRED", or a scrape reports the session expired or was
+blocked.** Run `python -m src.login`, re-encode `src/auth_state.json`, and update
+the `AUTH_STATE` secret.
 
-**"ERROR: Missing required config"**
-→ One of the four required variables is unset. Check `.env` locally, or repository secrets for the
-deployed workflow. Note the script exits with status 0 so a misconfigured run does not show as a
-failed workflow — check the job log, not just the badge.
+**"No members parsed".** Usually the same expired session. If the login is fresh,
+Strava changed its members-page markup and the regex in `src/members/members.py`
+needs updating.
 
-**"401 Unauthorized" from Strava**
-→ The Client ID or Client Secret is wrong. Verify at
-[strava.com/settings/api](https://www.strava.com/settings/api).
+**Everyone shows up with no unit, company, or full name.** `nominal_roll.csv` is
+missing. Rebuild it locally with `parse_nominal_roll`; in CI, check the
+`NOMINAL_ROLL` secret.
 
-**Everyone shows up without a unit, company, or full name**
-→ `data/nominal_roll.csv` is missing. Locally, generate it per [`data/README.md`](data/README.md);
-in CI, check the `NOMINAL_ROLL_B64` secret is set.
+**One runner's stats are missing or under the wrong unit.** Their Strava display
+name doesn't match the `STRAVA username` column in the roll. Strava may truncate it
+differently than the roll expects.
 
-**One member's stats are missing or under the wrong unit**
-→ Their Strava display name doesn't match the `STRAVA username` column in the roll. Strava can
-truncate names differently than expected.
+**No weather.** Check `weather.latitude` / `weather.longitude`. The widget is
+optional and the dashboard works without it.
 
-**"WARNING: append anchor not found"**
-→ Strava's club feed had no overlap with the stored ledger, so the whole page was appended and a
-few activities may be double-counted. Usually means the job hadn't run for a while.
-
-**"ERROR: start anchor not found in the ledger"**
-→ `data/start_anchor.json` no longer matches any run of entries in `src/activity-ledger-clean.json`,
-so the challenge cutover can't be located. Generation stops without rewriting `index.html`, leaving
-the last good dashboard deployed. Usually `START_DATE` is set later than the anchor's own
-`ingested_at` date and filtered it out first — it must be on or before it. Otherwise re-copy the
-anchor from the clean ledger.
-
-**Weather not showing**
-→ Check `WEATHER_LAT` / `WEATHER_LON`. Weather is optional; the dashboard works without it.
-
-**GitHub Actions not running**
-→ Check the **Actions** tab — scheduled workflows can be disabled automatically on repositories
-with no recent activity.
+**Scheduled runs stopped.** GitHub disables cron on repos with no recent activity.
+Re-enable it from the Actions tab.
 
 ---
 
-## License
+## Licence
 
 MIT.
 
----
-
-Built with data from the [Strava API](https://developers.strava.com/) and weather from
+Data from the [Strava API](https://developers.strava.com/) and weather from
 [Open-Meteo](https://open-meteo.com/). Based on
 [DatabenderSK/strava-club-dashboard](https://github.com/DatabenderSK/strava-club-dashboard).
