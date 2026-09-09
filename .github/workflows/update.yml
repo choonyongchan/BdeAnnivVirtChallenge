@@ -2,11 +2,11 @@ name: Update and Deploy Strava Dashboard
 
 on:
   schedule:
-    # Every 5 minutes — GitHub Actions' minimum supported cron granularity.
+    # Every hour — GitHub Actions' minimum supported cron granularity.
     # Timing isn't guaranteed even at this cadence (runs can queue during
     # high load), but this shrinks the club-activities overflow window from
-    # 60 min to 5 min (see src/strava_client.py fetch_club_activities).
-    - cron: '*/5 * * * *'
+    # 60 min to 60 min (see src/strava_client.py fetch_club_activities).
+    - cron: '0 * * * *'
   workflow_dispatch:   # Manual trigger via GitHub UI
   push:
     branches: ["main"]
