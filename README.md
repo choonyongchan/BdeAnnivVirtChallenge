@@ -54,7 +54,7 @@ python -m src.main
   ├─ ActivityScraper().scrape()   src/activities/      fetch the club feed in a real browser
   │                                                    → append new rows to activities.csv
   ├─ MemberScraper().scrape()     src/members/         page through the club member list
-  │                                                    → upsert members.csv (first_seen / last_seen)
+  │                                                    → append new athletes to members.csv
   ├─ generate.run()               src/dashboard/       load the 3 CSVs + config.yaml + weather
   │      stats.py   → totals, awards, leaderboard, devices
   │      names.py   → match truncated Strava names to the roll (unit / company / service)
@@ -74,7 +74,7 @@ Three CSVs feed the generator:
 | File | Shape |
 |---|---|
 | `src/activities/activities.csv` | Append-only, one row per Strava `activity_id`. The real activity time is `start_date_utc`; per-day history is replayed from that at generation time, not stored. |
-| `src/members/members.csv` | One row per `athlete_id` ever seen, with `first_seen` / `last_seen`. Rewritten each run; rows are never deleted. |
+| `src/members/members.csv` | Append-only. One row per `athlete_id` the first time it's seen, with `first_seen`. Existing rows are never rewritten, so `name` is a first-seen snapshot. |
 | `src/nominal_roll/nominal_roll.csv` | The formal roster: name, unit, company, type of service, Strava username. Holds personal data, so it is gitignored and injected in CI. |
 
 Strava truncates club-feed names like `"Siva R."`. `NominalRoll` in
@@ -146,11 +146,11 @@ Content is HTML-escaped.
 
 ## How it deploys
 
-Two workflows run it. `.github/workflows/update.yml` builds the dashboard on the
-hour (`cron: '0 * * * *'`; GitHub can delay a scheduled run 5–20 minutes) and on
-demand from **Actions → Update and Deploy Strava Dashboard → Run workflow**. Each
-run checks out, sets up Python 3.13, installs the requirements and Edge for
-Playwright, decodes the two secrets into `src/auth_state.json` and
+`.github/workflows/update.yml` has two jobs. The `update` job builds the dashboard
+on the hour (`cron: '0 * * * *'`; GitHub can delay a scheduled run 5–20 minutes)
+and on demand from **Actions → Update and Deploy Strava Dashboard → Run
+workflow**. It checks out, sets up Python 3.13, installs the requirements and Edge
+for Playwright, decodes the two secrets into `src/auth_state.json` and
 `src/nominal_roll/nominal_roll.csv`, runs `python -m src.main`, then commits
 `activities.csv`, `members.csv`, and `index.html` back to `main`.
 
@@ -159,10 +159,10 @@ Playwright, decodes the two secrets into `src/auth_state.json` and
 | `AUTH_STATE` | Base64 of `src/auth_state.json`. Refresh with `python -m src.login`, then re-encode. |
 | `NOMINAL_ROLL` | Base64 of `src/nominal_roll/nominal_roll.csv`. |
 
-`.github/workflows/pages.yml` handles deployment. It fires on any push to `main`
-that touches `index.html`, copies that one file into `_site/`, and publishes it
-with `actions/deploy-pages`. `index.html` is the entire site. The CSV ledgers are
-committed for history; `auth_state.json` and `nominal_roll.csv` never are.
+The `deploy` job runs after `update` and publishes the freshly committed
+`index.html` with `actions/deploy-pages`. It needs **Settings → Pages → Source =
+GitHub Actions**. `index.html` is the entire site. The CSV ledgers are committed
+for history; `auth_state.json` and `nominal_roll.csv` never are.
 
 ---
 
@@ -182,7 +182,7 @@ src/
     activities.py                scrape club feed → append-only ledger
     activities.csv               activity ledger (committed)
   members/
-    members.py                   scrape member list → upsert ledger
+    members.py                   scrape member list → append-only ledger
     members.csv                  member ledger (committed)
   nominal_roll/
     parse_nominal_roll.py        raw FormSG export → cleaned roster
@@ -196,9 +196,7 @@ src/
     template.html                dashboard markup, styles, and JS; edit this
   docs/                          README screenshots
 test/                            pytest suite (unit / integration / e2e)
-.github/workflows/
-  update.yml                     hourly scrape + generate + commit
-  pages.yml                      deploy index.html to GitHub Pages on push
+.github/workflows/update.yml     hourly scrape + generate, then deploy to Pages
 ```
 
 ---
