@@ -100,7 +100,7 @@ direct edits are overwritten.
 git clone https://github.com/choonyongchan/BdeAnnivVirtChallenge.git
 cd BdeAnnivVirtChallenge
 pip install -r requirements.txt
-python -m playwright install msedge      # add --with-deps on Linux
+python -m playwright install chromium    # add --with-deps on Linux
 ```
 
 1. Log in once. `python -m src.login` opens a visible browser. Sign in to Strava;
@@ -135,7 +135,7 @@ code reads no environment variables; CI supplies secrets separately.
 | `timezone` | `Asia/Singapore` | Display timezone for the dashboard |
 | `weather.latitude` / `weather.longitude` | `1.3835` / `103.7478` | Weather widget location |
 | `announcement_path` | `src/announcement.md` | Banner source file |
-| `browser.channel` | `msedge` | Installed browser Playwright drives (`chrome` also works) |
+| `browser.channel` | `""` | Empty = Playwright's bundled Chromium; `chrome`/`msedge` drive a system browser |
 | `browser.headless` | `true` | Set `false` to watch a scrape |
 
 To show the banner, put a title on the first line of `src/announcement.md` (a
@@ -149,8 +149,9 @@ Content is HTML-escaped.
 `.github/workflows/update.yml` has two jobs. The `update` job builds the dashboard
 on the hour (`cron: '0 * * * *'`; GitHub can delay a scheduled run 5–20 minutes)
 and on demand from **Actions → Update and Deploy Strava Dashboard → Run
-workflow**. It checks out, sets up Python 3.13, installs the requirements and Edge
-for Playwright, decodes the two secrets into `src/auth_state.json` and
+workflow**. It checks out, sets up Python 3.13, installs the requirements and
+Chromium for Playwright (cached between runs), decodes the two secrets into
+`src/auth_state.json` and
 `src/nominal_roll/nominal_roll.csv`, runs `python -m src.main`, then commits
 `activities.csv`, `members.csv`, and `index.html` back to `main`.
 

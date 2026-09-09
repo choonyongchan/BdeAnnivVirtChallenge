@@ -17,7 +17,7 @@ from playwright.sync_api import sync_playwright
 from .config import settings
 
 CLUB_ID = settings.club_id                             # the club every scraper reports on
-BROWSER_CHANNEL = settings.browser_channel             # from src/config.yaml; "chrome" also works
+BROWSER_CHANNEL = settings.browser_channel             # from src/config.yaml; "" -> bundled Chromium
 AUTH_PATH = Path(__file__).parent / "auth_state.json"  # shared session-cookie store
 LOGIN_URL = "https://www.strava.com/login"             # redirects to /dashboard on success
 
@@ -35,11 +35,11 @@ class StravaScraper:
     def _new_context(self, pw, headless):
         """Return (browser, context) that looks like ordinary browsing (UA/locale/tz spoofed)."""
         browser = pw.chromium.launch(
-            headless=headless, channel=BROWSER_CHANNEL,
+            headless=headless, channel=BROWSER_CHANNEL or None,
             args=["--disable-blink-features=AutomationControlled"],
         )
         # Headless otherwise advertises "HeadlessChrome/..." — the most obvious bot tell.
-        # Derived from the live browser so it tracks Edge updates; major only, because
+        # Derived from the live browser so it tracks Chromium updates; major only, because
         # real Chromium freezes the UA to <major>.0.0.0 (UA reduction).
         ver = f"{browser.version.split('.')[0]}.0.0.0"
         ctx = browser.new_context(

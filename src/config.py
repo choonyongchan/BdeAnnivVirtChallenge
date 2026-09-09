@@ -21,7 +21,7 @@ class Config:
     weather_lat: float = 1.3835
     weather_lon: float = 103.7478
     announcement_path: str = "src/announcement.md"   # repo-root-relative; generate.py resolves it
-    browser_channel: str = "msedge"
+    browser_channel: str = ""   # "" -> Playwright's bundled Chromium; "chrome"/"msedge" drive a system browser
     browser_headless: bool = True
 
 

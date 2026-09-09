@@ -16,5 +16,5 @@ weather:
 announcement_path: "src/announcement.md"   # relative to repo root; missing file hides the banner
 
 browser:
-  channel: "msedge"              # installed browser Playwright drives ("chrome" also works)
+  channel: ""                   # "" -> Playwright's bundled Chromium; "chrome"/"msedge" drive a system browser
   headless: true                 # set false to watch a scrape run
