@@ -7,9 +7,10 @@ this pages through the same HTML the members page renders for itself.
 Run via the pipeline (python -m src.main); the one-off login is python -m src.login.
 
 Shares src/auth_state.json with the activity scraper - one login covers both (browser
-session, login, and retry live in src/strava_session.py). The ledger keeps every athlete
-ever seen: new rows get first_seen, every row's last_seen is bumped on each run, and rows
-are never deleted, so a member who leaves keeps a frozen last_seen.
+session, login, and retry live in src/strava_session.py). The ledger is append-only:
+each run appends a first_seen row for every athlete_id not already in it and never
+touches an existing row, so name is a first-seen snapshot that may drift from Strava
+and a member who leaves simply stops getting new rows (their row stays).
 """
 import csv
 import random
@@ -22,7 +23,7 @@ from ..strava_session import CLUB_ID, ScrapeError, StravaScraper
 CSV_PATH = Path(__file__).parent / "members.csv"
 MEMBERS_URL = f"https://www.strava.com/clubs/{CLUB_ID}/members?page={{page}}"
 
-FIELDS = ["athlete_id", "name", "first_seen", "last_seen"]
+FIELDS = ["athlete_id", "name", "first_seen"]
 
 
 def parse_members(html: str) -> list:
@@ -48,6 +49,7 @@ class MemberScraper(StravaScraper):
         Stop when a page adds no new athlete ids."""
         with self._club_page() as page:
             members = {}
+            empty_streak = 0
             for n in range(1, 61):  # safety ceiling; the club is ~23 pages
                 result = page.evaluate(
                     """async (url) => {
@@ -62,9 +64,12 @@ class MemberScraper(StravaScraper):
                 rows = parse_members(result["text"])
                 new = {aid: name for aid, name in rows if aid not in members}
                 print(f"page {n}: {len(rows)} rows, {len(new)} new, {len(members) + len(new)} total")
-                if not new:
-                    break
                 members.update(new)
+                # Stop only after two consecutive dry pages, so a single transiently
+                # empty or failed-to-parse page does not truncate the crawl early.
+                empty_streak = 0 if new else empty_streak + 1
+                if empty_streak >= 2:
+                    break
                 page.wait_for_timeout(random.randint(400, 900))
 
         if not members:
@@ -72,29 +77,22 @@ class MemberScraper(StravaScraper):
         return members
 
     def write(self, current: dict) -> None:
-        """Bump last_seen for known athletes, add first_seen rows for new ones, never delete."""
-        ledger = {}
+        """Append a first_seen row for every athlete_id not already in the ledger; existing
+        rows are never touched, so name is a first-seen snapshot that may drift from Strava."""
+        seen = set()
         if CSV_PATH.exists():
             with CSV_PATH.open(encoding="utf-8", newline="") as f:
-                ledger = {r["athlete_id"]: r for r in csv.DictReader(f)}
+                seen = {r["athlete_id"] for r in csv.DictReader(f)}
 
         now = datetime.now(timezone.utc).isoformat(timespec="seconds")
-        added = 0
-        for aid, name in current.items():
-            row = ledger.get(aid)
-            if row:
-                row["name"] = name
-                row["last_seen"] = now
-            else:
-                ledger[aid] = {"athlete_id": aid, "name": name, "first_seen": now, "last_seen": now}
-                added += 1
+        new = [{"athlete_id": aid, "name": name, "first_seen": now}
+               for aid, name in current.items() if aid not in seen]
 
-        rows = sorted(ledger.values(), key=lambda r: r["name"].lower())
-        with CSV_PATH.open("w", encoding="utf-8", newline="") as f:
+        write_header = not CSV_PATH.exists()
+        with CSV_PATH.open("a", encoding="utf-8", newline="") as f:
             w = csv.DictWriter(f, fieldnames=FIELDS)
-            w.writeheader()
-            w.writerows(rows)
+            if write_header:
+                w.writeheader()
+            w.writerows(new)
 
-        left = len(ledger) - len(current)
-        print(f"{len(current)} current members, {added} new, {left} in ledger no longer listed "
-              f"-> {CSV_PATH}")
+        print(f"{len(current)} current members, {len(new)} new -> {CSV_PATH}")

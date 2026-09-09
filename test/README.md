@@ -40,7 +40,7 @@ resolves; there is no `pytest.ini` / `pyproject.toml`.
 | `unit/test_members_parse.py` | `parse_members` |
 | `integration/test_nominal_roll_convert.py` | `convert()` — synthetic FormSG CSV → roster file bytes + rules + missing-column abort |
 | `integration/test_dashboard_pipeline.py` | `load_activities` + `load_members` + `build_grouped_data` + `build_daily_history` wired together |
-| `integration/test_scraper_write.py` | `ActivityScraper.write` (append-only, dedupe) and `MemberScraper.write` (ledger) — no browser |
+| `integration/test_scraper_write.py` | `ActivityScraper.write` and `MemberScraper.write` (both append-only, dedupe by id) — no browser |
 | `integration/test_scraper_retry.py` | `StravaScraper.scrape` auth-check + 3-attempt backoff + `ScrapeError` handling (`time.sleep` patched) |
 | `e2e/test_generate_end_to_end.py` | real `generate.run()` → `index.html`: placeholders filled, announcement wired, group/roster/history invariants |
 | `e2e/test_roll_to_dashboard.py` | raw FormSG export → `convert()` → `nominal_roll.csv` → dashboard grouping matches the converted roll |

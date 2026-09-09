@@ -44,9 +44,9 @@ def _write_export(path):
 def _write_members(path):
     with path.open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
-        w.writerow(["athlete_id", "name", "first_seen", "last_seen"])
+        w.writerow(["athlete_id", "name", "first_seen"])
         for aid, name in RUNNERS:
-            w.writerow([aid, name, "2026-09-10T00:00:00+00:00", "2026-09-10T00:00:00+00:00"])
+            w.writerow([aid, name, "2026-09-10T00:00:00+00:00"])
     return path
 
 

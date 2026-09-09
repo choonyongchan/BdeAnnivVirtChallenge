@@ -63,9 +63,9 @@ def env(tmp_path, monkeypatch):
     members = tmp_path / "members.csv"
     with members.open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
-        w.writerow(["athlete_id", "name", "first_seen", "last_seen"])
+        w.writerow(["athlete_id", "name", "first_seen"])
         for aid, name, seen in MEMBERS:
-            w.writerow([aid, name, f"{seen}T00:00:00+00:00", f"{seen}T00:00:00+00:00"])
+            w.writerow([aid, name, f"{seen}T00:00:00+00:00"])
     monkeypatch.setattr(generate, "MEMBERS_CSV", members)
 
     activities = tmp_path / "activities.csv"

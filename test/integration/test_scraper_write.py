@@ -2,9 +2,9 @@
 
 Only `write()` is exercised — the Playwright `fetch()` is not. The rules:
 activities.csv is append-only and deduped by activity_id (header written once,
-scraped_at stamped), and members.csv is a ledger where a returning athlete
-keeps their original first_seen, a renamed athlete's row is updated, and an
-athlete who has left is never removed.
+scraped_at stamped), and members.csv is append-only and deduped by athlete_id -
+a returning athlete keeps their original first_seen row untouched (name frozen),
+and a row is never rewritten or removed.
 """
 import csv
 from datetime import datetime
@@ -66,23 +66,23 @@ class _FrozenClock:
         return datetime.fromisoformat(self._iso)
 
 
-def test_members_ledger_keeps_first_seen_updates_name_and_never_deletes(tmp_path, monkeypatch):
+def test_members_write_is_append_only(tmp_path, monkeypatch):
     path = tmp_path / "members.csv"
     monkeypatch.setattr(M, "CSV_PATH", path)
 
     monkeypatch.setattr(M, "datetime", _FrozenClock("2026-09-10T00:00:00+00:00"))
     M.MemberScraper().write({"1": "Alice Anon", "2": "Bob Bogus"})
     first = {r["athlete_id"]: r for r in _read(path)}
-    assert first["1"]["first_seen"] == first["1"]["last_seen"] == "2026-09-10T00:00:00+00:00"
+    assert first["1"]["first_seen"] == "2026-09-10T00:00:00+00:00"
 
     monkeypatch.setattr(M, "datetime", _FrozenClock("2026-09-20T00:00:00+00:00"))
     M.MemberScraper().write({"1": "Alice A.", "3": "Cara Cipher"})   # Alice renamed, Bob gone, Cara new
     rows = _read(path)
     by_id = {r["athlete_id"]: r for r in rows}
 
-    assert by_id["1"]["name"] == "Alice A."
-    assert by_id["1"]["first_seen"] == "2026-09-10T00:00:00+00:00"   # original, untouched
-    assert by_id["1"]["last_seen"] == "2026-09-20T00:00:00+00:00"    # bumped
-    assert by_id["2"]["last_seen"] == "2026-09-10T00:00:00+00:00"    # Bob retained, frozen
-    assert "3" in by_id                                              # Cara added
-    assert [r["name"].lower() for r in rows] == sorted(r["name"].lower() for r in rows)
+    assert "last_seen" not in rows[0]                               # column dropped
+    assert by_id["1"]["name"] == "Alice Anon"                       # row untouched, not rewritten
+    assert by_id["1"]["first_seen"] == "2026-09-10T00:00:00+00:00"  # original, untouched
+    assert by_id["2"]["first_seen"] == "2026-09-10T00:00:00+00:00"  # Bob retained
+    assert by_id["3"]["first_seen"] == "2026-09-20T00:00:00+00:00"  # Cara appended
+    assert path.read_text(encoding="utf-8").count("athlete_id,name,first_seen") == 1  # header once

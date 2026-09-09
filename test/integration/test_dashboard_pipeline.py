@@ -35,9 +35,9 @@ def test_load_activities_filters_by_local_challenge_start(
 def test_load_members_returns_every_row(tmp_path, monkeypatch):
     p = tmp_path / "members.csv"
     p.write_text(
-        "athlete_id,name,first_seen,last_seen\n"
-        "1,Alice Anon,2026-09-10T00:00:00+00:00,2026-09-18T00:00:00+00:00\n"
-        "2,Gone Member,2026-09-10T00:00:00+00:00,2026-09-11T00:00:00+00:00\n",
+        "athlete_id,name,first_seen\n"
+        "1,Alice Anon,2026-09-10T00:00:00+00:00\n"
+        "2,Gone Member,2026-09-10T00:00:00+00:00\n",
         encoding="utf-8",
     )
     monkeypatch.setattr(generate, "MEMBERS_CSV", p)
