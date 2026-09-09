@@ -2,17 +2,22 @@
 .env
 .venv/
 
-# Sensitive roster data — never commit, inject via NOMINAL_ROLL_B64 secret in CI
-data/nominal_roll.csv
-data/NOMINAL_ROLL_B64.txt
-
-# Raw FormSG exports — contain NRIC/mobile/email
-data/*Registration Form*.csv
+# Sensitive data — never commit
+# Playwright session cookies
+src/auth_state.json
+# cleaned roster (names, unit/company)
+src/nominal_roll/nominal_roll.csv
+# raw FormSG export — NRIC/mobile/email
+src/nominal_roll/*Registration Form*.csv
 
 # Python
 __pycache__/
 *.pyc
+.pytest_cache/
 
 # Claude Code
 .claude/
-CLAUDE.md
+
+# OS
+.DS_Store
+Thumbs.db

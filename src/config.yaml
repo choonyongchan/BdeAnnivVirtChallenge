@@ -1,0 +1,20 @@
+# Dashboard + scraper settings. No secrets here.
+# src/config.py reads this once; any missing key falls back to its Config default.
+
+club:
+  name: "8SAB 50th Anniversary Virtual Challenge"
+  id: "2211123"                  # Strava club id; the scrapers report on this club
+
+challenge_start: "2026-09-01"     # local date; activities before this don't count
+
+timezone: "Asia/Singapore"        # dashboard display tz (NOT the scraper's browser tz)
+
+weather:
+  latitude: 1.3835
+  longitude: 103.7478
+
+announcement_path: "src/announcement.md"   # relative to repo root; missing file hides the banner
+
+browser:
+  channel: "msedge"              # installed browser Playwright drives ("chrome" also works)
+  headless: true                 # set false to watch a scrape run

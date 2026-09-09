@@ -32,6 +32,7 @@ regenerates it every 5 minutes.
 - [Running it locally](#running-it-locally)
 - [Deploying your own copy](#deploying-your-own-copy)
 - [Getting or rotating a Strava refresh token](#getting-or-rotating-a-strava-refresh-token)
+- [The start anchor](#the-start-anchor)
 - [The announcement banner](#the-announcement-banner)
 - [File structure](#file-structure)
 - [Development](#development)
@@ -105,6 +106,12 @@ repository and are never published.
   and deduped into `src/activity-ledger-clean.json`. Strava's club feed carries no activity id or
   timestamp, so the ledger's `ingested_at` (scrape time) is the only timeline signal; per-date
   history is replayed from it at generation time.
+- **Two anchors, two jobs** — both find a run of activities inside a newest-first list using the
+  same content key, but they answer different questions. The **append anchor** is recomputed every
+  run and searched inside the *fresh fetch*: "which of the 200 fetched activities are new?" The
+  **start anchor** (`data/start_anchor.json`) is written by hand once and searched inside the
+  *stored ledger*: "which ledgered activities count for the challenge?" See
+  [The start anchor](#the-start-anchor).
 - **Payload kept small** — historical snapshots omit the all-zero fields of members who hadn't run
   yet and rebuild them in the browser, which roughly halves the page.
 
@@ -135,6 +142,7 @@ WEATHER_LAT=1.3835
 WEATHER_LON=103.7478
 TIMEZONE=Asia/Singapore
 START_DATE=            # YYYY-MM-DD; if set, ignores activities ingested before this date
+                       # coarse pre-filter only — see 'The start anchor' for the exact cutover
 ```
 
 Only the four Strava values are required. `.env` is for local runs only — GitHub Actions reads the
@@ -153,9 +161,10 @@ python3 src/generate.py
 ```
 Fetching data from Strava...
   Fetching latest club activities...
-  Anchor found: 8/8 of last 8 ledger entries matched, cutting at fresh[4].
+  Append anchor found: 8/8 of last 8 ledger entries matched, cutting at fresh[4].
   4 new activities appended to ledger.
   11 new members registered.
+  Start anchor matched: keeping 42 of 590 activities.
 Generated: .../index.html (1.28 MB)
   Cumulative: 526 activities, 610 runners
 ```
@@ -183,7 +192,7 @@ Generated: .../index.html (1.28 MB)
    | `CLUB_NAME` | no | Dashboard title |
    | `WEATHER_LAT` / `WEATHER_LON` | no | Weather widget location |
    | `TIMEZONE` | no | IANA name, e.g. `Asia/Singapore` |
-   | `START_DATE` | no | Ignore activities ingested before this date |
+   | `START_DATE` | no | Ignore activities ingested before this date. Coarse pre-filter — must be on or before the start anchor's ingest date |
 
 3. Push to `main`, or trigger the workflow manually.
 
@@ -207,6 +216,48 @@ The wizard will:
 6. It prints a new `STRAVA_REFRESH_TOKEN`
 
 Update `.env` (local) and the `STRAVA_REFRESH_TOKEN` secret (deployed) with the new value.
+
+---
+
+## The start anchor
+
+The challenge begins **14 September 2026**, but `ingested_at` records *scrape* time, not activity
+time — the scrape just after midnight carries activities actually performed on the 13th. No date
+filter can split that batch. So the cutover is marked **positionally** instead.
+
+`data/start_anchor.json` holds a handful of activities copied verbatim from the ledger — the last
+ones of 13 September. Everything **newer** than them counts; the anchor itself and everything older
+is ignored. An empty array (the default) or a missing file switches the feature off.
+
+Because the ledgers are stored **newest-first**, "newer than the anchor" means *above* it in the
+file — the cut is `entries[:anchor_index]`. Matching is tolerant: it needs 2 of the anchor's entries
+found in the same relative order, so one revised or collapsed activity doesn't break the cut.
+
+**To set it, at the cutover:**
+
+1. Let the scheduled job run once more, then `git pull` so the ledger is current.
+2. Copy the **first 3 objects** of `src/activity-ledger-clean.json` into `data/start_anchor.json` as
+   a JSON array:
+
+   ```json
+   [{"resource_state": 2, "athlete": {"resource_state": 2, "firstname": "Lee", "lastname": "X."},
+     "name": "Morning Walk", "distance": 1168.6, "moving_time": 753, "elapsed_time": 891,
+     "total_elevation_gain": 31.8, "type": "Walk", "sport_type": "Walk",
+     "device_name": "Samsung Health", "ingested_at": "2026-08-31T09:32"}]
+   ```
+
+   Copy from `activity-ledger-clean.json`, **not** `activity-ledger.json` — the clean ledger is what
+   the cut runs against, and it collapses same-athlete/same-scrape runs, so a raw entry may not
+   exist there. Only the athlete name, activity name, distance, moving/elapsed time and device are
+   compared; `total_elevation_gain` and `ingested_at` are ignored, because Strava revises elevation
+   after the fact.
+3. Set `START_DATE=2026-09-13` — **not** the 14th. `START_DATE` filters first, and setting it past
+   the anchor's own ingest date removes the anchor before it can be found, which aborts generation.
+4. Commit and push both. The next run publishes a leaderboard starting from zero.
+
+The ledger files themselves are never trimmed — this is a read-time filter, so the cut stays
+reversible and the anchor stays verifiable. If the anchor can't be found, generation stops and
+leaves the previous `index.html` deployed rather than publishing a wrong leaderboard.
 
 ---
 
@@ -237,6 +288,7 @@ file, or leave it empty, to hide the banner. Content is HTML-escaped.
 │   ├── nominal_roll.py            # Matches Strava names to the roster
 │   ├── config.py                  # Configuration from .env / GitHub Secrets
 │   ├── setup_strava.py            # OAuth setup / token-rotation wizard
+│   ├── test_ledger_generator.py   # Tests for the start-anchor cut
 │   ├── activity-ledger.json       # OUTPUT — raw activity log (source of truth)
 │   ├── activity-ledger-clean.json # OUTPUT — deduped activity log, used for all stats
 │   └── members-ledger.json        # OUTPUT — members + first-seen date
@@ -245,6 +297,7 @@ file, or leave it empty, to hide the banner. Content is HTML-escaped.
 │   ├── build_nominal_roll.py      # FormSG export  →  nominal_roll.csv
 │   ├── test_build_nominal_roll.py # Tests for the converter
 │   ├── announcement.md            # Optional banner text
+│   ├── start_anchor.json          # Challenge cutover marker — see 'The start anchor'
 │   ├── nominal_roll.csv           # Roster (gitignored — personal data)
 │   └── NOMINAL_ROLL_B64.txt       # Roster, base64 for the secret (gitignored)
 ├── requirements.txt
@@ -297,9 +350,16 @@ in CI, check the `NOMINAL_ROLL_B64` secret is set.
 → Their Strava display name doesn't match the `STRAVA username` column in the roll. Strava can
 truncate names differently than expected.
 
-**"WARNING: ledger anchor not found"**
+**"WARNING: append anchor not found"**
 → Strava's club feed had no overlap with the stored ledger, so the whole page was appended and a
 few activities may be double-counted. Usually means the job hadn't run for a while.
+
+**"ERROR: start anchor not found in the ledger"**
+→ `data/start_anchor.json` no longer matches any run of entries in `src/activity-ledger-clean.json`,
+so the challenge cutover can't be located. Generation stops without rewriting `index.html`, leaving
+the last good dashboard deployed. Usually `START_DATE` is set later than the anchor's own
+`ingested_at` date and filtered it out first — it must be on or before it. Otherwise re-copy the
+anchor from the clean ledger.
 
 **Weather not showing**
 → Check `WEATHER_LAT` / `WEATHER_LON`. Weather is optional; the dashboard works without it.

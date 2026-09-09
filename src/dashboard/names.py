@@ -1,4 +1,10 @@
-"""Roster loading and athlete-name resolution, shared by generate.py and report_generator.py."""
+"""Roster loading and athlete-name resolution.
+
+Maps Strava's (often truncated) display names to full formal names, and full
+names to their unit / company / type of service. Ported from
+src_bak/nominal_roll.py; only CSV_PATH changed and the unused
+full_name(dict) helper was dropped (callers now pass name strings directly).
+"""
 import csv
 from pathlib import Path
 
@@ -7,19 +13,21 @@ JUNK_COMPANIES = {"fabrica robotics", "aia"}
 
 
 class NominalRoll:
-    """Maps Strava's (often truncated) display names to full formal names,
-    and full names to their unit/company."""
+    """Maps Strava display names to full formal names, and full names to unit/company."""
 
-    CSV_PATH = Path(__file__).parent.parent / "data" / "nominal_roll.csv"
+    #: The cleaned roster CSV, output of src/nominal_roll/parse_nominal_roll.py.
+    CSV_PATH = Path(__file__).parent.parent / "nominal_roll" / "nominal_roll.csv"
 
     def __init__(self):
+        # name_map: {truncated_strava_name: FULL_NAME} — used by resolve().
+        # unit_company_map: {FULL_NAME: {unit, company, service}} — used by unit_company()/service().
         self.name_map, self.unit_company_map = self._load(self.CSV_PATH)
 
     @staticmethod
     def _all_truncations(strava_name: str):
         """Yield every possible API-truncated form by splitting at each word boundary."""
         parts = strava_name.lower().split()
-        yield strava_name.lower()  # ponytail: exact match first — handles full names returned by API
+        yield strava_name.lower()  # exact match first — handles full names returned by API
         if len(parts) < 2:
             return
         for i in range(1, len(parts)):
@@ -57,16 +65,13 @@ class NominalRoll:
             pass
         return name_map, unit_company_map
 
-    @staticmethod
-    def full_name(person: dict) -> str:
-        """Build a raw display name from a Strava athlete/member dict."""
-        return f"{person.get('firstname', '')} {person.get('lastname', '')}".strip()
-
     def resolve(self, raw_name: str) -> str:
         """Map a raw Strava display name to its canonical roster name, if known."""
-        return self.name_map.get(raw_name.lower().strip(), raw_name) if self.name_map else raw_name
+        raw_name = (raw_name or "").strip()
+        return self.name_map.get(raw_name.lower(), raw_name) if self.name_map else raw_name
 
     def unit_company(self, name: str) -> dict:
+        """Roll's {unit, company, service} for a full name, or {} if absent."""
         return self.unit_company_map.get(name, {})
 
     def service(self, name: str) -> str:

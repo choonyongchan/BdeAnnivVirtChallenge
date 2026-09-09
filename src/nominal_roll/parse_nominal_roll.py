@@ -1,11 +1,9 @@
-"""Convert the raw FormSG registration export into the cleaned data/nominal_roll.csv.
+"""Convert the raw FormSG registration export into the cleaned src/nominal_roll/nominal_roll.csv.
 
 Autocorrects free-text Unit and Company answers, and flags anything it cannot
-confidently convert. Also regenerates data/NOMINAL_ROLL_B64.txt, the copy-paste
-source for the NOMINAL_ROLL_B64 GitHub secret that CI decodes at run time.
+confidently convert.
 """
 import argparse
-import base64
 import csv
 import re
 import sys
@@ -231,21 +229,13 @@ def convert(in_path: Path, out_path: Path) -> tuple:
     return len(out_rows), notes
 
 
-def write_b64(csv_path: Path, b64_path: Path) -> int:
-    """Base64 the exact CSV bytes into a single-line ASCII file. Returns the char count."""
-    encoded = base64.b64encode(csv_path.read_bytes()).decode("ascii")
-    b64_path.write_text(encoded + "\n", encoding="ascii", newline="\n")
-    return len(encoded)
-
-
 def main():
-    data_dir = Path(__file__).resolve().parent
+    roll_dir = Path(__file__).resolve().parent
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("input", type=Path, help="raw FormSG registration export CSV")
     args = parser.parse_args()
 
-    out_path = data_dir / "nominal_roll.csv"
-    b64_path = data_dir / "NOMINAL_ROLL_B64.txt"
+    out_path = roll_dir / "nominal_roll.csv"
     count, notes = convert(args.input, out_path)
 
     for level, name, message in sorted(notes):   # "INFO" sorts before "WARN"
@@ -253,11 +243,6 @@ def main():
 
     flagged = sum(1 for lvl, _, _ in notes if lvl == "WARN")
     print(f"--- {count} rows written to {out_path}, {flagged} flagged ---", file=sys.stderr)
-
-    chars = write_b64(out_path, b64_path)
-    print(f"wrote {b64_path} ({chars} chars)", file=sys.stderr)
-    print("REMINDER: paste its contents into the NOMINAL_ROLL_B64 GitHub secret - "
-          "the dashboard reads that secret, not the CSV.", file=sys.stderr)
 
 
 if __name__ == "__main__":
