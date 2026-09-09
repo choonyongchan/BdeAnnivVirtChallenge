@@ -9,6 +9,8 @@ src/auth_state.json
 src/nominal_roll/nominal_roll.csv
 # raw FormSG export — NRIC/mobile/email
 src/nominal_roll/*Registration Form*.csv
+# base64 dumps of the above (for pasting into GitHub secrets)
+*_b64.txt
 
 # Python
 __pycache__/
