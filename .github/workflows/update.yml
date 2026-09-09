@@ -33,18 +33,18 @@ jobs:
 
       - name: Restore Strava session (src/auth_state.json)
         env:
-          STRAVA_AUTH_STATE: ${{ secrets.STRAVA_AUTH_STATE }}
+          AUTH_STATE: ${{ secrets.AUTH_STATE }}
         run: |
-          if [ -z "$STRAVA_AUTH_STATE" ]; then
-            echo "::error::Secret STRAVA_AUTH_STATE is empty. Run 'python -m src.login' and set it." >&2
+          if [ -z "$AUTH_STATE" ]; then
+            echo "::error::Secret AUTH_STATE is empty. Run 'python -m src.login' and set it." >&2
             exit 1
           fi
-          base64 -d <<< "$STRAVA_AUTH_STATE" > src/auth_state.json
+          base64 -d <<< "$AUTH_STATE" > src/auth_state.json
 
       - name: Restore nominal roll (src/nominal_roll/nominal_roll.csv)
         env:
-          NOMINAL_ROLL_B64: ${{ secrets.NOMINAL_ROLL_B64 }}
-        run: base64 -d <<< "$NOMINAL_ROLL_B64" > src/nominal_roll/nominal_roll.csv
+          NOMINAL_ROLL: ${{ secrets.NOMINAL_ROLL }}
+        run: base64 -d <<< "$NOMINAL_ROLL" > src/nominal_roll/nominal_roll.csv
 
       - name: Run pipeline
         run: |

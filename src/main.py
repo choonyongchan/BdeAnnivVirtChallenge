@@ -26,7 +26,7 @@ REAUTH_MSG = (
     "  2. Re-encode the session:\n"
     "     PowerShell: [Convert]::ToBase64String([IO.File]::ReadAllBytes('src/auth_state.json'))\n"
     "     bash:       base64 -w0 src/auth_state.json\n"
-    "  3. Paste the result into the GitHub Actions secret  STRAVA_AUTH_STATE\n"
+    "  3. Paste the result into the GitHub Actions secret  AUTH_STATE\n"
     "===============================================================\n"
 )
 
