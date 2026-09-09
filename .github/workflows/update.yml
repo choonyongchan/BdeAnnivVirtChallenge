@@ -1,0 +1,64 @@
+name: Update and Deploy Strava Dashboard
+
+on:
+  schedule:
+    # Hourly. GitHub's cron floor is */5, but hourly is what this challenge wants;
+    # scheduled runs can still be delayed 5-20 min under load.
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+# One run at a time; let an in-flight run finish (it pushes commits mid-job).
+concurrency:
+  group: strava-dashboard
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Install Edge for Playwright
+        run: python -m playwright install --with-deps msedge
+
+      - name: Restore Strava session (src/auth_state.json)
+        env:
+          STRAVA_AUTH_STATE: ${{ secrets.STRAVA_AUTH_STATE }}
+        run: |
+          if [ -z "$STRAVA_AUTH_STATE" ]; then
+            echo "::error::Secret STRAVA_AUTH_STATE is empty. Run 'python -m src.login' and set it." >&2
+            exit 1
+          fi
+          base64 -d <<< "$STRAVA_AUTH_STATE" > src/auth_state.json
+
+      - name: Restore nominal roll (src/nominal_roll/nominal_roll.csv)
+        env:
+          NOMINAL_ROLL_B64: ${{ secrets.NOMINAL_ROLL_B64 }}
+        run: base64 -d <<< "$NOMINAL_ROLL_B64" > src/nominal_roll/nominal_roll.csv
+
+      - name: Run pipeline
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          python -m src.main
+
+      - name: Commit ledgers (main.py only pushes index.html)
+        run: |
+          git add src/activities/activities.csv src/members/members.csv index.html
+          if git diff --cached --quiet; then
+            echo "No ledger changes."
+          else
+            git pull --rebase --autostash origin main
+            git commit -m "🗃️ Ledger update ${{ github.run_id }}"
+            git push
+          fi

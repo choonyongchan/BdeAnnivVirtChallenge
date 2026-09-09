@@ -6,6 +6,7 @@ then generate the dashboard.
 The one-off browser login is separate: python -m src.login
 Each step raises on failure, so the first failure stops the pipeline.
 """
+import json
 import subprocess
 from datetime import datetime
 from pathlib import Path
@@ -13,10 +14,34 @@ from pathlib import Path
 from .activities.activities import ActivityScraper
 from .dashboard import generate
 from .members.members import MemberScraper
-from .strava_session import ScrapeError
+from .strava_session import AUTH_PATH, ScrapeError
 
 REPO_ROOT = Path(__file__).parent.parent
 INDEX_HTML = REPO_ROOT / "index.html"
+
+REAUTH_MSG = (
+    "\n==================== STRAVA RE-AUTH REQUIRED ====================\n"
+    "The saved Strava session is missing or expired.\n\n"
+    "  1. python -m src.login          # opens a browser, log in\n"
+    "  2. Re-encode the session:\n"
+    "     PowerShell: [Convert]::ToBase64String([IO.File]::ReadAllBytes('src/auth_state.json'))\n"
+    "     bash:       base64 -w0 src/auth_state.json\n"
+    "  3. Paste the result into the GitHub Actions secret  STRAVA_AUTH_STATE\n"
+    "===============================================================\n"
+)
+
+
+def check_auth() -> None:
+    """Fail fast, before launching a browser, if the saved Strava session is
+    absent or malformed. An expired but well-formed session still gets past this
+    and is caught by the scrape itself; both paths exit non-zero with REAUTH_MSG.
+    """
+    try:
+        state = json.loads(AUTH_PATH.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        raise SystemExit(REAUTH_MSG)
+    if not state.get("cookies"):
+        raise SystemExit(REAUTH_MSG)
 
 
 def publish_dashboard() -> None:
@@ -35,6 +60,7 @@ def publish_dashboard() -> None:
 
 
 def main() -> None:
+    check_auth()
     try:
         print("=== scrape activities ===", flush=True)
         ActivityScraper().scrape()
@@ -42,7 +68,7 @@ def main() -> None:
         print("\n=== scrape members ===", flush=True)
         MemberScraper().scrape()
     except ScrapeError as e:
-        raise SystemExit(f"scrape failed, pipeline stopped: {e}")
+        raise SystemExit(f"scrape failed, pipeline stopped: {e}\n{REAUTH_MSG}")
 
     print("\n=== generate dashboard ===", flush=True)
     generate.run()
