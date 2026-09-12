@@ -19,7 +19,7 @@ from .strava_session import AUTH_PATH, ScrapeError
 
 REPO_ROOT = Path(__file__).parent.parent
 INDEX_HTML = REPO_ROOT / "index.html"
-USER_COUNT_JSON = REPO_ROOT / "user-count.json"
+USER_COUNT_JSON = REPO_ROOT / "src" / "user-count.json"
 
 REAUTH_MSG = (
     "\n==================== STRAVA RE-AUTH REQUIRED ====================\n"

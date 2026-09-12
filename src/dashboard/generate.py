@@ -30,7 +30,7 @@ REPO_ROOT = Path(__file__).parent.parent.parent
 ACTIVITIES_CSV = Path(__file__).parent.parent / "activities" / "activities.csv"
 MEMBERS_CSV = Path(__file__).parent.parent / "members" / "members.csv"
 OUT_PATH = REPO_ROOT / "index.html"
-USER_COUNT_PATH = REPO_ROOT / "user-count.json"
+USER_COUNT_PATH = REPO_ROOT / "src" / "user-count.json"
 
 
 # ---------------------------------------------------------------------------

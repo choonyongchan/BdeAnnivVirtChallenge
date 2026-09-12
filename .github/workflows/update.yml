@@ -62,7 +62,7 @@ jobs:
 
       - name: Commit ledgers (main.py only pushes index.html)
         run: |
-          git add src/activities/activities.csv src/members/members.csv index.html
+          git add src/activities/activities.csv src/members/members.csv index.html src/user-count.json
           if git diff --cached --quiet; then
             echo "No ledger changes."
           else
@@ -90,7 +90,7 @@ jobs:
         run: |
           mkdir _site
           cp index.html _site/
-          cp user-count.json _site/
+          cp src/user-count.json _site/
 
       - uses: actions/configure-pages@v6
 

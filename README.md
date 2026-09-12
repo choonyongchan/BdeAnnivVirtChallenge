@@ -162,7 +162,7 @@ src/
     nominal_roll.py               raw FormSG export → cleaned roster
     nominal_roll.csv             roster (gitignored; from NOMINAL_ROLL)
   dashboard/
-    generate.py                  load CSVs → compute → render → write index.html + user-count.json
+    generate.py                  load CSVs → compute → render → write index.html + src/user-count.json
     stats.py                     statistics engine (totals, awards, leaderboard)
     names.py                     NominalRoll, truncated-name resolution
     renderer.py                  token substitution into template.html
