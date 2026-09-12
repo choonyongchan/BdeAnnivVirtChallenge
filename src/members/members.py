@@ -76,7 +76,7 @@ class MemberScraper(StravaScraper):
             raise ScrapeError("No members parsed - Strava markup may have changed, or session expired.")
         return members
 
-    def write(self, current: dict) -> None:
+    def write(self, current: dict) -> int:
         """Append a first_seen row for every athlete_id not already in the ledger; existing
         rows are never touched, so name is a first-seen snapshot that may drift from Strava."""
         seen = set()
@@ -96,3 +96,4 @@ class MemberScraper(StravaScraper):
             w.writerows(new)
 
         print(f"{len(current)} current members, {len(new)} new -> {CSV_PATH}")
+        return len(new)

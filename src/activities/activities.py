@@ -144,7 +144,7 @@ class ActivityScraper(StravaScraper):
                               f"Response was not JSON: {result['snippet'][:120]!r}")
         return result["data"].get("entries") or []
 
-    def write(self, entries: list) -> None:
+    def write(self, entries: list) -> int:
         """Append every feed activity not already in activities.csv, stamped with scrape time."""
         rows = [r for e in entries for r in normalise(e) if r["activity_id"]]
 
@@ -170,3 +170,4 @@ class ActivityScraper(StravaScraper):
             w.writerows(new)
 
         print(f"{len(entries)} entries -> {len(rows)} activities, {len(new)} new -> {CSV_PATH}")
+        return len(new)

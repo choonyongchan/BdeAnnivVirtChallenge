@@ -76,8 +76,9 @@ class StravaScraper:
             browser.close()
         print(f"Session saved to {AUTH_PATH}")
 
-    def scrape(self):
-        """Auth-check, run fetch() with 3 attempts + exponential backoff, then write()."""
+    def scrape(self) -> int:
+        """Auth-check, run fetch() with 3 attempts + exponential backoff, then write().
+        Returns the number of new rows write() appended."""
         if not AUTH_PATH.exists():
             raise ScrapeError("No saved session. Run: python -m src.login")
         for attempt in range(3):
@@ -90,12 +91,13 @@ class StravaScraper:
                 if attempt == 2:
                     raise ScrapeError(f"Failed after 3 attempts: {e}") from e
                 time.sleep(30 * 2 ** attempt)  # back off, never hammer
-        self.write(payload)
+        return self.write(payload)
 
     def fetch(self):
         """Subclass: pull the raw data from inside the club page and return it."""
         raise NotImplementedError
 
-    def write(self, payload):
-        """Subclass: merge the payload into this scraper's append-only CSV."""
+    def write(self, payload) -> int:
+        """Subclass: merge the payload into this scraper's append-only CSV.
+        Returns the number of new rows appended."""
         raise NotImplementedError

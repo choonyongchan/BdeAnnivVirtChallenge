@@ -7,6 +7,7 @@ The one-off browser login is separate: python -m src.login
 Each step raises on failure, so the first failure stops the pipeline.
 """
 import json
+import os
 import subprocess
 from datetime import datetime
 from pathlib import Path
@@ -59,16 +60,29 @@ def publish_dashboard() -> None:
     print("Pushed index.html.")
 
 
+def report_counts_to_ci(new_activities: int, new_members: int) -> None:
+    """Expose the new-row counts as step outputs, so the workflow can put them
+    in the ledger commit message. No-op outside GitHub Actions."""
+    output_path = os.environ.get("GITHUB_OUTPUT")
+    if not output_path:
+        return
+    with open(output_path, "a", encoding="utf-8") as f:
+        f.write(f"new_activities={new_activities}\n")
+        f.write(f"new_members={new_members}\n")
+
+
 def main() -> None:
     check_auth()
     try:
         print("=== scrape activities ===", flush=True)
-        ActivityScraper().scrape()
+        new_activities = ActivityScraper().scrape()
 
         print("\n=== scrape members ===", flush=True)
-        MemberScraper().scrape()
+        new_members = MemberScraper().scrape()
     except ScrapeError as e:
         raise SystemExit(f"scrape failed, pipeline stopped: {e}\n{REAUTH_MSG}")
+
+    report_counts_to_ci(new_activities, new_members)
 
     print("\n=== generate dashboard ===", flush=True)
     generate.run()
