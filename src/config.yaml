@@ -1,5 +1,5 @@
 # Dashboard + scraper settings. No secrets here.
-# src/config.py reads this once; any missing key falls back to its Config default.
+# src/config.py reads this once; every key below is required.
 
 club:
   name: "8SAB 50th Anniversary Virtual Challenge"
