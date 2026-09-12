@@ -9,7 +9,6 @@ Ported from src_bak/report_generator.py. Two changes for the CSV data model:
 The public compute_stats() signature and ReportStats.to_dict() output shape are
 unchanged, so renderer.TEMPLATE consumes it untouched.
 """
-import math
 from collections import Counter
 from dataclasses import asdict, dataclass, field
 
@@ -162,19 +161,8 @@ class ReportStats:
     """[{"device", "count"}] runners per recording device, hardware first."""
 
     def to_dict(self) -> dict:
-        """Serialise to a plain dict that json.dumps can always emit (NaN/Inf -> 0.0)."""
-        return _json_safe(asdict(self))
-
-
-def _json_safe(obj):
-    """Recursively replace NaN and Inf floats with 0.0."""
-    if isinstance(obj, dict):
-        return {k: _json_safe(v) for k, v in obj.items()}
-    if isinstance(obj, list):
-        return [_json_safe(i) for i in obj]
-    if isinstance(obj, float) and not math.isfinite(obj):
-        return 0.0
-    return obj
+        """Serialise to a plain dict for json.dumps."""
+        return asdict(self)
 
 
 def _device_sort(item):

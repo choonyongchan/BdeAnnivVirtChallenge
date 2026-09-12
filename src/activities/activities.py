@@ -7,13 +7,12 @@ Run via the pipeline (python -m src.main); the one-off login is python -m src.lo
 The feed only retains ~2.5 days, so this must run often enough to never miss a window.
 Browser session, login, and retry live in src/strava_session.py.
 """
-import csv
 import random
 import re
 from datetime import datetime, timezone
 from pathlib import Path
 
-from ..strava_session import CLUB_ID, ScrapeError, StravaScraper
+from ..strava_session import CLUB_ID, ScrapeError, StravaScraper, append_new_rows, csv_column_set
 
 CSV_PATH = Path(__file__).parent / "activities.csv"
 FEED_URL = f"/clubs/{CLUB_ID}/feed?feed_type=club&num_entries=100"
@@ -125,10 +124,7 @@ def normalise(entry: dict) -> list:
 
 def _seen_ids() -> set:
     """activity_id of every row already in activities.csv, as strings."""
-    if not CSV_PATH.exists():
-        return set()
-    with CSV_PATH.open(encoding="utf-8", newline="") as f:
-        return {r["activity_id"] for r in csv.DictReader(f)}
+    return csv_column_set(CSV_PATH, "activity_id")
 
 
 class ActivityScraper(StravaScraper):
@@ -194,12 +190,7 @@ class ActivityScraper(StravaScraper):
                 seen.add(r["activity_id"])
                 new.append(r)
 
-        write_header = not CSV_PATH.exists()
-        with CSV_PATH.open("a", encoding="utf-8", newline="") as f:
-            w = csv.DictWriter(f, fieldnames=FIELDS)
-            if write_header:
-                w.writeheader()
-            w.writerows(new)
+        append_new_rows(CSV_PATH, FIELDS, new)
 
         print(f"{len(entries)} entries -> {len(rows)} activities, {len(new)} new -> {CSV_PATH}")
         return len(new)

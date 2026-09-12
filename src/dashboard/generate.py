@@ -46,11 +46,8 @@ def load_config() -> config.Config:
 # Time helpers
 # ---------------------------------------------------------------------------
 
-def _zone(tz: str):
-    try:
-        return ZoneInfo(tz)
-    except Exception:
-        return timezone.utc
+def _zone(tz: str) -> ZoneInfo:
+    return ZoneInfo(tz)
 
 
 def day_label(d) -> str:

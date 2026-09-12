@@ -7,6 +7,7 @@ precautions, and the same retry policy; that lives here as StravaScraper.
 
     python -m src.login   # once: log in, save the shared session cookies
 """
+import csv
 import random
 import time
 from contextlib import contextmanager
@@ -24,6 +25,25 @@ LOGIN_URL = "https://www.strava.com/login"             # redirects to /dashboard
 
 class ScrapeError(RuntimeError):
     """A scrape could not complete: no saved session, blocked, or changed markup."""
+
+
+def csv_column_set(path: Path, field: str) -> set:
+    """Every value of `field` already in the CSV at path, as a set of strings.
+    Empty set if the file doesn't exist yet."""
+    if not path.exists():
+        return set()
+    with path.open(encoding="utf-8", newline="") as f:
+        return {r[field] for r in csv.DictReader(f)}
+
+
+def append_new_rows(path: Path, fields: list, rows: list) -> None:
+    """Append rows to the CSV at path, writing the header first if the file is new."""
+    write_header = not path.exists()
+    with path.open("a", encoding="utf-8", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=fields)
+        if write_header:
+            w.writeheader()
+        w.writerows(rows)
 
 
 class StravaScraper:

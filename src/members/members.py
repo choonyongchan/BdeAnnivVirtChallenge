@@ -12,13 +12,12 @@ each run appends a first_seen row for every athlete_id not already in it and nev
 touches an existing row, so name is a first-seen snapshot that may drift from Strava
 and a member who leaves simply stops getting new rows (their row stays).
 """
-import csv
 import random
 import re
 from datetime import datetime, timezone
 from pathlib import Path
 
-from ..strava_session import CLUB_ID, ScrapeError, StravaScraper
+from ..strava_session import CLUB_ID, ScrapeError, StravaScraper, append_new_rows, csv_column_set
 
 CSV_PATH = Path(__file__).parent / "members.csv"
 MEMBERS_URL = f"https://www.strava.com/clubs/{CLUB_ID}/members?page={{page}}"
@@ -76,21 +75,13 @@ class MemberScraper(StravaScraper):
     def write(self, current: dict) -> int:
         """Append a first_seen row for every athlete_id not already in the ledger; existing
         rows are never touched, so name is a first-seen snapshot that may drift from Strava."""
-        seen = set()
-        if CSV_PATH.exists():
-            with CSV_PATH.open(encoding="utf-8", newline="") as f:
-                seen = {r["athlete_id"] for r in csv.DictReader(f)}
+        seen = csv_column_set(CSV_PATH, "athlete_id")
 
         now = datetime.now(timezone.utc).isoformat(timespec="seconds")
         new = [{"athlete_id": aid, "name": name, "first_seen": now}
                for aid, name in current.items() if aid not in seen]
 
-        write_header = not CSV_PATH.exists()
-        with CSV_PATH.open("a", encoding="utf-8", newline="") as f:
-            w = csv.DictWriter(f, fieldnames=FIELDS)
-            if write_header:
-                w.writeheader()
-            w.writerows(new)
+        append_new_rows(CSV_PATH, FIELDS, new)
 
         print(f"{len(current)} current members, {len(new)} new -> {CSV_PATH}")
         return len(new)

@@ -2,12 +2,12 @@
 
 `_local_date` is the rule that decides which local day an activity counts for:
 parse the UTC stamp, assume UTC if it is naive, convert to the challenge
-timezone, take the date. A bad timezone name degrades to UTC rather than
-raising. (load_config is deliberately not covered here — config handling is
-mid-refactor.)
+timezone, take the date. A bad timezone name raises, matching config.py's
+fail-loudly policy. (load_config is deliberately not covered here — config
+handling is mid-refactor.)
 """
-from datetime import date, timezone
-from zoneinfo import ZoneInfo
+from datetime import date
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import pytest
 
@@ -43,5 +43,6 @@ def test_zone_resolves_valid_name():
     assert _zone("Asia/Singapore") == SGT
 
 
-def test_zone_falls_back_to_utc_on_bad_name():
-    assert _zone("Not/AZone") is timezone.utc
+def test_zone_raises_on_bad_name():
+    with pytest.raises(ZoneInfoNotFoundError):
+        _zone("Not/AZone")

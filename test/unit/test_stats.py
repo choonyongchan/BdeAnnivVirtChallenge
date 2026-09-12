@@ -6,15 +6,12 @@ leaderboard shows the whole unit (non-runners as zero rows), each award has a
 qualifying threshold and is None when nobody clears it, and device stats put
 real hardware above virtual platforms.
 """
-import math
-
 import pytest
 
 from src.dashboard.stats import (
     AthleteStats,
     ReportStats,
     _build_device_stats,
-    _json_safe,
     _num,
     compute_stats,
 )
@@ -88,13 +85,6 @@ def test_fmt_time(seconds, text):
 
 def test_spd_kmh():
     assert AthleteStats.spd_kmh(2.5) == "9.0 km/h"
-
-
-# --- _json_safe ------------------------------------------------------------
-
-def test_json_safe_replaces_non_finite_only():
-    out = _json_safe({"a": math.nan, "b": [math.inf, 1.5], "c": {"d": -math.inf, "e": "x"}})
-    assert out == {"a": 0.0, "b": [0.0, 1.5], "c": {"d": 0.0, "e": "x"}}
 
 
 # --- device stats --------------------------------------------------------
