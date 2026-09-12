@@ -29,14 +29,11 @@ FIELDS = ["athlete_id", "name", "first_seen"]
 def parse_members(html: str) -> list:
     """One members-page response -> [(athlete_id, name)]. The page has a couple of
     <ul class='list-athletes'> blocks (a small club-admins one plus the paginated member
-    grid); take anchors from all of them and let the caller dedupe by id."""
-    out = []
-    for block in re.findall(r"<ul class='list-athletes'>(.*?)</ul>", html, re.S):
-        for aid, name in re.findall(r'href="/athletes/(\d+)"[^>]*>([^<]{1,80})</a>', block):
-            name = name.strip()
-            if name:
-                out.append((aid, name))
-    return out
+    grid); the athlete-anchor pattern is specific enough to scan the whole page directly
+    and let the caller dedupe by id."""
+    return [(aid, name.strip()) for aid, name in
+            re.findall(r'href="/athletes/(\d+)"[^>]*>([^<]{1,80})</a>', html)
+            if name.strip()]
 
 
 class MemberScraper(StravaScraper):
