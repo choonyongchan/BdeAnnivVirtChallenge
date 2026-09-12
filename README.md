@@ -106,7 +106,7 @@ python -m playwright install chromium    # add --with-deps on Linux
 1. Log in once. `python -m src.login` opens a visible browser. Sign in to Strava;
    when it lands on your dashboard it writes `src/auth_state.json`. Every scraper
    reuses that session.
-2. Build the roster. `python -m src.nominal_roll.parse_nominal_roll "<raw FormSG export.csv>"`
+2. Build the roster. `python -m src.nominal_roll.nominal_roll "<raw FormSG export.csv>"`
    cleans the registration export into `src/nominal_roll/nominal_roll.csv`. It
    autocorrects free-text unit and company answers and prints `INFO` / `WARN`
    lines for anything it had to guess or couldn't place. Without this file the
@@ -186,7 +186,7 @@ src/
     members.py                   scrape member list → append-only ledger
     members.csv                  member ledger (committed)
   nominal_roll/
-    parse_nominal_roll.py        raw FormSG export → cleaned roster
+    nominal_roll.py               raw FormSG export → cleaned roster
     nominal_roll.csv             roster (gitignored; from NOMINAL_ROLL)
   dashboard/
     generate.py                  load CSVs → compute → render → write index.html
@@ -230,7 +230,7 @@ Strava changed its members-page markup and the regex in `src/members/members.py`
 needs updating.
 
 **Everyone shows up with no unit, company, or full name.** `nominal_roll.csv` is
-missing. Rebuild it locally with `parse_nominal_roll`; in CI, check the
+missing. Rebuild it locally with `nominal_roll`; in CI, check the
 `NOMINAL_ROLL` secret.
 
 **One runner's stats are missing or under the wrong unit.** Their Strava display

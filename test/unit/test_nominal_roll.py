@@ -10,7 +10,7 @@ from datetime import datetime
 
 import pytest
 
-from src.nominal_roll.parse_nominal_roll import (
+from src.nominal_roll.nominal_roll import (
     canon_company,
     clean_service,
     dedupe,
@@ -123,23 +123,23 @@ def test_canon_company_unknown_company_warns():
     assert company == "Falcon" and note[0] == "WARN"
 
 
-# (description, entries, expected kept rows) — entries are (key, order, valid, row)
+# (description, entries, expected kept rows) — entries are (key, order, valid, row, row_notes)
 DEDUPE_CASES = [
     ("latest of two valid entries wins",
-     [("S1", 1, True, ["ANN", "41SAR"]), ("S1", 2, True, ["ANN", "40SAR"])],
+     [("S1", 1, True, ["ANN", "41SAR"], []), ("S1", 2, True, ["ANN", "40SAR"], [])],
      [["ANN", "40SAR"]]),
     ("a valid entry beats a later invalid one",
-     [("S1", 1, True, ["ANN", "41SAR"]), ("S1", 2, False, ["ANN", ""])],
+     [("S1", 1, True, ["ANN", "41SAR"], []), ("S1", 2, False, ["ANN", ""], [])],
      [["ANN", "41SAR"]]),
     ("with nothing valid, the latest entry is kept",
-     [("S1", 2, False, ["ANN", ""]), ("S1", 1, False, ["ANN", "Nil"])],
+     [("S1", 2, False, ["ANN", ""], []), ("S1", 1, False, ["ANN", "Nil"], [])],
      [["ANN", ""]]),
     ("different people are all kept, in file order",
-     [("S1", 1, True, ["ANN", "41SAR"]), ("S2", 2, True, ["BOB", "40SAR"])],
+     [("S1", 1, True, ["ANN", "41SAR"], []), ("S2", 2, True, ["BOB", "40SAR"], [])],
      [["ANN", "41SAR"], ["BOB", "40SAR"]]),
     ("a kept entry stays at the position of the person's first row",
-     [("S1", 1, False, ["ANN", ""]), ("S2", 2, True, ["BOB", "40SAR"]),
-      ("S1", 3, True, ["ANN", "41SAR"])],
+     [("S1", 1, False, ["ANN", ""], []), ("S2", 2, True, ["BOB", "40SAR"], []),
+      ("S1", 3, True, ["ANN", "41SAR"], [])],
      [["ANN", "41SAR"], ["BOB", "40SAR"]]),
 ]
 

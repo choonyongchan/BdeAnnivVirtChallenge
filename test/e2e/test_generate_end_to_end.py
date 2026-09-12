@@ -87,9 +87,12 @@ def env(tmp_path, monkeypatch):
     announce.write_text("# Test Banner\nGo run.", encoding="utf-8")
     cfg_yaml = tmp_path / "config.yaml"
     cfg_yaml.write_text(
+        "club:\n  name: Test Club\n  id: '1'\n"
         f"challenge_start: {CHALLENGE_START}\n"
         "timezone: Asia/Singapore\n"
-        f'announcement_path: "{str(announce).replace(chr(92), "/")}"\n',
+        "weather:\n  latitude: 1.3835\n  longitude: 103.7478\n"
+        f'announcement_path: "{str(announce).replace(chr(92), "/")}"\n'
+        "browser:\n  channel: ''\n  headless: true\n",
         encoding="utf-8",
     )
     monkeypatch.setattr(config, "CONFIG_PATH", cfg_yaml)

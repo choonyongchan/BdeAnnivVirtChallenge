@@ -15,7 +15,7 @@ JUNK_COMPANIES = {"fabrica robotics", "aia"}
 class NominalRoll:
     """Maps Strava display names to full formal names, and full names to unit/company."""
 
-    #: The cleaned roster CSV, output of src/nominal_roll/parse_nominal_roll.py.
+    #: The cleaned roster CSV, output of src/nominal_roll/nominal_roll.py.
     CSV_PATH = Path(__file__).parent.parent / "nominal_roll" / "nominal_roll.csv"
 
     def __init__(self):

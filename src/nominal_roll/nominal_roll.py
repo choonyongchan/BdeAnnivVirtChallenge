@@ -147,26 +147,27 @@ def resolve(raw_unit: str, raw_company: str) -> tuple:
 def dedupe(entries: list) -> tuple:
     """Keep one row per person: the latest entry that parsed cleanly, else the latest entry.
 
-    entries are (key, order, valid, row) in file order; the survivor takes the position of
-    the person's first row so the output stays in registration order.
+    entries are (key, order, valid, row, row_notes) in file order; the survivor takes the
+    position of the person's first row so the output stays in registration order.
     """
-    counts = Counter(key for key, _, _, _ in entries)
+    counts = Counter(key for key, _, _, _, _ in entries)
     best = {}
-    for key, order, valid, row in entries:
+    for key, order, valid, row, row_notes in entries:
         if key not in best or (valid, order) > best[key][:2]:
-            best[key] = (valid, order, row)
+            best[key] = (valid, order, row, row_notes)
 
     notes = []
     seen = set()
     rows = []
-    for key, _, _, _ in entries:
+    for key, _, _, _, _ in entries:
         if key in seen:
             continue
         seen.add(key)
-        kept = best[key][2]
+        _, _, kept, kept_notes = best[key]
         if counts[key] > 1:
             notes.append(("INFO", kept[0], "registered more than once - kept the latest entry "
                                            "that parsed cleanly"))
+        notes.extend(kept_notes)
         rows.append(kept)
     return rows, notes
 
@@ -195,7 +196,6 @@ def convert(in_path: Path, out_path: Path) -> tuple:
         sys.exit(f"ERROR: {in_path.name} is missing expected column(s): {', '.join(missing)}")
 
     entries = []
-    pending = {}   # notes per candidate row, reported only if that row survives dedupe
     for index, row in enumerate(rows[HEADER_ROW + 1:]):
         if not any(row):
             continue
@@ -210,15 +210,13 @@ def convert(in_path: Path, out_path: Path) -> tuple:
             row_notes.append(("WARN", "no usable STRAVA username - will never match an activity"))
 
         out_row = [name, unit, company, clean_service(r["Type of service"]), strava]
-        pending[id(out_row)] = [(level, name, message) for level, message in row_notes]
         entries.append((r.get("SingPass Validated NRIC", "").strip() or name.upper(),
                         entry_order(r.get("Response timestamp", ""), index),
                         not any(level == "WARN" for level, _ in row_notes),
-                        out_row))
+                        out_row,
+                        [(level, name, message) for level, message in row_notes]))
 
     out_rows, notes = dedupe(entries)
-    for out_row in out_rows:
-        notes.extend(pending[id(out_row)])
 
     # Match the existing roll's bytes: UTF-8 with BOM, LF endings, trailing newline.
     with open(out_path, "w", newline="", encoding="utf-8-sig") as f:

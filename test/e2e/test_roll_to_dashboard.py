@@ -12,7 +12,7 @@ from zoneinfo import ZoneInfo
 from src import config
 from src.dashboard import generate
 from src.dashboard.names import NominalRoll
-from src.nominal_roll.parse_nominal_roll import convert
+from src.nominal_roll.nominal_roll import convert
 
 SGT = ZoneInfo("Asia/Singapore")
 
@@ -75,7 +75,18 @@ def test_converted_roll_drives_dashboard_grouping(tmp_path, monkeypatch):
     monkeypatch.setattr(generate, "MEMBERS_CSV", _write_members(tmp_path / "members.csv"))
     monkeypatch.setattr(generate, "ACTIVITIES_CSV", _write_activities(tmp_path / "activities.csv"))
 
-    gen = generate.DashboardGenerator(config.Config(challenge_start="2026-09-14"))
+    cfg = config.Config(
+        club_name="Test Club",
+        club_id="1",
+        challenge_start="2026-09-14",
+        timezone="Asia/Singapore",
+        weather_lat=1.3835,
+        weather_lon=103.7478,
+        announcement_path="src/announcement.md",
+        browser_channel="",
+        browser_headless=True,
+    )
+    gen = generate.DashboardGenerator(cfg)
     gen.load()
     data, _ = gen.build(datetime(2026, 9, 20, 12, 0, tzinfo=gen.tzinfo))
     today = data["today"]

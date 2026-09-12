@@ -12,7 +12,7 @@ import io
 
 import pytest
 
-from src.nominal_roll.parse_nominal_roll import convert
+from src.nominal_roll.nominal_roll import convert
 
 HEADER = [
     "Response timestamp", "[Myinfo] Name", "Type of service", "Unit", "Company",
