@@ -5,7 +5,7 @@ club:
   name: "8SAB 50th Anniversary Virtual Challenge"
   id: "2211123"                  # Strava club id; the scrapers report on this club
 
-challenge_start: "2026-09-01"     # local date; activities before this don't count
+challenge_start: "2026-09-13"     # local date; activities before this don't count
 
 timezone: "Asia/Singapore"        # dashboard display tz (NOT the scraper's browser tz)
 
