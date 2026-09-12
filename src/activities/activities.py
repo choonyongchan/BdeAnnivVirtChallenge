@@ -8,6 +8,7 @@ The feed only retains ~2.5 days, so this must run often enough to never miss a w
 Browser session, login, and retry live in src/strava_session.py.
 """
 import csv
+import random
 import re
 from datetime import datetime, timezone
 from pathlib import Path
@@ -122,37 +123,68 @@ def normalise(entry: dict) -> list:
     return []
 
 
+def _seen_ids() -> set:
+    """activity_id of every row already in activities.csv, as strings."""
+    if not CSV_PATH.exists():
+        return set()
+    with CSV_PATH.open(encoding="utf-8", newline="") as f:
+        return {r["activity_id"] for r in csv.DictReader(f)}
+
+
 class ActivityScraper(StravaScraper):
     """Scrape the club activity feed into the append-only activities.csv."""
 
     landing_url = f"https://www.strava.com/clubs/{CLUB_ID}/recent_activity"
 
     def fetch(self) -> list:
-        """Request the feed from inside the club page (same XHR the page makes); return its entries."""
+        """Page through the club feed from inside the club page (same XHR the page makes);
+        return all entries. Strava caps each response at 100 entries regardless of
+        num_entries and reports pagination.hasMore, so a single fetch silently drops
+        older entries still inside the ~2.5 day window - keep following the cursor
+        (before/cursor, taken from the last entry's cursorData) until it doesn't.
+
+        The feed is newest-first, so once a whole page is already in activities.csv,
+        everything beyond it is old too - stop there instead of paging to hasMore's
+        end every run. That keeps a normal run to a page or two while still coping
+        with a sudden burst of activities: pages keep going, however many it takes,
+        up to a large circuit-breaker ceiling that raises loudly instead of quietly
+        truncating."""
+        seen = _seen_ids()
+        entries = []
+        url = FEED_URL
         with self._club_page() as page:
-            result = page.evaluate(
-                """async (url) => {
-                    const r = await fetch(url, {credentials: 'include'});
-                    const t = await r.text();
-                    try { return {ok: true, data: JSON.parse(t)}; }
-                    catch { return {ok: false, snippet: t.slice(0, 200)}; }
-                }""",
-                FEED_URL,
-            )
-        if not result["ok"]:
-            raise ScrapeError("Session expired or blocked - re-run: python -m src.login\n"
-                              f"Response was not JSON: {result['snippet'][:120]!r}")
-        return result["data"].get("entries") or []
+            for _ in range(500):  # circuit breaker; ~50k entries, far above a burst hour
+                result = page.evaluate(
+                    """async (url) => {
+                        const r = await fetch(url, {credentials: 'include'});
+                        const t = await r.text();
+                        try { return {ok: true, data: JSON.parse(t)}; }
+                        catch { return {ok: false, snippet: t.slice(0, 200)}; }
+                    }""",
+                    url,
+                )
+                if not result["ok"]:
+                    raise ScrapeError("Session expired or blocked - re-run: python -m src.login\n"
+                                      f"Response was not JSON: {result['snippet'][:120]!r}")
+                data = result["data"]
+                page_entries = data.get("entries") or []
+                entries.extend(page_entries)
+                if not page_entries or not (data.get("pagination") or {}).get("hasMore"):
+                    return entries
+                page_ids = [str(r["activity_id"]) for e in page_entries for r in normalise(e) if r["activity_id"]]
+                if page_ids and all(i in seen for i in page_ids):
+                    return entries
+                cursor = page_entries[-1]["cursorData"]
+                url = f"{FEED_URL}&before={cursor['updated_at']}&cursor={cursor['rank']}"
+                page.wait_for_timeout(random.randint(400, 900))
+        raise ScrapeError(f"Feed still had more pages after {len(entries)} entries - "
+                           "backlog too large for the circuit breaker, needs a look.")
 
     def write(self, entries: list) -> int:
         """Append every feed activity not already in activities.csv, stamped with scrape time."""
         rows = [r for e in entries for r in normalise(e) if r["activity_id"]]
 
-        seen = set()
-        if CSV_PATH.exists():
-            with CSV_PATH.open(encoding="utf-8", newline="") as f:
-                seen = {r["activity_id"] for r in csv.DictReader(f)}
-
+        seen = _seen_ids()
         now = datetime.now(timezone.utc).isoformat(timespec="seconds")
         new = []
         for r in rows:
