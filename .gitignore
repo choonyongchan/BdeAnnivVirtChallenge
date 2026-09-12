@@ -16,6 +16,8 @@ src/nominal_roll/*Registration Form*.csv
 __pycache__/
 *.pyc
 .pytest_cache/
+.coverage
+coverage.xml
 
 # Claude Code
 .claude/

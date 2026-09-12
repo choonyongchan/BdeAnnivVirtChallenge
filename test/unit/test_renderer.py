@@ -75,3 +75,11 @@ def test_render_club_short_from_name_shape():
     assert "XWT" in multi                           # initials of a multi-word name
     single = render({}, {}, "", "", "", "Zzyx", "1")
     assert "ZZYX" in single                         # first 4 chars of a single word
+
+
+def test_render_escapes_script_breakout_in_embedded_json():
+    data = {"today": {"all": {"leaderboard": [
+        {"name": "</script><script>alert(1)</script>", "acts": 0},
+    ]}}}
+    page = render(data, {}, "", "", "", "Club", "1")
+    assert "</script><script>alert(1)</script>" not in page

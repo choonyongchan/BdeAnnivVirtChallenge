@@ -99,6 +99,7 @@ def env(tmp_path, monkeypatch):
 
     out = tmp_path / "index.html"
     monkeypatch.setattr(generate, "OUT_PATH", out)
+    monkeypatch.setattr(generate, "USER_COUNT_PATH", tmp_path / "user-count.json")
     monkeypatch.setattr("src.dashboard.weather.weather_html", lambda *a, **k: "")
     return out
 

@@ -13,6 +13,7 @@ filtered to start_date_utc >= challenge_start and history is replayed from the
 real per-day dates.
 """
 import csv
+import json
 from datetime import datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -29,6 +30,7 @@ REPO_ROOT = Path(__file__).parent.parent.parent
 ACTIVITIES_CSV = Path(__file__).parent.parent / "activities" / "activities.csv"
 MEMBERS_CSV = Path(__file__).parent.parent / "members" / "members.csv"
 OUT_PATH = REPO_ROOT / "index.html"
+USER_COUNT_PATH = REPO_ROOT / "user-count.json"
 
 
 # ---------------------------------------------------------------------------
@@ -194,6 +196,12 @@ class DashboardGenerator:
         now_dt = datetime.now(self.tzinfo)
         data, daily = self.build(now_dt)
         OUT_PATH.write_text(self.render(data, daily, now_dt), encoding="utf-8")
+        USER_COUNT_PATH.write_text(json.dumps({
+            "schemaVersion": 1,
+            "label": "users covered",
+            "message": str(len(self.members)),
+            "color": "blue",
+        }), encoding="utf-8")
 
         w = data["today"]["all"]
         print(f"Generated: {OUT_PATH} ({OUT_PATH.stat().st_size / 1e6:.2f} MB)")

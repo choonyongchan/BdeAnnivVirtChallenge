@@ -1,5 +1,9 @@
 # 8SAB 50th Anniversary Virtual Challenge — Strava Dashboard
 
+[![Tests](https://github.com/choonyongchan/BdeAnnivVirtChallenge/actions/workflows/test.yml/badge.svg)](https://github.com/choonyongchan/BdeAnnivVirtChallenge/actions/workflows/test.yml)
+[![Coverage](https://codecov.io/gh/choonyongchan/BdeAnnivVirtChallenge/branch/main/graph/badge.svg)](https://codecov.io/gh/choonyongchan/BdeAnnivVirtChallenge)
+[![Users covered](https://img.shields.io/endpoint?url=https://choonyongchan.github.io/BdeAnnivVirtChallenge/user-count.json)](https://choonyongchan.github.io/BdeAnnivVirtChallenge/)
+
 **→ [View the live dashboard](https://choonyongchan.github.io/BdeAnnivVirtChallenge/)**
 
 A live leaderboard for the 8SAB 50th Anniversary Virtual Challenge. A scheduled job
@@ -12,7 +16,7 @@ chart, and history view runs in your browser off data baked into the page.
 
 ---
 
-## For users
+# User Guide
 
 Open [the dashboard](https://choonyongchan.github.io/BdeAnnivVirtChallenge/) in any
 browser. Nothing to install, no login.
@@ -43,7 +47,9 @@ round out the page.
 
 ---
 
-## How it works
+# Developer Guide
+
+## Architecture
 
 Strava shut off its public club API in 2026, so the pipeline drives a logged-in
 browser instead. One `python -m src.main` run does five things in order:
@@ -63,38 +69,17 @@ python -m src.main
   └─ publish_dashboard()          src/main.py          commit and push index.html
 ```
 
-Both scrapers share one Playwright session (`src/strava_session.py`). It spoofs a
-normal browser's user-agent, locale, and timezone, and retries a failed fetch
-twice with a 30s then 60s backoff. The session cookies live in
-`src/auth_state.json`, which is gitignored and restored in CI from a secret. There
-is no OAuth and there are no API tokens.
+Both scrapers share one Playwright session (`src/strava_session.py`), which spoofs
+a normal browser and retries a failed fetch twice with backoff; there's no OAuth
+and no API tokens. Three append-only CSVs feed the generator — activities,
+members, and the nominal roll (roster) — and `NominalRoll` in
+`src/dashboard/names.py` resolves Strava's truncated club-feed names (e.g.
+`"Siva R."`) back to the right roster entry. `renderer.render()` substitutes the
+computed data into `src/dashboard/template.html` to produce `index.html`, which is
+generated output — edit the template and regenerate, since direct edits to
+`index.html` are overwritten.
 
-Three CSVs feed the generator:
-
-| File | Shape |
-|---|---|
-| `src/activities/activities.csv` | Append-only, one row per Strava `activity_id`. The real activity time is `start_date_utc`; per-day history is replayed from that at generation time, not stored. |
-| `src/members/members.csv` | Append-only. One row per `athlete_id` the first time it's seen, with `first_seen`. Existing rows are never rewritten, so `name` is a first-seen snapshot. |
-| `src/nominal_roll/nominal_roll.csv` | The formal roster: name, unit, company, type of service, Strava username. Holds personal data, so it is gitignored and injected in CI. |
-
-Strava truncates club-feed names like `"Siva R."`. `NominalRoll` in
-`src/dashboard/names.py` precomputes every truncation of each roster username
-ahead of time, so a shortened name still resolves to one person and their unit.
-
-An activity counts only if its local start date is on or after `challenge_start`
-in `src/config.yaml`. The CSV timestamps are real, so that plain date filter is
-the whole cutoff; there is no positional anchor.
-
-`renderer.render()` then does eight string substitutions on
-`src/dashboard/template.html`. Two of them inject `DATA` and `DAILY` as JSON
-blobs; every stat, table, award, and chart is computed client-side from those, and
-old snapshots ship slimmed and are rehydrated in the page. `index.html` is
-generated output: change `src/dashboard/template.html` and regenerate, because
-direct edits are overwritten.
-
----
-
-## Running it locally
+## Key commands
 
 ```bash
 git clone https://github.com/choonyongchan/BdeAnnivVirtChallenge.git
@@ -103,26 +88,15 @@ pip install -r requirements.txt
 python -m playwright install chromium    # add --with-deps on Linux
 ```
 
-1. Log in once. `python -m src.login` opens a visible browser. Sign in to Strava;
-   when it lands on your dashboard it writes `src/auth_state.json`. Every scraper
-   reuses that session.
-2. Build the roster. `python -m src.nominal_roll.nominal_roll "<raw FormSG export.csv>"`
-   cleans the registration export into `src/nominal_roll/nominal_roll.csv`. It
-   autocorrects free-text unit and company answers and prints `INFO` / `WARN`
-   lines for anything it had to guess or couldn't place. Without this file the
-   dashboard still builds, but nobody gets a unit, company, or full name.
-3. Run it. `python -m src.main` scrapes, generates, and pushes.
+| Command | Does |
+|---|---|
+| `python -m src.login` | Opens a visible browser to log in to Strava; writes `src/auth_state.json`, the session every scraper reuses. |
+| `python -m src.nominal_roll.nominal_roll "<raw FormSG export.csv>"` | Cleans a registration export into `src/nominal_roll/nominal_roll.csv`. Without this file the dashboard still builds, but nobody gets a unit, company, or full name. |
+| `python -m src.main` | Runs the full pipeline: scrape, generate, and push. |
+| `python -m src.dashboard.generate` | Rebuilds `index.html` from the CSVs you already have, without scraping or touching git. |
+| `python -m pytest test/ -q` | Runs the test suite (`test/unit`, `test/integration`, `test/e2e`). Every fixture is synthetic. |
 
-To rebuild the page from the CSVs you already have, without scraping or touching
-git, run `python -m src.dashboard.generate`:
-
-```
-Loaded 115 activities (>= 2026-09-01), 664 members.
-Generated: .../index.html (0.44 MB)
-  Cumulative: 115 activities, 664 members, 471 km
-```
-
-`index.html` is self-contained. Open the file directly; no local server.
+`index.html` is self-contained — open the file directly, no local server needed.
 
 Settings live in `src/config.yaml` and nowhere else. There is no `.env` and the
 code reads no environment variables; CI supplies secrets separately.
@@ -142,30 +116,29 @@ To show the banner, put a title on the first line of `src/announcement.md` (a
 leading `#` is stripped) and the body below it. An empty or missing file hides it.
 Content is HTML-escaped.
 
----
-
 ## How it deploys
 
-`.github/workflows/update.yml` has two jobs. The `update` job builds the dashboard
-on the hour (`cron: '0 * * * *'`; GitHub can delay a scheduled run 5–20 minutes)
-and on demand from **Actions → Update and Deploy Strava Dashboard → Run
-workflow**. It checks out, sets up Python 3.13, installs the requirements and
-Chromium for Playwright (cached between runs), decodes the two secrets into
-`src/auth_state.json` and
-`src/nominal_roll/nominal_roll.csv`, runs `python -m src.main`, then commits
-`activities.csv`, `members.csv`, and `index.html` back to `main`.
+`.github/workflows/update.yml` builds and deploys the dashboard on the hour
+(`cron: '0 * * * *'`; GitHub can delay a scheduled run 5–20 minutes) and on demand
+from **Actions → Update and Deploy Strava Dashboard → Run workflow**. It runs the
+tests, installs Chromium for Playwright, decodes the two secrets below, runs
+`python -m src.main`, commits `activities.csv`, `members.csv`, and `index.html`
+back to `main`, then publishes `index.html` (and the `user-count.json` badge data
+file) to GitHub Pages via `actions/deploy-pages`.
 
 | Secret | Contents |
 |---|---|
 | `AUTH_STATE` | Base64 of `src/auth_state.json`. Refresh with `python -m src.login`, then re-encode. |
 | `NOMINAL_ROLL` | Base64 of `src/nominal_roll/nominal_roll.csv`. |
 
-The `deploy` job runs after `update` and publishes the freshly committed
-`index.html` with `actions/deploy-pages`. It needs **Settings → Pages → Source =
-GitHub Actions**. `index.html` is the entire site. The CSV ledgers are committed
-for history; `auth_state.json` and `nominal_roll.csv` never are.
+Publishing needs **Settings → Pages → Source = GitHub Actions**. `index.html` is
+the entire site. The CSV ledgers are committed for history; `auth_state.json` and
+`nominal_roll.csv` never are.
 
----
+A separate `.github/workflows/test.yml` runs the suite with coverage on every push
+and pull request to `main` and uploads results to Codecov — this is what the
+badges at the top track. Codecov needs a `CODECOV_TOKEN` repo secret from
+[codecov.io](https://codecov.io/) to upload.
 
 ## Project layout
 
@@ -189,7 +162,7 @@ src/
     nominal_roll.py               raw FormSG export → cleaned roster
     nominal_roll.csv             roster (gitignored; from NOMINAL_ROLL)
   dashboard/
-    generate.py                  load CSVs → compute → render → write index.html
+    generate.py                  load CSVs → compute → render → write index.html + user-count.json
     stats.py                     statistics engine (totals, awards, leaderboard)
     names.py                     NominalRoll, truncated-name resolution
     renderer.py                  token substitution into template.html
@@ -198,26 +171,19 @@ src/
   docs/                          README screenshots
 test/                            pytest suite (unit / integration / e2e)
 .github/workflows/update.yml     hourly scrape + generate, then deploy to Pages
+.github/workflows/test.yml       tests + coverage on every push/PR
 ```
-
----
 
 ## Contributing
 
 You need Python 3.10 or newer (the code uses `X | None` annotations; CI pins
-3.13), a Strava account in the club, and the club set to show member activity.
+3.14), a Strava account in the club, and the club set to show member activity.
 
-Run the tests from the repo root:
-
-```bash
-python -m pytest test/ -q          # or test/unit, test/integration, test/e2e
-```
-
-`pytest` is in `requirements.txt`. Every fixture is synthetic; the real roster and
-the real FormSG export are never read. CI runs no test step. It only scrapes,
-generates, and deploys, so run the suite before you push.
-
----
+Run `python -m pytest test/ -q` (or scope to `test/unit`, `test/integration`,
+`test/e2e`) from the repo root before you push — `test.yml` runs it in CI, but
+`update.yml`'s hourly run fails outright if the suite breaks. `pytest` is in
+`requirements.txt`; every fixture is synthetic, so the real roster and the real
+FormSG export are never read.
 
 ## Troubleshooting
 

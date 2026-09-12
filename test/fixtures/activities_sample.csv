@@ -1,0 +1,6 @@
+activity_id,athlete_id,athlete_name,athlete_firstname,start_date_utc,start_date_local,activity_name,type,distance_m,moving_time_s,elapsed_time_s,pace,elev_gain_m,steps,device_name,workout_type,is_virtual,is_commute,visibility,location,description,kudos_count,comment_count,entity,scraped_at
+1000000001,900000001,Athlete A,A,2026-09-09T08:36:36Z,,Afternoon Run,Run,570.0,260,359,7:35 /km,,,Strava App,,False,False,everyone,Southwest,,0,0,Activity,2026-09-09T08:52:53+00:00
+1000000002,900000002,Athlete B,B,2026-09-09T07:08:44Z,,30/100,Run,5230.0,1911,1916,6:05 /km,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-09-09T08:52:53+00:00
+1000000003,900000003,Athlete C,C,2026-09-09T06:45:45Z,,Afternoon Run,Run,4880.0,1805,1805,6:09 /km,,,Garmin fēnix 7 Pro (47mm),,False,False,everyone,,,0,0,Activity,2026-09-09T08:52:53+00:00
+1000000004,900000004,Athlete D,D,2026-09-09T05:14:14Z,,Afternoon Walk,Walk,1020.0,870,998,,15.0,,Samsung Health,,False,False,everyone,Southeast,,0,0,Activity,2026-09-09T08:52:53+00:00
+1000000005,900000005,Athlete E,E,2026-09-09T03:34:38Z,,Lunch Hike,Hike,1620.0,1355,4069,,14.0,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-09-09T08:52:53+00:00

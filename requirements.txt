@@ -2,3 +2,4 @@ requests==2.34.2
 playwright==1.62.0
 pyyaml==6.0.3
 pytest==9.1.1
+pytest-cov==7.1.0

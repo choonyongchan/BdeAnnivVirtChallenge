@@ -86,10 +86,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Stage site (index.html is the whole site)
+      - name: Stage site (index.html plus the badge data file)
         run: |
           mkdir _site
           cp index.html _site/
+          cp user-count.json _site/
 
       - uses: actions/configure-pages@v6
 

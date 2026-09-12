@@ -56,6 +56,12 @@ def build_announcement_html(path: Path) -> str:
     )
 
 
+def _json_for_script(value) -> str:
+    """json.dumps for embedding inside a <script> tag: escape '</' so a literal
+    </script> in the data (e.g. an athlete name) can't close the tag early."""
+    return json.dumps(value, ensure_ascii=False).replace("</", "<\\/")
+
+
 def render(data, daily, updated_human, weather_html, announcement_html, club_name, club_id):
     """Fill the template's placeholders and return the finished page string."""
     words = club_name.split()
@@ -63,8 +69,8 @@ def render(data, daily, updated_human, weather_html, announcement_html, club_nam
 
     page = TEMPLATE
     for placeholder, value in (
-        ("__DATA__", json.dumps(data, ensure_ascii=False)),
-        ("__DAILY_DATA__", json.dumps(daily, ensure_ascii=False)),
+        ("__DATA__", _json_for_script(data)),
+        ("__DAILY_DATA__", _json_for_script(daily)),
         ("__UPDATED_HUMAN__", updated_human),
         ("__WEATHER__", weather_html),
         ("__ANNOUNCEMENT__", announcement_html),

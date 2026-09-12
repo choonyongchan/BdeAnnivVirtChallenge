@@ -19,6 +19,7 @@ from .strava_session import AUTH_PATH, ScrapeError
 
 REPO_ROOT = Path(__file__).parent.parent
 INDEX_HTML = REPO_ROOT / "index.html"
+USER_COUNT_JSON = REPO_ROOT / "user-count.json"
 
 REAUTH_MSG = (
     "\n==================== STRAVA RE-AUTH REQUIRED ====================\n"
@@ -46,11 +47,12 @@ def check_auth() -> None:
 
 
 def publish_dashboard() -> None:
-    """Commit and push index.html so GitHub Actions redeploys the page.
+    """Commit and push index.html (and its user-count.json badge data) so
+    GitHub Actions redeploys the page.
 
     No-op when index.html is unchanged.
     """
-    subprocess.run(["git", "add", str(INDEX_HTML)], cwd=REPO_ROOT, check=True)
+    subprocess.run(["git", "add", str(INDEX_HTML), str(USER_COUNT_JSON)], cwd=REPO_ROOT, check=True)
     if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=REPO_ROOT).returncode == 0:
         print("index.html unchanged, nothing to publish.")
         return
