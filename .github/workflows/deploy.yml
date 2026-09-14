@@ -1,0 +1,43 @@
+name: Deploy Pages
+
+# push: catches Task Scheduler / main.py commits pushed with the user's own
+# credentials (update.yml has no push trigger of its own for those).
+# workflow_call: lets update.yml's own GITHUB_TOKEN-pushed cron runs deploy too —
+# GITHUB_TOKEN pushes don't retrigger push-triggered workflows, so no double-deploy.
+on:
+  push:
+    branches: [main]
+    paths:
+      - index.html
+      - src/user-count.json
+  workflow_call:
+
+# Publish the regenerated root index.html to GitHub Pages.
+# Requires Settings -> Pages -> Source = "GitHub Actions".
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Stage site (index.html plus the badge data file)
+        run: |
+          mkdir _site
+          cp index.html _site/
+          cp src/user-count.json _site/
+
+      - uses: actions/configure-pages@v6
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+      - id: deployment
+        uses: actions/deploy-pages@v5
