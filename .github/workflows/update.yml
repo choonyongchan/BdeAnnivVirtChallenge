@@ -4,7 +4,8 @@ on:
   schedule:
     # Hourly. GitHub's cron floor is */5, but hourly is what this challenge wants;
     # scheduled runs can still be delayed 5-20 min under load.
-    - cron: '0 * * * *'
+    # Adjusted to avoid congestion
+    - cron: '17 * * * *'
   workflow_dispatch:
 
 # One run at a time; let an in-flight run finish (it pushes commits mid-job).
