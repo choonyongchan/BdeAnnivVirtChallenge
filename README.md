@@ -140,6 +140,39 @@ and pull request to `main` and uploads results to Codecov — this is what the
 badges at the top track. Codecov needs a `CODECOV_TOKEN` repo secret from
 [codecov.io](https://codecov.io/) to upload.
 
+### Windows Task Scheduler (local hourly runs)
+
+In addition to GitHub Actions, an operator's Windows machine can run the same
+pipeline hourly via Task Scheduler — useful as a second, independent path to
+keep the ledgers and dashboard current if the GitHub-hosted cron is delayed or
+disabled. `scripts/run_pipeline.ps1` mirrors `update.yml`'s "Run pipeline" and
+"Commit ledgers" steps, skipping the CI-only secret-restore steps since
+`src/auth_state.json` and `src/nominal_roll/nominal_roll.csv` already exist on
+disk on that machine. It's scheduled at **minute 47** of every hour — 30
+minutes offset from GitHub Actions' `17 * * * *` cron — so the two are unlikely
+to `git push` at the same moment; if they ever collide, the loser's `git pull
+--rebase --autostash` picks up the winner's commit on its next hourly run.
+
+Registered once with:
+
+```powershell
+$Action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument '-NoProfile -ExecutionPolicy Bypass -File "<repo>\scripts\run_pipeline.ps1"'
+$next47 = Get-Date -Minute 47 -Second 0
+if ($next47 -le (Get-Date)) { $next47 = $next47.AddHours(1) }
+$Trigger = New-ScheduledTaskTrigger -Once -At $next47 -RepetitionInterval (New-TimeSpan -Hours 1) -RepetitionDuration (New-TimeSpan -Days 3650)
+$Settings = New-ScheduledTaskSettingsSet -DontStopOnIdleEnd -MultipleInstances IgnoreNew -StartWhenAvailable
+$Principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType S4U -RunLevel Limited
+Register-ScheduledTask -TaskName "BdeAnnivVirtChallenge-HourlyPipeline" -Action $Action -Trigger $Trigger -Settings $Settings -Principal $Principal -Description "Runs the Strava dashboard pipeline hourly at :47."
+```
+
+`-LogonType S4U` runs the task whether or not anyone is logged into Windows,
+without storing a password. Each run's output is logged to `logs/` (gitignored)
+via `Start-Transcript`. Check status with:
+
+```powershell
+Get-ScheduledTaskInfo -TaskName "BdeAnnivVirtChallenge-HourlyPipeline"
+```
+
 ## Project layout
 
 ```
@@ -170,6 +203,9 @@ src/
     template.html                dashboard markup, styles, and JS; edit this
   docs/                          README screenshots
 test/                            pytest suite (unit / integration / e2e)
+scripts/
+  run_pipeline.ps1               Windows Task Scheduler entry point (hourly, local)
+logs/                            run_pipeline.ps1 output (gitignored)
 .github/workflows/update.yml     hourly scrape + generate, then deploy to Pages
 .github/workflows/test.yml       tests + coverage on every push/PR
 ```
