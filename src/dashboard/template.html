@@ -475,6 +475,7 @@ thead th.sort-desc::after { content: ' ↓'; opacity: 1 !important; color: #FC4C
     <div class="totals" id="totals"></div>
   </div>
 
+  <!-- AWARDS / FUN STATS / DEVICES IN THE CLUB — hidden
   <div id="awards-section">
     <div class="section-title">Awards</div>
     <div class="awards" id="awards"></div>
@@ -489,6 +490,7 @@ thead th.sort-desc::after { content: ' ↓'; opacity: 1 !important; color: #FC4C
     <div class="section-title">Devices in the Club</div>
     <div id="devices" style="display:flex;gap:8px;flex-wrap:wrap"></div>
   </div>
+  -->
 
   <div id="group-rankings-section" class="group-rankings">
     <div>
@@ -862,6 +864,7 @@ function render() {
 
   renderRegistrationTree(dashboard.currentBucket(), dashboard.currentGroup);
 
+  /* AWARDS — hidden
   document.getElementById('awards').innerHTML = AWARDS.map(def => {
     const a = data[def.key]; if (!a) return '';
     return `<div class="award-card fade">
@@ -873,7 +876,9 @@ function render() {
       </div>
     </div>`;
   }).join('');
+  */
 
+  /* FUN STATS — hidden
   const fun = data.fun_stats || {};
   const funHtml = FUN.map(def => {
     const a = fun[def.key]; if (!a || !a.name) return '';
@@ -889,7 +894,9 @@ function render() {
   }).join('');
   document.getElementById('fun-stats').innerHTML = funHtml;
   document.getElementById('fun-section').style.display = funHtml.trim() ? '' : 'none';
+  */
 
+  /* DEVICES IN THE CLUB — hidden
   const devs = data.device_stats || [];
   const DEVS_SHOW = 3;
   function devChip(d, i, hidden) {
@@ -903,6 +910,7 @@ function render() {
     : '';
   document.getElementById('devices').innerHTML = devs.slice(0, DEVS_SHOW).map((d,i) => devChip(d,i,false)).join('') + moreHtml;
   document.getElementById('device-section').style.display = devs.length ? '' : 'none';
+  */
 
   // Empty state
   const isEmpty = !data.run_count;
@@ -920,12 +928,12 @@ function render() {
   }
   esEl.style.display = isEmpty ? '' : 'none';
   document.getElementById('totals-section').style.display         = isEmpty ? 'none' : '';
-  document.getElementById('awards-section').style.display         = isEmpty ? 'none' : '';
+//  document.getElementById('awards-section').style.display         = isEmpty ? 'none' : '';
   document.getElementById('leaderboard-section').style.display    = isEmpty ? 'none' : '';
   document.getElementById('group-rankings-section').style.display = isEmpty ? 'none' : '';
   if (isEmpty) {
-    document.getElementById('fun-section').style.display    = 'none';
-    document.getElementById('device-section').style.display = 'none';
+//    document.getElementById('fun-section').style.display    = 'none';
+//    document.getElementById('device-section').style.display = 'none';
   }
   // History picker — populate day calendar
   const dailyKeys = Object.keys(DAILY);
@@ -1116,8 +1124,8 @@ function showPrevWeek() {
   updateBreadcrumb('7days');
 }
 
-const MAIN_SECTION_IDS = ['empty-state', 'totals-section', 'awards-section', 'fun-section',
-  'device-section', 'group-rankings-section', 'leaderboard-section'];
+const MAIN_SECTION_IDS = ['empty-state', 'totals-section', /* 'awards-section', 'fun-section',
+  'device-section', */ 'group-rankings-section', 'leaderboard-section'];
 
 function setMainSectionsVisible(visible) {
   MAIN_SECTION_IDS.forEach(id => { document.getElementById(id).style.display = visible ? '' : 'none'; });
