@@ -170,6 +170,12 @@ class DashboardGenerator:
         """Read activities.csv (>= challenge_start) and the full members.csv."""
         self.acts = load_activities(self.cfg.challenge_start, self.tzinfo)
         self.members = load_members()
+        # Fit the roster match once, over every name we will ever look up. Doing
+        # it here rather than per-resolve keeps the one-to-one assignment stable:
+        # build_daily_history() re-resolves each activity for every past day, and
+        # a per-call match could land differently on different days.
+        self.roll.fit({m.get("name", "") for m in self.members}
+                      | {a.get("athlete_name", "") for a in self.acts})
         print(f"Loaded {len(self.acts)} activities (>= {self.cfg.challenge_start}), "
               f"{len(self.members)} members.")
 
