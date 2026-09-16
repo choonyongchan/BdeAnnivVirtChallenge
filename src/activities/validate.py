@@ -2,8 +2,8 @@
 
 The feed only retains ~2.5 days (see activities.py's docstring), so this can only
 confirm the CSV against that recent window - it is not a full-history audit. Rows
-older than the feed's own oldest entry are outside what the feed can attest to and
-are never reported as missing.
+older than the feed's own floor are outside what the feed can attest to and are
+never reported as missing.
 
 Requires an existing saved session (python -m src.login); never writes to
 activities.csv.
@@ -12,6 +12,7 @@ activities.csv.
 """
 import csv
 import sys
+from datetime import datetime, timezone
 
 from ..strava_session import AUTH_PATH, ScrapeError
 from .activities import CSV_PATH, ActivityScraper, normalise
@@ -24,6 +25,24 @@ COMPARE_FIELDS = [
 ]
 
 
+def feed_floor(entries: list) -> str:
+    """The feed's oldest entry as an ISO-Z timestamp, taken from cursorData.updated_at
+    (epoch seconds) - the key the feed itself paginates by.
+
+    It must be updated_at, not start_date: the feed is ordered by update time, so an
+    activity that started inside the window but was uploaded before this floor has
+    already rolled off. Windowing on start_date reports those as missing when they
+    are simply older than the feed reaches."""
+    stamps = [
+        (e.get("cursorData") or {}).get("updated_at")
+        for e in entries
+    ]
+    stamps = [s for s in stamps if s]
+    if not stamps:
+        raise ScrapeError("Feed entries carry no cursorData.updated_at - feed schema changed.")
+    return datetime.fromtimestamp(min(stamps), timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
 def _csv_rows() -> dict:
     """activities.csv -> {activity_id: row}."""
     if not CSV_PATH.exists():
@@ -32,18 +51,16 @@ def _csv_rows() -> dict:
         return {r["activity_id"]: r for r in csv.DictReader(f)}
 
 
-def diff(feed_rows: list, csv_rows: dict) -> dict:
+def diff(feed_rows: list, csv_rows: dict, window_start: str) -> dict:
     """Compare normalised feed rows (activities.py's normalise() output) against
-    activities.csv rows (activity_id -> row dict).
+    activities.csv rows (activity_id -> row dict). `window_start` is feed_floor()'s
+    ISO-Z timestamp.
 
-    "missing_from_feed" only lists csv rows whose start_date_utc falls within the
-    feed's own covered window (its oldest entry's start_date_utc) - anything older
-    is outside what this feed snapshot can attest to, and is not reported."""
+    "missing_from_feed" only lists csv rows that started after the feed's floor.
+    An activity cannot be updated before it starts, so start_date > floor implies
+    the feed should still carry it; anything older is outside what this snapshot
+    can attest to and is not reported."""
     feed_by_id = {str(r["activity_id"]): r for r in feed_rows if r["activity_id"]}
-    window_start = min(
-        (r["start_date_utc"] for r in feed_by_id.values() if r["start_date_utc"]),
-        default=None,
-    )
 
     missing_from_csv = sorted(aid for aid in feed_by_id if aid not in csv_rows)
     missing_from_feed = sorted(
@@ -72,10 +89,7 @@ def diff(feed_rows: list, csv_rows: dict) -> dict:
 
 def report(result: dict) -> str:
     """A plain-text summary of a diff() result."""
-    lines = [
-        f"Feed window covers activities from {result['window_start']} onward."
-        if result["window_start"] else "Feed returned no entries."
-    ]
+    lines = [f"Feed window covers activities updated from {result['window_start']} onward."]
 
     lines.append(f"\nOn Strava but missing from activities.csv ({len(result['missing_from_csv'])}):")
     lines += [f"  {aid}" for aid in result["missing_from_csv"]] or ["  (none)"]
@@ -99,8 +113,12 @@ def main() -> int:
         raise ScrapeError("No saved session. Run: python -m src.login")
 
     entries = ActivityScraper().fetch()
+    if not entries:
+        raise ScrapeError("Feed returned no entries - session expired, blocked, or rate-limited.\n"
+                          "Nothing can be validated against an empty feed. Re-run: python -m src.login")
+
     feed_rows = [r for e in entries for r in normalise(e) if r["activity_id"]]
-    result = diff(feed_rows, _csv_rows())
+    result = diff(feed_rows, _csv_rows(), feed_floor(entries))
 
     print(report(result))
     return 1 if (result["missing_from_csv"] or result["missing_from_feed"] or result["mismatches"]) else 0
