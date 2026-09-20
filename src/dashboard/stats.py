@@ -139,6 +139,8 @@ class ReportStats:
     """Number of activities in the period."""
     athlete_count: int = 0
     """Number of registered members (from members.csv), runners or not."""
+    no_unit_count: int = 0
+    """Roster-matched athletes whose roll Unit is blank - registered, but unplaceable."""
     leaderboard: list = field(default_factory=list)
     """Display-ready rows, km-ranked, one per athlete incl. zero rows for non-runners."""
     fun_stats: dict = field(default_factory=dict)
@@ -303,13 +305,17 @@ def compute_stats(activities: list, members: list = None, roll: NominalRoll = No
 
     member_by_id = {str(m.get("athlete_id") or ""): m for m in (members or [])}
     athletes, total_km, total_elev = _accumulate_athletes(activities, roll, member_by_id)
+    leaderboard = _build_leaderboard(athletes, members, roll)
 
     return ReportStats(
         total_km=total_km,
         total_elev=total_elev,
         run_count=len(activities),
         athlete_count=len(members or []),
-        leaderboard=_build_leaderboard(athletes, members, roll),
+        # unit_company() is empty only for someone off the roll, never for a blank unit.
+        no_unit_count=sum(1 for r in leaderboard
+                          if roll and roll.unit_company(r["name"]) and not r["unit"]),
+        leaderboard=leaderboard,
         fun_stats=_compute_fun_stats(athletes),
         device_stats=_build_device_stats(athletes),
         **_compute_awards(athletes),

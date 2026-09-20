@@ -6,8 +6,11 @@ leaderboard shows the whole unit (non-runners as zero rows), each award has a
 qualifying threshold and is None when nobody clears it, and device stats put
 real hardware above virtual platforms.
 """
+import csv
+
 import pytest
 
+from src.dashboard.names import NominalRoll
 from src.dashboard.stats import (
     AthleteStats,
     ReportStats,
@@ -199,3 +202,28 @@ def test_fun_stats_break_king_threshold(make_activity, dummy_members, roll, brea
 
 def test_no_data_period_is_plain_report_stats():
     assert compute_stats([], None).to_dict() == ReportStats().to_dict()
+
+
+def test_blank_unit_is_counted_apart_from_being_off_the_roll(tmp_path, monkeypatch,
+                                                             make_activity):
+    """A junk Unit answer on the form leaves a registered runner unplaceable, but
+    still registered - the dashboard must not file them with the strangers."""
+    csv_path = tmp_path / "nominal_roll.csv"
+    with csv_path.open("w", newline="", encoding="utf-8-sig") as f:
+        w = csv.writer(f)
+        w.writerow(["Name", "Unit", "Company", "Type of service", "STRAVA username"])
+        w.writerows([["ALICE ANON", "40SAR", "Cougar", "NSF", "Alice Anon"],
+                     ["GHOST GABLE", "", "", "Alumni", "Ghost Gable"]])
+    monkeypatch.setattr(NominalRoll, "CSV_PATH", csv_path)
+    roll = NominalRoll()
+    members = [{"athlete_id": "1", "name": "Alice Anon"},
+               {"athlete_id": "2", "name": "Ghost Gable"},
+               {"athlete_id": "3", "name": "Total Stranger"}]
+    roll.fit(m["name"] for m in members)
+
+    s = compute_stats([make_activity("Alice Anon", athlete_id="1")],
+                      members=members, roll=roll)
+
+    assert s.no_unit_count == 1                       # Ghost, not the stranger
+    blank = [r for r in s.leaderboard if not r["unit"]]
+    assert {r["name"] for r in blank} == {"GHOST GABLE", "Total Stranger"}

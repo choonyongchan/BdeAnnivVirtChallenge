@@ -5,11 +5,12 @@ company / type of service.
 
 The username people self-report on the registration form rarely matches their
 Strava display name character for character, so the match runs in tiers --
-normalised exact, then word-order-insensitive, then fuzzy -- and is fitted once
-over every known athlete name so the result is strictly one-to-one: no two
-Strava accounts resolve to the same person, and no account claims two. A
-username that several people on the roll declared is ambiguous and matches
-nobody; fit() reports those so the roll itself can be corrected.
+normalised exact, then word-order-insensitive, then fuzzy, then against the
+roll's real-name column -- and is fitted once over every known athlete name so
+the result is strictly one-to-one: no two Strava accounts resolve to the same
+person, and no account claims two. A username that several people on the roll
+declared is ambiguous and matches nobody; fit() reports those so the roll
+itself can be corrected.
 """
 import csv
 import difflib
@@ -24,6 +25,15 @@ JUNK_COMPANIES = {"fabrica robotics", "aia"}
 #: 0.90 accepts every correct near-miss and still rejects "Darren Ho" against
 #: "Warren Ho" (0.89), who are two different people.
 FUZZY_THRESHOLD = 0.90
+
+#: Shortened given names people use on Strava, folded to the form the roll spells out.
+NAME_ABBREVIATIONS = {"muhd": "muhammad", "md": "muhammad", "mohd": "muhammad",
+                      "mhd": "muhammad", "mohamad": "muhammad",
+                      "mohamed": "muhammad", "mohammad": "muhammad"}
+
+#: Ranks people prefix to a Strava name ("2416 REC Pravin K") - they name no person.
+RANK_TOKENS = {"rec", "recruit", "pte", "pfc", "lcp", "cpl", "cfc",
+               "3sg", "2sg", "1sg", "ssg", "msg", "me1", "me2", "ct"}
 
 #: Audit trail written by fit(): what matched non-exactly, and what did not.
 REPORT_PATH = Path(__file__).parent.parent.parent / "logs" / "name_matches.log"
@@ -45,6 +55,17 @@ def _norm(s: str) -> str:
 def _token_key(s: str) -> str:
     """_norm with the words sorted, so surname-first/given-name-first both match."""
     return " ".join(sorted(_norm(s).split()))
+
+
+def _name_tokens(s: str) -> frozenset:
+    """The words of a name that identify a person: no serials ("1111"), no ranks."""
+    return frozenset(NAME_ABBREVIATIONS.get(w, w) for w in _norm(s).split()
+                     if not any(c.isdigit() for c in w) and w not in RANK_TOKENS)
+
+
+def _covers(a, b) -> bool:
+    """True when every word of a appears in b, a lone initial matching any word it begins."""
+    return all(w in b or (len(w) == 1 and any(x.startswith(w) for x in b)) for w in a)
 
 
 class NominalRoll:
@@ -138,6 +159,7 @@ class NominalRoll:
                     and _norm(n) not in self.conflicts
                     and _token_key(n) not in self.conflicts]
 
+        # Exact / order tiers: the username as declared, cosmetics and word order aside.
         for tier, key, table in (("exact", _norm, self.name_map),
                                  ("order", _token_key, self.token_map)):
             for n in pending():
@@ -145,8 +167,7 @@ class NominalRoll:
                 if full and full not in blocked:
                     claim(n, full, tier, 1.0, "")
 
-        # Fuzzy tier: score every surviving pair, then settle best-first so the
-        # strongest match gets first refusal on a roster entry.
+        # Fuzzy tier: score every surviving pair, settle best-first so the strongest wins.
         pool = [(u, f) for u, f in self.entries if f not in taken and f not in blocked]
         pairs = []
         for n in pending():
@@ -160,9 +181,36 @@ class NominalRoll:
         for score, n, f, u in sorted(pairs, key=lambda p: (-p[0], p[1], p[2])):
             claim(n, f, "fuzzy", score, u)
 
-        self._write_report(names, matched)
+        ambiguous = self._fit_real_names(names, taken, claim)
+        self._write_report(names, matched, ambiguous)
 
-    def _write_report(self, names, matched) -> None:
+    def _fit_real_names(self, names, taken, claim) -> list:
+        """Real-name tier: the roll's Name column, when the username was blank or wrong.
+
+        A contested username says nothing about whose real name is whose, so
+        unlike the earlier tiers this one ignores conflicts entirely - it is
+        independent evidence, not a rescue of the declared username. Returns the
+        names it refused because several roster entries fit equally well.
+        """
+        # Roster entries still free. Conflicted ones are eligible here.
+        pool = [(f, _name_tokens(f)) for f in self.unit_company_map if f not in taken]
+        ambiguous = []
+        for n in sorted(n for n in names if n not in self.match_map):
+            # Two tokens minimum, because one word names too many people to be evidence.
+            tn = _name_tokens(n)
+            if len(tn) < 2:
+                continue
+            # Containment either way: a Strava name may be richer or poorer than the roster name.
+            cands = [f for f, tf in pool
+                     if _covers(tn, tf) or (len(tf) >= 2 and _covers(tf, tn))]
+            # One candidate or none, because a wrong claim credits one person's runs to another.
+            if len(cands) == 1:
+                claim(n, cands[0], "real", 1.0, cands[0])
+            elif cands:
+                ambiguous.append((n, cands))
+        return ambiguous
+
+    def _write_report(self, names, matched, ambiguous=()) -> None:
         """Write the fit() audit trail, so a wrong match is visible rather than silent."""
         unmatched = [n for n in names if n not in self.match_map]
         lines = [
@@ -176,6 +224,9 @@ class NominalRoll:
         lines += ["", "== ambiguous roll usernames (matched to nobody) =="]
         lines += [f"  {key!r} declared by: {', '.join(owners)}"
                   for key, owners in sorted(self.conflicts.items())] or ["  (none)"]
+        lines += ["", "== ambiguous real-name candidates (matched to nobody) =="]
+        lines += [f"  {name!r} -> {' | '.join(sorted(cands))}"
+                  for name, cands in sorted(ambiguous)] or ["  (none)"]
         lines += ["", "== unmatched names =="]
         lines += [f"  {n}" for n in unmatched] or ["  (none)"]
         try:

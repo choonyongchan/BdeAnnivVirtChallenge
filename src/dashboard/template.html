@@ -1083,8 +1083,10 @@ function renderRegistrationTree(bucket, currentGroup) {
       rows.push({ level: 'branch', name: label, count });
       if (b && b.leaderboard) rows = rows.concat(unitRows(b.leaderboard));
     });
-    const unmatched = (all.leaderboard || []).filter(r => !r.unit).length;
-    rows.push({ level: 'branch', name: 'Unmatched', count: unmatched });
+    const noUnit = all.no_unit_count || 0;
+    const offRoll = (all.leaderboard || []).filter(r => !r.unit).length - noUnit;
+    rows.push({ level: 'branch', name: 'Registered, no unit', count: noUnit });
+    rows.push({ level: 'branch', name: 'Not on the roll', count: offRoll });
   } else {
     const b = bucket[currentGroup];
     const count = (b && b.athlete_count) || 0;
