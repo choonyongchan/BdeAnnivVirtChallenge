@@ -91,7 +91,7 @@ python -m playwright install chromium    # add --with-deps on Linux
 | Command | Does |
 |---|---|
 | `python -m src.login` | Opens a visible browser to log in to Strava; writes `src/auth_state.json`, the session every scraper reuses. |
-| `python -m src.nominal_roll.nominal_roll "<raw FormSG export.csv>"` | Cleans a registration export into `src/nominal_roll/nominal_roll.csv`. Without this file the dashboard still builds, but nobody gets a unit, company, or full name. |
+| `python -m src.nominal_roll.nominal_roll "<raw FormSG export.csv>"` | Cleans a registration export and merges it into `src/nominal_roll/nominal_roll.csv` — exports are incremental, so new registrants are appended and a re-registration replaces that person's row. Delete the roll first to rebuild it from scratch. Without this file the dashboard still builds, but nobody gets a unit, company, or full name. |
 | `python -m src.main` | Runs the full pipeline: scrape, generate, and push. |
 | `python -m src.dashboard.generate` | Rebuilds `index.html` from the CSVs you already have, without scraping or touching git. |
 | `python -m pytest test/ -q` | Runs the test suite (`test/unit`, `test/integration`, `test/e2e`). Every fixture is synthetic. |

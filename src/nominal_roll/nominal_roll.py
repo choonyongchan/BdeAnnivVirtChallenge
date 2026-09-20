@@ -26,12 +26,21 @@ HQ_ALIASES = {"hq", "bn hq"}
 # Units smart_title() alone cannot spell consistently. Keyed on lowercase alphanumerics.
 UNIT_ALIASES = {"campops": "Campops"}
 
+# The Unit dropdown's free-text escape hatch: 'Others: Nil', 'Others: Keat Hong camp 8sab'.
+OTHERS_PREFIX = re.compile(r"^\s*others?\s*:\s*", re.IGNORECASE)
+
 OUTPUT_HEADER = ["Name", "Unit", "Company", "Type of service", "STRAVA username"]
 
+# The registrant's name: Myinfo-verified in the first exports, plain 'Name' since.
+NAME_COLUMNS = ["[Myinfo] Name", "Name"]
+
 # Source columns in the FormSG export, in output order.
-SOURCE_COLUMNS = ["[Myinfo] Name", "Unit", "Company", "Type of service", "STRAVA User name"]
+SOURCE_COLUMNS = ["Unit", "Company", "Type of service", "STRAVA User name"]
 
 HEADER_ROW = 5  # the export prefixes 5 metadata lines before the real header
+
+# 'Response timestamp' has been exported in both of these.
+TIMESTAMP_FORMATS = ("%d %b %Y %I:%M:%S %p", "%d/%m/%Y %H:%M")
 
 
 def is_nil(value: str) -> bool:
@@ -113,6 +122,8 @@ def canon_company(text: str, unit: str) -> tuple:
 def resolve(raw_unit: str, raw_company: str) -> tuple:
     """Returns (unit, company, notes) from the two free-text answers, in either order."""
     notes = []
+    raw_unit = OTHERS_PREFIX.sub("", raw_unit)      # the dropdown wraps free text in 'Others: '
+    raw_company = OTHERS_PREFIX.sub("", raw_company)
     u_unit, u_left = parse_field(raw_unit)
     c_unit, c_left = parse_field(raw_company)
 
@@ -174,10 +185,12 @@ def dedupe(entries: list) -> tuple:
 
 def entry_order(timestamp: str, index: int):
     """FormSG's 'Response timestamp', falling back to file order if it can't be read."""
-    try:
-        return datetime.strptime(timestamp.strip(), "%d %b %Y %I:%M:%S %p")
-    except ValueError:
-        return datetime.min + timedelta(seconds=index)
+    for fmt in TIMESTAMP_FORMATS:
+        try:
+            return datetime.strptime(timestamp.strip(), fmt)
+        except ValueError:
+            pass
+    return datetime.min + timedelta(seconds=index)
 
 
 def clean_service(raw: str) -> str:
@@ -185,13 +198,58 @@ def clean_service(raw: str) -> str:
     return re.sub(r"^Option\s+\d+\s+", "", raw.strip())
 
 
+def row_fields(header: list, row: list) -> dict:
+    """Map column name -> answer; when a name repeats, the first non-empty answer wins.
+
+    The export carries two 'Unit'/'Company' pairs and a registrant's answer lands in one
+    pair or the other, never both.
+    """
+    fields = {}
+    for key, value in zip(header, row):
+        if not fields.get(key, "").strip():
+            fields[key] = value
+    return fields
+
+
+def read_roll(path: Path) -> list:
+    """The existing roll's data rows, or [] when there is no roll yet."""
+    if not path.exists():
+        return []
+    with open(path, newline="", encoding="utf-8-sig") as f:
+        return [row for row in list(csv.reader(f))[1:] if any(row)]
+
+
+def merge(existing: list, new_rows: list) -> tuple:
+    """Fold a converted export into the existing roll; returns (rows, updated, added).
+
+    Exports are incremental, so a re-registration replaces that person's row where it
+    already sits - the roll stays in registration order - and anyone new is appended. The
+    roll carries no NRIC, so unlike dedupe() this can only key on the name.
+    """
+    rows = list(existing)
+    at = {row[0].strip().upper(): i for i, row in enumerate(rows)}
+    updated = added = 0
+    for row in new_rows:
+        key = row[0].strip().upper()
+        if key in at:
+            rows[at[key]] = row
+            updated += 1
+        else:
+            at[key] = len(rows)
+            rows.append(row)
+            added += 1
+    return rows, updated, added
+
+
 def convert(in_path: Path, out_path: Path) -> tuple:
-    """Read the export, write the cleaned roll, return (row_count, notes)."""
+    """Read the export, merge it into the roll at out_path, return (row_count, notes)."""
     with open(in_path, newline="", encoding="utf-8-sig") as f:
         rows = list(csv.reader(f))
 
     header = rows[HEADER_ROW]
     missing = [c for c in SOURCE_COLUMNS + ["Do you have a STRAVA account"] if c not in header]
+    if not any(c in header for c in NAME_COLUMNS):
+        missing.insert(0, " or ".join(NAME_COLUMNS))
     if missing:
         sys.exit(f"ERROR: {in_path.name} is missing expected column(s): {', '.join(missing)}")
 
@@ -199,8 +257,8 @@ def convert(in_path: Path, out_path: Path) -> tuple:
     for index, row in enumerate(rows[HEADER_ROW + 1:]):
         if not any(row):
             continue
-        r = dict(zip(header, row))
-        name = r["[Myinfo] Name"].strip()
+        r = row_fields(header, row)
+        name = next(r[c] for c in NAME_COLUMNS if c in r).strip()
 
         unit, company, row_notes = resolve(r["Unit"], r["Company"])
 
@@ -217,6 +275,12 @@ def convert(in_path: Path, out_path: Path) -> tuple:
                         [(level, name, message) for level, message in row_notes]))
 
     out_rows, notes = dedupe(entries)
+
+    existing = read_roll(out_path)
+    out_rows, updated, added = merge(existing, out_rows)
+    if existing:
+        notes.append(("INFO", "", f"merged into the existing roll: "
+                                  f"{updated} updated, {added} added"))
 
     # Match the existing roll's bytes: UTF-8 with BOM, LF endings, trailing newline.
     with open(out_path, "w", newline="", encoding="utf-8-sig") as f:

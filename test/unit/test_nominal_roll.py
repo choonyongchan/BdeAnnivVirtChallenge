@@ -16,8 +16,10 @@ from src.nominal_roll.nominal_roll import (
     dedupe,
     entry_order,
     is_nil,
+    merge,
     parse_field,
     resolve,
+    row_fields,
     smart_title,
 )
 
@@ -90,6 +92,14 @@ def test_backfill_emits_info_note():
     """Correcting the unit from the company is reported, not hidden."""
     levels = {lvl for lvl, _ in resolve("Singapore", "Cougar")[2]}
     assert "INFO" in levels and "WARN" not in levels
+
+
+def test_others_prefix_is_stripped_before_the_junk_check():
+    """The Unit dropdown wraps free text in 'Others: ' - it must not reach the roll."""
+    unit, company, notes = resolve("Others: Nil", "Nil")
+    assert (unit, company) == ("", "")
+    assert any(lvl == "WARN" for lvl, _ in notes)
+    assert resolve("Others: Nil", "STALLION")[:2] == ("40SAR", "Stallion")
 
 
 def test_bare_number_notes_suffix_assumed():
@@ -193,3 +203,40 @@ def test_entry_order_parses_timestamp_and_falls_back():
     assert isinstance(parsed, datetime) and parsed.year == 2026
     # unparseable -> deterministic file-order fallback, later index sorts later
     assert entry_order("not a date", 2) < entry_order("still not", 3)
+
+
+def test_entry_order_parses_both_exported_timestamp_formats():
+    """FormSG has exported 'Response timestamp' in both shapes."""
+    assert entry_order("09 Sep 2026 01:02:03 PM", 0) == datetime(2026, 9, 9, 13, 2, 3)
+    assert entry_order("16/9/2026 22:26", 0) == datetime(2026, 9, 16, 22, 26)
+
+
+def test_row_fields_first_non_empty_answer_wins():
+    """The export repeats Unit/Company; a registrant answers in one pair or the other."""
+    header = ["Name", "Unit", "Company", "Unit", "Company"]
+    assert row_fields(header, ["Ann", "40SAR", "", "", "Cougar"]) == {
+        "Name": "Ann", "Unit": "40SAR", "Company": "Cougar"}
+    assert row_fields(header, ["Bob", "", "", "8SAB", "HQ"]) == {
+        "Name": "Bob", "Unit": "8SAB", "Company": "HQ"}
+
+
+# (description, existing, new rows) -> (merged rows, updated, added)
+MERGE_CASES = [
+    ("a name not in the roll is appended",
+     [["ANN", "41SAR"]], [["BOB", "40SAR"]],
+     ([["ANN", "41SAR"], ["BOB", "40SAR"]], 0, 1)),
+    ("a re-registration replaces the row where it already sits",
+     [["ANN", "41SAR"], ["BOB", "40SAR"]], [["ann", "8SAB"]],
+     ([["ann", "8SAB"], ["BOB", "40SAR"]], 1, 0)),
+    ("with no roll yet, the export is the roll",
+     [], [["ANN", "41SAR"]],
+     ([["ANN", "41SAR"]], 0, 1)),
+]
+
+
+@pytest.mark.parametrize(
+    "existing,new_rows,expected",
+    [pytest.param(e, n, x, id=d) for d, e, n, x in MERGE_CASES],
+)
+def test_merge(existing, new_rows, expected):
+    assert merge(existing, new_rows) == expected

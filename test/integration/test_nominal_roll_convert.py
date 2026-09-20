@@ -88,8 +88,84 @@ def test_only_surviving_rows_warnings_are_reported(converted):
                for level, _, msg in notes)
 
 
+def test_either_name_column_spelling_converts(tmp_path):
+    """The export dropped the '[Myinfo] ' prefix; both spellings must still convert."""
+    header = ["Name" if c == "[Myinfo] Name" else c for c in HEADER]
+    in_path = _write_export(tmp_path / "plain.csv", header=header)
+    count, _ = convert(in_path, tmp_path / "nominal_roll.csv")
+    assert count == 4
+
+
+def test_missing_name_column_aborts(tmp_path):
+    bad_header = [c for c in HEADER if c != "[Myinfo] Name"]
+    in_path = _write_export(tmp_path / "noname.csv", header=bad_header)
+    with pytest.raises(SystemExit):
+        convert(in_path, tmp_path / "out.csv")
+
+
 def test_missing_source_column_aborts(tmp_path):
     bad_header = [c for c in HEADER if c != "Company"]
     in_path = _write_export(tmp_path / "bad.csv", header=bad_header)
     with pytest.raises(SystemExit):
         convert(in_path, tmp_path / "out.csv")
+
+
+# The export repeats Unit/Company: a registrant's answer sits in one pair or the other.
+DUP_HEADER = HEADER + ["Unit", "Company"]
+
+DUP_ROWS = [
+    # answered in the first pair
+    ["16/9/2026 22:26", "Echo Tester", "Option 1 NSF", "40SAR", "COUGAR",
+     "Yes", "Echo Tester", "S005", "", ""],
+    # answered in the trailing pair
+    ["17/9/2026 06:14", "Foxtrot Tester", "Option 1 NSF", "", "",
+     "Yes", "Foxtrot Tester", "S006", "Stallion Pioneer Section 2", "Stallion"],
+    # split across both pairs
+    ["17/9/2026 10:33", "Golf Tester", "Option 2 REGULAR", "41SAR", "",
+     "Yes", "Golf Tester", "S007", "", "Hawk"],
+]
+
+
+def _read(out_path):
+    return [r for r in csv.reader(io.StringIO(out_path.read_bytes().decode("utf-8-sig"))) if r]
+
+
+def test_duplicate_unit_company_columns(tmp_path):
+    in_path = _write_export(tmp_path / "dup.csv", header=DUP_HEADER, data=DUP_ROWS)
+    out_path = tmp_path / "nominal_roll.csv"
+    convert(in_path, out_path)
+
+    data = _read(out_path)[1:]
+    assert [r[0] for r in data] == ["Echo Tester", "Foxtrot Tester", "Golf Tester"]
+    assert [r[1:3] for r in data] == [["40SAR", "Cougar"], ["40SAR", "Stallion"],
+                                      ["41SAR", "Hawk"]]
+
+
+LATER_ROWS = [
+    # brand new registrant -> appended
+    ["09 Sep 2026 10:00:00 AM", "Echo Tester", "Option 1 NSF", "41 SAR", "Shrike",
+     "Yes", "Echo Tester", "S005"],
+    # Alpha re-registered -> replaces the row where it already sits
+    ["09 Sep 2026 10:05:00 AM", "Alpha Tester", "Option 1 NSF", "8 SAB", "Nil",
+     "Yes", "Alpha Tester", "S001"],
+]
+
+
+def test_merges_into_an_existing_roll(converted):
+    """Exports are incremental, so a second one must grow the roll, not replace it."""
+    out_path, _, _ = converted
+    before = _read(out_path)
+
+    in_path = _write_export(out_path.parent / "later.csv", data=LATER_ROWS)
+    count, notes = convert(in_path, out_path)
+
+    assert count == 5                                  # the 4 already there + 1 new
+    rows = _read(out_path)
+    assert [r[0] for r in rows[1:]] == ["Alpha Tester", "Bravo Tester", "Charlie Tester",
+                                        "Delta Tester", "Echo Tester"]
+    assert rows[1][1:3] == ["8SAB", ""]                # Alpha updated where it already sat
+    assert rows[2:5] == before[2:5]                    # everyone else untouched
+    assert rows[5][1:3] == ["41SAR", "Shrike"]
+    assert out_path.read_bytes().startswith(b"\xef\xbb\xbf")   # byte shape unchanged
+    assert any(level == "INFO" and "merged into the existing roll" in msg
+               for level, _, msg in notes)

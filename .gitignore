@@ -7,8 +7,10 @@
 src/auth_state.json
 # cleaned roster (names, unit/company)
 src/nominal_roll/nominal_roll.csv
+src/nominal_roll/*.bak.csv
 # raw FormSG export — NRIC/mobile/email
 src/nominal_roll/*Registration Form*.csv
+src/nominal_roll/8sab*.csv
 # base64 dumps of the above (for pasting into GitHub secrets)
 *_b64.txt
 
