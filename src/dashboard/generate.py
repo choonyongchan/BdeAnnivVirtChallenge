@@ -5,6 +5,7 @@
 Reads src/config.yaml plus:
   src/activities/activities.csv   - one row per activity (real activity_id, start_date_utc)
   src/members/members.csv         - one row per club member (real athlete_id, first_seen)
+  src/members/member_count.json   - Strava's headline member count (the "all" total)
   src/nominal_roll/nominal_roll.csv - the roster (via names.NominalRoll)
 
 Replaces the src_bak Strava-API + JSON-ledger + start-anchor pipeline: the CSVs
@@ -29,6 +30,7 @@ ALUMNI_TYPES = {"NSMAN", "ALUMNI"}
 REPO_ROOT = Path(__file__).parent.parent.parent
 ACTIVITIES_CSV = Path(__file__).parent.parent / "activities" / "activities.csv"
 MEMBERS_CSV = Path(__file__).parent.parent / "members" / "members.csv"
+MEMBER_COUNT_JSON = Path(__file__).parent.parent / "members" / "member_count.json"
 OUT_PATH = REPO_ROOT / "index.html"
 USER_COUNT_PATH = REPO_ROOT / "src" / "user-count.json"
 
@@ -98,6 +100,13 @@ def load_members() -> list:
 # Grouping / history
 # ---------------------------------------------------------------------------
 
+def load_member_count() -> int | None:
+    """Strava's headline member count, or None if member_count.json is absent."""
+    if not MEMBER_COUNT_JSON.exists():
+        return None
+    return json.loads(MEMBER_COUNT_JSON.read_text(encoding="utf-8"))["member_count"]
+
+
 def build_grouped_data(acts: list, members: list, label: str, roll: NominalRoll) -> dict:
     """Split acts/members into 'all'/'serving'/'alumni' stats dicts, each tagged
     with label. serving = SERVING_TYPES, alumni = ALUMNI_TYPES; anyone off the
@@ -165,11 +174,16 @@ class DashboardGenerator:
         self.acts: list = []
         #: members.csv rows, the whole club roster (set by load()).
         self.members: list = []
+        #: Club-wide member total: Strava's headline count, else len(members) (set by load()).
+        self.member_count: int = 0
 
     def load(self) -> None:
         """Read activities.csv (>= challenge_start) and the full members.csv."""
         self.acts = load_activities(self.cfg.challenge_start, self.tzinfo)
         self.members = load_members()
+        # Strava stopped listing members, so members.csv misses joiners who have not
+        # run yet; the headline count is the true total when we have it.
+        self.member_count = max(load_member_count() or 0, len(self.members))
         # Fit the roster match once, over every name we will ever look up. Doing
         # it here rather than per-resolve keeps the one-to-one assignment stable:
         # build_daily_history() re-resolves each activity for every past day, and
@@ -184,6 +198,9 @@ class DashboardGenerator:
         data = {"today": build_grouped_data(
             self.acts, self.members, day_label(now_dt), self.roll)}
         daily = build_daily_history(self.acts, self.members, self.roll, self.tzinfo)
+        data["today"]["all"]["athlete_count"] = self.member_count
+        if daily:
+            daily[max(daily)]["all"]["athlete_count"] = self.member_count
         return data, daily
 
     def render(self, data: dict, daily: dict, now_dt: datetime) -> str:
@@ -205,7 +222,7 @@ class DashboardGenerator:
         USER_COUNT_PATH.write_text(json.dumps({
             "schemaVersion": 1,
             "label": "users covered",
-            "message": str(len(self.members)),
+            "message": str(self.member_count),
             "color": "blue",
         }), encoding="utf-8")
 

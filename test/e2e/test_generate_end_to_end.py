@@ -4,10 +4,11 @@ Drives the real `generate.run()` with every path pointed at temp files and the
 weather call stubbed, then checks the output page and the reasoning behind it:
 placeholders are all filled, pre-challenge activities never count, the
 serving/alumni groups are subsets of "all", the leaderboard shows the whole
-roster, member count is independent of who ran, and daily history is sorted and
-cumulative.
+roster, member count is independent of who ran (and Strava's headline count,
+when saved, overrides it), and daily history is sorted and cumulative.
 """
 import csv
+import json
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -67,6 +68,7 @@ def env(tmp_path, monkeypatch):
         for aid, name, seen in MEMBERS:
             w.writerow([aid, name, f"{seen}T00:00:00+00:00"])
     monkeypatch.setattr(generate, "MEMBERS_CSV", members)
+    monkeypatch.setattr(generate, "MEMBER_COUNT_JSON", tmp_path / "member_count.json")
 
     activities = tmp_path / "activities.csv"
     with activities.open("w", newline="", encoding="utf-8") as f:
@@ -142,3 +144,18 @@ def test_rationale_invariants_hold(env):
     assert days == sorted(days) and days[0] == CHALLENGE_START
     kms = [daily[d]["all"]["total_km"] for d in days]
     assert kms == sorted(kms)
+
+
+def test_headline_member_count_overrides_all_total(env, tmp_path):
+    (tmp_path / "member_count.json").write_text(json.dumps({"member_count": 1055}), encoding="utf-8")
+    gen = generate.DashboardGenerator(generate.load_config())
+    gen.load()
+    data, daily = gen.build(datetime(2026, 9, 20, 12, 0, tzinfo=gen.tzinfo))
+
+    assert data["today"]["all"]["athlete_count"] == 1055
+    assert daily[max(daily)]["all"]["athlete_count"] == 1055
+    assert daily[min(daily)]["all"]["athlete_count"] <= len(MEMBERS)   # past days stay ledger-based
+
+    generate.run()
+    badge = json.loads((tmp_path / "user-count.json").read_text(encoding="utf-8"))
+    assert badge["message"] == "1055"

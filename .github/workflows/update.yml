@@ -58,7 +58,7 @@ jobs:
 
       - name: Commit ledgers (main.py only pushes index.html)
         run: |
-          git add src/activities/activities.csv src/members/members.csv index.html src/user-count.json
+          git add src/activities/activities.csv src/members/members.csv src/members/member_count.json index.html src/user-count.json
           if git diff --cached --quiet; then
             echo "No ledger changes."
           else

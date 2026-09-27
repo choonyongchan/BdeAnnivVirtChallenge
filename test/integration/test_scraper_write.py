@@ -3,11 +3,12 @@
 Only `write()` is exercised — the Playwright `fetch()` is not. The rules:
 activities.csv is append-only and deduped by activity_id (header written once,
 scraped_at stamped), and members.csv is append-only and deduped by athlete_id -
-a returning athlete keeps their original first_seen row untouched (name frozen),
-and a row is never rewritten or removed.
+every activities.csv athlete without a row is appended with first_seen = their
+first activity, an existing row is never rewritten (name frozen), and the
+headline member count is saved alongside.
 """
 import csv
-from datetime import datetime
+import json
 
 import pytest
 
@@ -57,32 +58,51 @@ def test_activities_write_drops_idless_rows_and_expands_group(tmp_path, monkeypa
     assert [r["activity_id"] for r in _read(path)] == ["10", "11"]
 
 
-class _FrozenClock:
-    """Stand-in for the module's `datetime`, so scrape timestamps are deterministic."""
-    def __init__(self, iso):
-        self._iso = iso
-
-    def now(self, tz=None):
-        return datetime.fromisoformat(self._iso)
+def _write_activities(path, rows):
+    with path.open("w", encoding="utf-8", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["athlete_id", "athlete_name", "start_date_utc"])
+        w.writerows(rows)
 
 
-def test_members_write_is_append_only(tmp_path, monkeypatch):
-    path = tmp_path / "members.csv"
-    monkeypatch.setattr(M, "CSV_PATH", path)
+@pytest.fixture
+def member_paths(tmp_path, monkeypatch):
+    paths = {"csv": tmp_path / "members.csv", "acts": tmp_path / "activities.csv",
+             "count": tmp_path / "member_count.json"}
+    monkeypatch.setattr(M, "CSV_PATH", paths["csv"])
+    monkeypatch.setattr(M, "ACTIVITIES_CSV", paths["acts"])
+    monkeypatch.setattr(M, "COUNT_PATH", paths["count"])
+    return paths
 
-    monkeypatch.setattr(M, "datetime", _FrozenClock("2026-09-10T00:00:00+00:00"))
-    M.MemberScraper().write({"1": "Alice Anon", "2": "Bob Bogus"})
-    first = {r["athlete_id"]: r for r in _read(path)}
-    assert first["1"]["first_seen"] == "2026-09-10T00:00:00+00:00"
 
-    monkeypatch.setattr(M, "datetime", _FrozenClock("2026-09-20T00:00:00+00:00"))
-    M.MemberScraper().write({"1": "Alice A.", "3": "Cara Cipher"})   # Alice renamed, Bob gone, Cara new
-    rows = _read(path)
-    by_id = {r["athlete_id"]: r for r in rows}
+def test_members_write_adds_activity_athletes_at_first_run(member_paths):
+    _write_activities(member_paths["acts"], [
+        ["2", "Bob Bogus", "2026-09-18T07:00:00Z"],
+        ["2", "Bob Bogus", "2026-09-17T06:00:00Z"],      # Bob's earliest run
+        ["", "No Id", "2026-09-17T06:00:00Z"],           # id-less: skipped
+    ])
 
-    assert "last_seen" not in rows[0]                               # column dropped
-    assert by_id["1"]["name"] == "Alice Anon"                       # row untouched, not rewritten
-    assert by_id["1"]["first_seen"] == "2026-09-10T00:00:00+00:00"  # original, untouched
-    assert by_id["2"]["first_seen"] == "2026-09-10T00:00:00+00:00"  # Bob retained
-    assert by_id["3"]["first_seen"] == "2026-09-20T00:00:00+00:00"  # Cara appended
-    assert path.read_text(encoding="utf-8").count("athlete_id,name,first_seen") == 1  # header once
+    assert M.MemberScraper().write(1055) == 1
+
+    assert _read(member_paths["csv"]) == [
+        {"athlete_id": "2", "name": "Bob Bogus", "first_seen": "2026-09-17T06:00:00+00:00"}]
+    assert json.loads(member_paths["count"].read_text(encoding="utf-8")) == {"member_count": 1055}
+
+
+def test_members_write_is_append_only(member_paths):
+    _write_activities(member_paths["acts"], [["1", "Alice Anon", "2026-09-15T00:00:00Z"]])
+    M.MemberScraper().write(1000)
+
+    _write_activities(member_paths["acts"], [               # Alice renamed, Cara new
+        ["1", "Alice A.", "2026-09-14T00:00:00Z"],
+        ["3", "Cara Cipher", "2026-09-20T00:00:00Z"],
+    ])
+    assert M.MemberScraper().write(1001) == 1
+    assert M.MemberScraper().write(1001) == 0               # nothing new on a rerun
+
+    by_id = {r["athlete_id"]: r for r in _read(member_paths["csv"])}
+    assert by_id["1"] == {"athlete_id": "1", "name": "Alice Anon",   # row untouched
+                          "first_seen": "2026-09-15T00:00:00+00:00"}
+    assert by_id["3"]["first_seen"] == "2026-09-20T00:00:00+00:00"
+    assert member_paths["csv"].read_text(encoding="utf-8").count("athlete_id,name,first_seen") == 1
+    assert json.loads(member_paths["count"].read_text(encoding="utf-8")) == {"member_count": 1001}

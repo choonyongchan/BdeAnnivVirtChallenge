@@ -1,87 +1,86 @@
-"""Scrape the club's full member list from Strava's logged-in members page into an
-append-only CSV ledger.
+"""Keep the append-only members.csv ledger and the club's headline member count.
 
-The public club API (getClubMembersByClubId) was deactivated by Strava in 2026, so
-this pages through the same HTML the members page renders for itself.
+Since 16 Sep 2026 Strava's members page lists only the club admins, not the members,
+so the ledger grows from activities.csv instead: every athlete who has logged a club
+activity but has no ledger row gets one, with first_seen = their first activity.
+Members who have not run yet therefore have no row; the club's true total comes from
+the members page's headline count ("1055 members"), saved to member_count.json.
 
-Run via the pipeline (python -m src.main); the one-off login is python -m src.login.
-
-Shares src/auth_state.json with the activity scraper - one login covers both (browser
+Run via the pipeline (python -m src.main), after the activity scrape; the one-off login
+is python -m src.login. Shares src/auth_state.json with the activity scraper (browser
 session, login, and retry live in src/strava_session.py). The ledger is append-only:
-each run appends a first_seen row for every athlete_id not already in it and never
-touches an existing row, so name is a first-seen snapshot that may drift from Strava
-and a member who leaves simply stops getting new rows (their row stays).
+an existing row is never touched, so name is a first-seen snapshot that may drift from
+Strava and a member who leaves keeps their row.
 """
-import random
+import csv
+import json
 import re
-from datetime import datetime, timezone
 from pathlib import Path
 
+from ..activities.activities import CSV_PATH as ACTIVITIES_CSV
 from ..strava_session import CLUB_ID, ScrapeError, StravaScraper, append_new_rows, csv_column_set
 
 CSV_PATH = Path(__file__).parent / "members.csv"
-MEMBERS_URL = f"https://www.strava.com/clubs/{CLUB_ID}/members?page={{page}}"
+COUNT_PATH = Path(__file__).parent / "member_count.json"
+MEMBERS_URL = f"https://www.strava.com/clubs/{CLUB_ID}/members"
 
 FIELDS = ["athlete_id", "name", "first_seen"]
 
 
-def parse_members(html: str) -> list:
-    """One members-page response -> [(athlete_id, name)]. The page has a couple of
-    <ul class='list-athletes'> blocks (a small club-admins one plus the paginated member
-    grid); the athlete-anchor pattern is specific enough to scan the whole page directly
-    and let the caller dedupe by id."""
-    return [(aid, name.strip()) for aid, name in
-            re.findall(r'href="/athletes/(\d+)"[^>]*>([^<]{1,80})</a>', html)
-            if name.strip()]
+def parse_member_count(html: str) -> int | None:
+    """The club's headline member count (<span class='membership-count'>1055 members</span>),
+    or None if the page no longer has it."""
+    m = re.search(r"class=['\"]membership-count['\"][^>]*>\s*([\d,]+)\s+members?\b", html)
+    return int(m.group(1).replace(",", "")) if m else None
+
+
+def activity_athletes(path: Path) -> dict:
+    """{athlete_id: (name, first start_date_utc)} for every athlete in activities.csv."""
+    if not path.exists():
+        return {}
+    out = {}
+    with path.open(encoding="utf-8", newline="") as f:
+        for r in csv.DictReader(f):
+            aid, start = r.get("athlete_id") or "", r.get("start_date_utc") or ""
+            if aid and (aid not in out or start < out[aid][1]):
+                out[aid] = (r.get("athlete_name", ""), start)
+    return out
 
 
 class MemberScraper(StravaScraper):
-    """Scrape the full club member list into the append-only members.csv ledger."""
+    """Read the club's headline member count and grow members.csv from activities.csv."""
 
     landing_url = f"https://www.strava.com/clubs/{CLUB_ID}"
 
-    def fetch(self) -> dict:
-        """Page through the members list from inside the club page; return {athlete_id: name}.
-        Stop when a page adds no new athlete ids."""
+    def fetch(self) -> int:
+        """Fetch the members page from inside the club page; return its headline count."""
         with self._club_page() as page:
-            members = {}
-            empty_streak = 0
-            for n in range(1, 61):  # safety ceiling; the club is ~23 pages
-                result = page.evaluate(
-                    """async (url) => {
-                        const r = await fetch(url, {credentials: 'include'});
-                        return {ok: r.ok, status: r.status, text: await r.text()};
-                    }""",
-                    MEMBERS_URL.format(page=n),
-                )
-                if not result["ok"]:
-                    raise ScrapeError("Session expired or blocked - re-run: python -m src.login\n"
-                                      f"Page {n} returned HTTP {result['status']}.")
-                rows = parse_members(result["text"])
-                new = {aid: name for aid, name in rows if aid not in members}
-                print(f"page {n}: {len(rows)} rows, {len(new)} new, {len(members) + len(new)} total")
-                members.update(new)
-                # Stop only after two consecutive dry pages, so a single transiently
-                # empty or failed-to-parse page does not truncate the crawl early.
-                empty_streak = 0 if new else empty_streak + 1
-                if empty_streak >= 2:
-                    break
-                page.wait_for_timeout(random.randint(400, 900))
+            result = page.evaluate(
+                """async (url) => {
+                    const r = await fetch(url, {credentials: 'include'});
+                    return {ok: r.ok, status: r.status, text: await r.text()};
+                }""",
+                MEMBERS_URL,
+            )
+        if not result["ok"]:
+            raise ScrapeError("Session expired or blocked - re-run: python -m src.login\n"
+                              f"Members page returned HTTP {result['status']}.")
+        count = parse_member_count(result["text"])
+        if count is None:
+            raise ScrapeError("Member count not found on the members page - "
+                              "Strava markup may have changed.")
+        return count
 
-        if not members:
-            raise ScrapeError("No members parsed - Strava markup may have changed, or session expired.")
-        return members
+    def write(self, count: int) -> int:
+        """Save the headline count, then append a row (first_seen = first activity) for
+        every activities.csv athlete not already in the ledger. Returns rows appended."""
+        COUNT_PATH.write_text(json.dumps({"member_count": count}) + "\n", encoding="utf-8")
 
-    def write(self, current: dict) -> int:
-        """Append a first_seen row for every athlete_id not already in the ledger; existing
-        rows are never touched, so name is a first-seen snapshot that may drift from Strava."""
         seen = csv_column_set(CSV_PATH, "athlete_id")
-
-        now = datetime.now(timezone.utc).isoformat(timespec="seconds")
-        new = [{"athlete_id": aid, "name": name, "first_seen": now}
-               for aid, name in current.items() if aid not in seen]
-
+        new = [{"athlete_id": aid, "name": name, "first_seen": start.replace("Z", "+00:00")}
+               for aid, (name, start) in activity_athletes(ACTIVITIES_CSV).items()
+               if aid not in seen]
         append_new_rows(CSV_PATH, FIELDS, new)
 
-        print(f"{len(current)} current members, {len(new)} new -> {CSV_PATH}")
+        print(f"headline count {count}; {len(new)} new members from activities -> {CSV_PATH}")
         return len(new)

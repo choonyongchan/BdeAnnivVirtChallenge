@@ -73,6 +73,7 @@ def test_converted_roll_drives_dashboard_grouping(tmp_path, monkeypatch):
     assert count == 3
     monkeypatch.setattr(NominalRoll, "CSV_PATH", roll_csv)
     monkeypatch.setattr(generate, "MEMBERS_CSV", _write_members(tmp_path / "members.csv"))
+    monkeypatch.setattr(generate, "MEMBER_COUNT_JSON", tmp_path / "member_count.json")
     monkeypatch.setattr(generate, "ACTIVITIES_CSV", _write_activities(tmp_path / "activities.csv"))
 
     cfg = config.Config(

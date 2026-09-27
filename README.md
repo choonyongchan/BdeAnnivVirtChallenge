@@ -59,8 +59,9 @@ python -m src.main
   ├─ check_auth()                 src/main.py          is src/auth_state.json a valid session?
   ├─ ActivityScraper().scrape()   src/activities/      fetch the club feed in a real browser
   │                                                    → append new rows to activities.csv
-  ├─ MemberScraper().scrape()     src/members/         page through the club member list
-  │                                                    → append new athletes to members.csv
+  ├─ MemberScraper().scrape()     src/members/         read the club's headline member count
+  │                                                    → member_count.json; append new
+  │                                                      activities.csv athletes to members.csv
   ├─ generate.run()               src/dashboard/       load the 3 CSVs + config.yaml + weather
   │      stats.py   → totals, awards, leaderboard, devices
   │      names.py   → match truncated Strava names to the roll (unit / company / service)
@@ -122,7 +123,7 @@ Content is HTML-escaped.
 (`cron: '0 * * * *'`; GitHub can delay a scheduled run 5–20 minutes) and on demand
 from **Actions → Update and Deploy Strava Dashboard → Run workflow**. It runs the
 tests, installs Chromium for Playwright, decodes the two secrets below, runs
-`python -m src.main`, commits `activities.csv`, `members.csv`, and `index.html`
+`python -m src.main`, commits `activities.csv`, `members.csv`, `member_count.json`, and `index.html`
 back to `main`, then publishes `index.html` (and the `user-count.json` badge data
 file) to GitHub Pages via `actions/deploy-pages`.
 
@@ -189,8 +190,9 @@ src/
     activities.py                scrape club feed → append-only ledger
     activities.csv               activity ledger (committed)
   members/
-    members.py                   scrape member list → append-only ledger
+    members.py                   headline count + activity athletes → append-only ledger
     members.csv                  member ledger (committed)
+    member_count.json            Strava's headline member count (committed)
   nominal_roll/
     nominal_roll.py               raw FormSG export → cleaned roster
     nominal_roll.csv             roster (gitignored; from NOMINAL_ROLL)
@@ -227,9 +229,9 @@ FormSG export are never read.
 blocked.** Run `python -m src.login`, re-encode `src/auth_state.json`, and update
 the `AUTH_STATE` secret.
 
-**"No members parsed".** Usually the same expired session. If the login is fresh,
-Strava changed its members-page markup and the regex in `src/members/members.py`
-needs updating.
+**"Member count not found".** Usually the same expired session. If the login is
+fresh, Strava changed its members-page markup and the `membership-count` regex in
+`src/members/members.py` needs updating.
 
 **Everyone shows up with no unit, company, or full name.** `nominal_roll.csv` is
 missing. Rebuild it locally with `nominal_roll`; in CI, check the

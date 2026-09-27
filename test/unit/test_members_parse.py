@@ -1,42 +1,18 @@
-"""Unit tests for the members-page HTML parser.
+"""Unit tests for the members-page headline-count parser.
 
-The members page has more than one `<ul class='list-athletes'>` block (a small
-club-admins list plus the paginated grid). `parse_members` must read anchors
-from every block, trim names, skip empty ones, and leave id-dedupe to the
-caller.
+`parse_member_count` reads the club's total from the
+`<span class='membership-count'>` headline (commas allowed, singular "member"
+too) and returns None when that span is absent.
 """
-from src.members.members import parse_members
-
-HTML = """
-<div>
-  <ul class='list-athletes'>
-    <li><a href="/athletes/101" class="avatar">Alice Anon</a></li>
-    <li><a href="/athletes/102">Bob Bogus</a></li>
-  </ul>
-  <p>unrelated markup</p>
-  <ul class='list-athletes'>
-    <li><a href="/athletes/102">Bob Bogus</a></li>
-    <li><a href="/athletes/103">  Cara Cipher  </a></li>
-    <li><a href="/athletes/104">    </a></li>
-  </ul>
-</div>
-"""
+from src.members.members import parse_member_count
 
 
-def test_reads_anchors_from_every_block_and_trims():
-    out = parse_members(HTML)
-    assert ("101", "Alice Anon") in out
-    assert ("103", "Cara Cipher") in out                 # surrounding spaces trimmed
+def test_member_count_reads_headline_with_or_without_commas():
+    assert parse_member_count("<span class='membership-count'>\n1055 members\n</span>") == 1055
+    assert parse_member_count('<span class="membership-count">1,055 members</span>') == 1055
+    assert parse_member_count("<span class='membership-count'>1 member</span>") == 1
 
 
-def test_duplicates_across_blocks_are_left_for_the_caller():
-    assert parse_members(HTML).count(("102", "Bob Bogus")) == 2
-
-
-def test_blank_anchor_text_is_skipped():
-    assert all(aid != "104" for aid, _ in parse_members(HTML))
-
-
-def test_no_list_block_returns_empty():
-    assert parse_members("<div>no athletes here</div>") == []
-    assert parse_members("") == []
+def test_member_count_absent_is_none():
+    assert parse_member_count("<h3>1055 members</h3>") is None      # not the headline span
+    assert parse_member_count("") is None
