@@ -194,6 +194,9 @@ class BackfillScraper(StravaScraper):
         self._summary(members, per_member, found, hidden, errors, time.monotonic() - t0)
 
         if found and not dry_run:
+            # The hourly club-feed scrape may have appended some of these during the scan.
+            latest = csv_column_set(CSV_PATH, "activity_id")
+            found = [r for r in found if r["activity_id"] not in latest]
             now = datetime.now(timezone.utc).isoformat(timespec="seconds")
             for r in found:
                 r["scraped_at"] = now
