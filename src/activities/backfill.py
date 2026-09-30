@@ -205,6 +205,10 @@ class BackfillScraper(StravaScraper):
             print(f"\nAppended {len(found)} rows -> {CSV_PATH}")
         elif found:
             print(f"\nDry run: {len(found)} rows NOT written.")
+        if len(errors) > 0.02 * len(jobs):
+            # >2% of requests failed. Found rows are already saved; failing lets the scheduler flag the gaps.
+            raise ScrapeError(f"{len(errors)} of {len(jobs)} profile requests failed - "
+                              "activities may be missing; re-run to retry.")
         return len(found)
 
     @staticmethod
