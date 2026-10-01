@@ -1,12 +1,5 @@
-"""Integration test: the load -> group -> history chain in generate.py.
-
-Wires load_activities / load_members / build_grouped_data / build_daily_history
-together over temp CSVs and the dummy roll. Checks the rules that only show up
-once the pieces are connected: activities before the challenge start (in local
-time) are excluded, grouping follows the roll's Type of service, off-roll
-runners land only in "all", and daily history is cumulative and gated by each
-member's first_seen.
-"""
+"""Integration test: generate.py's load -> group -> history chain over temp CSVs and the dummy roll:
+local-date start filter, service grouping, off-roll runners only in 'all', first_seen-gated history."""
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -68,11 +61,11 @@ def test_off_roll_runner_counts_only_in_all(roll, make_activity, dummy_members):
 def test_daily_history_is_cumulative_and_first_seen_gated(roll, make_activity, dummy_members):
     acts = [
         make_activity("Alice Anon", distance_m=10_000, moving_time_s=3000,
-                      start_date_utc="2026-09-14T02:00:00Z"),
+                      start_date_utc="2026-09-14T02:00:00Z", _date="2026-09-14"),
         make_activity("Cara Cipher", athlete_id="3", distance_m=6_000, moving_time_s=1800,
-                      start_date_utc="2026-09-16T02:00:00Z"),
+                      start_date_utc="2026-09-16T02:00:00Z", _date="2026-09-16"),
     ]
-    hist = generate.build_daily_history(acts, dummy_members, roll, SGT)
+    hist = generate.build_daily_history(acts, dummy_members, roll)
 
     assert sorted(hist) == ["2026-09-14", "2026-09-16"]
     assert hist["2026-09-14"]["all"]["total_km"] == pytest.approx(10.0)
@@ -80,5 +73,3 @@ def test_daily_history_is_cumulative_and_first_seen_gated(roll, make_activity, d
     # Cara's first_seen is 2026-09-16, so she is not in the day-14 member count
     assert hist["2026-09-14"]["all"]["athlete_count"] == 3
     assert hist["2026-09-16"]["all"]["athlete_count"] == 4
-    # each historical bucket has been slimmed for the payload
-    assert "zero_gap" in hist["2026-09-14"]["all"]

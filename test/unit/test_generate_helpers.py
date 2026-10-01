@@ -1,17 +1,11 @@
-"""Unit tests for generate.py's pure date/timezone helpers.
-
-`_local_date` is the rule that decides which local day an activity counts for:
-parse the UTC stamp, assume UTC if it is naive, convert to the challenge
-timezone, take the date. A bad timezone name raises, matching config.py's
-fail-loudly policy. (load_config is deliberately not covered here — config
-handling is mid-refactor.)
-"""
+"""Unit tests for generate.py's date helpers: `_local_date` decides which local day an
+activity counts for (parse UTC, assume UTC if naive, convert, take the date)."""
 from datetime import date
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+from zoneinfo import ZoneInfo
 
 import pytest
 
-from src.dashboard.generate import _local_date, _zone, day_label
+from src.dashboard.generate import _local_date, day_label
 
 SGT = ZoneInfo("Asia/Singapore")
 
@@ -38,11 +32,3 @@ def test_day_label_is_not_zero_padded(d, text):
 def test_local_date(iso, expected):
     assert _local_date(iso, SGT) == expected
 
-
-def test_zone_resolves_valid_name():
-    assert _zone("Asia/Singapore") == SGT
-
-
-def test_zone_raises_on_bad_name():
-    with pytest.raises(ZoneInfoNotFoundError):
-        _zone("Not/AZone")

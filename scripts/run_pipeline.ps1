@@ -1,6 +1,5 @@
-# Hourly Windows Task Scheduler entry point. Mirrors .github/workflows/update.yml's
-# "Run pipeline" + "Commit ledgers" steps, minus the CI-only secret-restore steps
-# (src/auth_state.json and src/nominal_roll/nominal_roll.csv already exist locally).
+# Hourly Windows Task Scheduler entry point: runs the pipeline and commits the ledgers
+# (src/auth_state.json and src/nominal_roll/nominal_roll.csv must already exist locally).
 $ErrorActionPreference = "Stop"
 
 $RepoRoot = Split-Path -Parent $PSScriptRoot

@@ -1,10 +1,5 @@
-"""End-to-end: raw FormSG export -> convert() -> nominal_roll.csv -> dashboard.
-
-Proves the pieces agree — the roll the converter writes is the roll the
-dashboard groups by. Unit resolution and Type-of-service are independent: a
-registrant whose unit could not be resolved still keeps their service group,
-just with a blank unit on the leaderboard.
-"""
+"""End-to-end: FormSG export -> convert() -> nominal_roll.csv -> dashboard grouping.
+An unresolvable unit still keeps its service group, just with a blank unit."""
 import csv
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -87,9 +82,7 @@ def test_converted_roll_drives_dashboard_grouping(tmp_path, monkeypatch):
         browser_channel="",
         browser_headless=True,
     )
-    gen = generate.DashboardGenerator(cfg)
-    gen.load()
-    data, _ = gen.build(datetime(2026, 9, 20, 12, 0, tzinfo=gen.tzinfo))
+    data, _ = generate.build(*generate.load(cfg), datetime(2026, 9, 20, 12, 0, tzinfo=SGT))
     today = data["today"]
 
     serving = {r["name"] for r in today["serving"]["leaderboard"] if r["acts"]}

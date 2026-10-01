@@ -1,11 +1,5 @@
-"""Unit tests for src/main.py's three standalone pieces (not main()'s orchestration,
-which is just a straight-line call into already-covered/scraper-owned pieces).
-
-Rules: check_auth fails fast (SystemExit) unless the saved session file has a non-empty
-cookies list; publish_dashboard no-ops when the staged diff is empty, otherwise commits
-and pushes with a timestamped message; report_counts_to_ci no-ops outside GitHub Actions,
-otherwise writes both step outputs to GITHUB_OUTPUT.
-"""
+"""Unit tests for main.py's standalone pieces: check_auth fails fast without cookies, publish_dashboard
+no-ops on an empty diff, report_counts_to_ci no-ops outside GitHub Actions."""
 from datetime import datetime
 from types import SimpleNamespace
 
@@ -64,7 +58,7 @@ def test_publish_dashboard_noop_when_index_unchanged(monkeypatch):
     M.publish_dashboard()
 
     assert fake_run.calls == [
-        ["git", "add", str(M.INDEX_HTML), str(M.USER_COUNT_JSON)],
+        ["git", "add", str(M.generate.OUT_PATH), str(M.generate.USER_COUNT_PATH)],
         ["git", "diff", "--cached", "--quiet"],
     ]
 
@@ -77,7 +71,7 @@ def test_publish_dashboard_commits_and_pushes_when_changed(monkeypatch):
     M.publish_dashboard()
 
     assert fake_run.calls == [
-        ["git", "add", str(M.INDEX_HTML), str(M.USER_COUNT_JSON)],
+        ["git", "add", str(M.generate.OUT_PATH), str(M.generate.USER_COUNT_PATH)],
         ["git", "diff", "--cached", "--quiet"],
         ["git", "commit", "-m", "🏃 Dashboard update 2026-09-14 06:38"],
         ["git", "push"],

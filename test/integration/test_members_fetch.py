@@ -1,8 +1,5 @@
-"""Integration test for MemberScraper.fetch() (no browser).
-
-Rules: one request to the members page; its headline count is returned; a non-OK
-HTTP response or a page without the count is a definite ScrapeError.
-"""
+"""Integration test for MemberScraper.fetch() (no browser): one request returns the headline count;
+a non-OK response or a page without the count is a ScrapeError."""
 from contextlib import contextmanager
 
 import pytest
@@ -22,9 +19,9 @@ class _FakePage:
 
 def _use_fake_page(monkeypatch, fake_page):
     @contextmanager
-    def _fake_club_page(self):
+    def _fake_club_page(url):
         yield fake_page
-    monkeypatch.setattr(M.MemberScraper, "_club_page", _fake_club_page)
+    monkeypatch.setattr(M, "club_page", _fake_club_page)
 
 
 def _resp(html, ok=True, status=200):

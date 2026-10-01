@@ -1,25 +1,17 @@
-"""Run the full pipeline in one process: scrape activities, scrape members,
-then generate the dashboard.
-
+"""Scrape activities and members, then generate and publish the dashboard; the first failure stops it.
     python -m src.main
-
-The one-off browser login is separate: python -m src.login
-Each step raises on failure, so the first failure stops the pipeline.
 """
 import json
 import os
 import subprocess
 from datetime import datetime
-from pathlib import Path
 
-from .activities.activities import ActivityScraper
+from .activities.activities import RecentActivityFeed
 from .dashboard import generate
 from .members.members import MemberScraper
 from .strava_session import AUTH_PATH, ScrapeError
 
-REPO_ROOT = Path(__file__).parent.parent
-INDEX_HTML = REPO_ROOT / "index.html"
-USER_COUNT_JSON = REPO_ROOT / "src" / "user-count.json"
+REPO_ROOT = generate.REPO_ROOT
 
 REAUTH_MSG = (
     "\n==================== STRAVA RE-AUTH REQUIRED ====================\n"
@@ -34,10 +26,8 @@ REAUTH_MSG = (
 
 
 def check_auth() -> None:
-    """Fail fast, before launching a browser, if the saved Strava session is
-    absent or malformed. An expired but well-formed session still gets past this
-    and is caught by the scrape itself; both paths exit non-zero with REAUTH_MSG.
-    """
+    """Exit with REAUTH_MSG before launching a browser if the saved session is absent or malformed.
+    An expired but well-formed session gets past this and is caught by the scrape itself."""
     try:
         state = json.loads(AUTH_PATH.read_text(encoding="utf-8"))
     except (OSError, ValueError):
@@ -47,12 +37,9 @@ def check_auth() -> None:
 
 
 def publish_dashboard() -> None:
-    """Commit and push index.html (and its user-count.json badge data) so
-    GitHub Actions redeploys the page.
-
-    No-op when index.html is unchanged.
-    """
-    subprocess.run(["git", "add", str(INDEX_HTML), str(USER_COUNT_JSON)], cwd=REPO_ROOT, check=True)
+    """Commit and push index.html and its user-count.json badge so GitHub Actions redeploys; no-op if unchanged."""
+    subprocess.run(["git", "add", str(generate.OUT_PATH), str(generate.USER_COUNT_PATH)],
+                   cwd=REPO_ROOT, check=True)
     if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=REPO_ROOT).returncode == 0:
         print("index.html unchanged, nothing to publish.")
         return
@@ -63,8 +50,7 @@ def publish_dashboard() -> None:
 
 
 def report_counts_to_ci(new_activities: int, new_members: int) -> None:
-    """Expose the new-row counts as step outputs, so the workflow can put them
-    in the ledger commit message. No-op outside GitHub Actions."""
+    """Expose the new-row counts as step outputs for the ledger commit message; no-op outside GitHub Actions."""
     output_path = os.environ.get("GITHUB_OUTPUT")
     if not output_path:
         return
@@ -77,7 +63,7 @@ def main() -> None:
     check_auth()
     try:
         print("=== scrape activities ===", flush=True)
-        new_activities = ActivityScraper().scrape()
+        new_activities = RecentActivityFeed().scrape()
 
         print("\n=== scrape members ===", flush=True)
         new_members = MemberScraper().scrape()

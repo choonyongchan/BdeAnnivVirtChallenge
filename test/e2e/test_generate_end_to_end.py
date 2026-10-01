@@ -1,12 +1,5 @@
-"""End-to-end: config + roster + scraped CSVs -> index.html.
-
-Drives the real `generate.run()` with every path pointed at temp files and the
-weather call stubbed, then checks the output page and the reasoning behind it:
-placeholders are all filled, pre-challenge activities never count, the
-serving/alumni groups are subsets of "all", the leaderboard shows the whole
-roster, member count is independent of who ran (and Strava's headline count,
-when saved, overrides it), and daily history is sorted and cumulative.
-"""
+"""End-to-end: config + roster + scraped CSVs -> index.html via the real generate.run(),
+every path on temp files and weather stubbed; checks the page and its invariants."""
 import csv
 import json
 from datetime import datetime
@@ -118,9 +111,7 @@ def test_run_writes_a_fully_filled_page(env):
 
 
 def test_rationale_invariants_hold(env):
-    gen = generate.DashboardGenerator(generate.load_config())
-    gen.load()
-    data, daily = gen.build(datetime(2026, 9, 20, 12, 0, tzinfo=gen.tzinfo))
+    data, daily = generate.build(*generate.load(config.load()), datetime(2026, 9, 20, 12, 0, tzinfo=SGT))
     today = data["today"]
 
     # the 2026-09-09 activity is before the challenge start -> 6 of 7 kept
@@ -148,9 +139,7 @@ def test_rationale_invariants_hold(env):
 
 def test_headline_member_count_overrides_all_total(env, tmp_path):
     (tmp_path / "member_count.json").write_text(json.dumps({"member_count": 1055}), encoding="utf-8")
-    gen = generate.DashboardGenerator(generate.load_config())
-    gen.load()
-    data, daily = gen.build(datetime(2026, 9, 20, 12, 0, tzinfo=gen.tzinfo))
+    data, daily = generate.build(*generate.load(config.load()), datetime(2026, 9, 20, 12, 0, tzinfo=SGT))
 
     assert data["today"]["all"]["athlete_count"] == 1055
     assert daily[max(daily)]["all"]["athlete_count"] == 1055

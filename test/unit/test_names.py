@@ -1,13 +1,5 @@
-"""Unit tests for roster loading and name resolution.
-
-Self-reported STRAVA usernames rarely match the Strava display name exactly, so
-resolution normalises both sides, then falls back to word-order-insensitive,
-fuzzy, and finally real-name matching fitted globally by fit() -- which must
-stay strictly one-to-one and must refuse to guess when several roster entries
-fit equally well.
-Company is stored unit-qualified; a couple of employer names typed into the
-Company field are scrubbed to blank.
-"""
+"""Unit tests for roster loading and name resolution: tiered matching fitted one-to-one by fit(),
+refusing to guess on ties; company stored unit-qualified with junk employers blanked."""
 import csv
 
 import pytest

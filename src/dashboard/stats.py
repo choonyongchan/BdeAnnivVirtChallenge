@@ -1,16 +1,7 @@
-"""Statistics computation engine for scraped club activities.
-
-Ported from src_bak/report_generator.py. Two changes for the CSV data model:
-  * activity/member fields are the flat activities.csv / members.csv columns
-    (distance_m, moving_time_s, elev_gain_m, athlete_id, athlete_name, name),
-    and numeric columns may be blank -> coerced to 0;
-  * athletes are matched by real athlete_id (activities <-> members) before
-    falling back to name resolution, instead of a nested athlete dict.
-The public compute_stats() signature and ReportStats.to_dict() output shape are
-unchanged, so renderer.TEMPLATE consumes it untouched.
-"""
+"""Leaderboard, award and fun statistics over activities.csv / members.csv rows.
+Athletes join by athlete_id (activities <-> members) before falling back to name resolution."""
 from collections import Counter
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 
 from .names import NominalRoll
 
@@ -27,35 +18,22 @@ def _num(value) -> float:
 class AthleteStats:
     """Accumulated per-athlete totals for one report period."""
 
-    name: str
-    """Canonical roster name (or raw Strava name when unmatched)."""
+    name: str                  # canonical roster name, or the raw Strava name when unmatched
     unit: str = ""
-    """Roster unit, e.g. "40SAR"; blank when off the roll."""
-    company: str = ""
-    """Roster company, unit-qualified ("40SAR/Cougar"); blank when unknown."""
+    company: str = ""          # unit-qualified, e.g. "40SAR/Cougar"
 
     km: float = 0.0
-    """Total distance run, kilometres."""
-    elev: float = 0.0
-    """Total elevation gain, metres."""
-    time_s: float = 0.0
-    """Total moving time, seconds."""
-    speeds: list = field(default_factory=list)
-    """Per-activity m/s speeds, only for runs over 0.5 km (feeds avg_speed)."""
+    elev: float = 0.0          # metres
+    time_s: float = 0.0        # moving time
+    speeds: list = field(default_factory=list)  # m/s, runs over 0.5 km only (feeds avg_speed)
     count_acts: int = 0
-    """Number of activities counted."""
-    longest: float = 0.0
-    """Longest single activity, kilometres."""
+    longest: float = 0.0       # km
     devices: set = field(default_factory=set)
-    """Distinct recording device names seen."""
 
-    climber_run_elev: float = 0.0
-    """Elevation from "real hill" runs only (>= 5 km and >= 8 m+/km)."""
+    climber_run_elev: float = 0.0  # from "real hill" runs only (>= 5 km and >= 8 m+/km)
     climber_run_km: float = 0.0
-    """Distance from those same "real hill" runs."""
 
-    break_time: float = 0.0
-    """Total elapsed-minus-moving time, i.e. time spent stopped."""
+    break_time: float = 0.0    # elapsed minus moving, i.e. time spent stopped
 
     def add_activity(self, act: dict) -> tuple:
         """Accumulate one activity, returning (dist_km, elev) for club totals."""
@@ -124,47 +102,24 @@ class AthleteStats:
 
 @dataclass
 class ReportStats:
-    """Everything one reporting period contributes to the dashboard.
-
-    Every field defaults to its empty value, so a period with no activities
-    and no members is a plain ``ReportStats()`` rather than a special case.
-    Each award is None when nobody qualified for it.
-    """
+    """Everything one reporting period contributes to the dashboard; an empty period is ReportStats().
+    Each award is {"name", "value"}, or None when nobody qualified."""
 
     total_km: float = 0.0
-    """Club-wide distance for the period, kilometres."""
     total_elev: float = 0.0
-    """Club-wide elevation gain for the period, metres."""
     run_count: int = 0
-    """Number of activities in the period."""
-    athlete_count: int = 0
-    """Number of registered members (from members.csv), runners or not."""
-    no_unit_count: int = 0
-    """Roster-matched athletes whose roll Unit is blank - registered, but unplaceable."""
-    leaderboard: list = field(default_factory=list)
-    """Display-ready rows, km-ranked, one per athlete incl. zero rows for non-runners."""
+    athlete_count: int = 0     # members.csv rows, runners or not
+    no_unit_count: int = 0     # roster-matched athletes whose roll Unit is blank
+    leaderboard: list = field(default_factory=list)  # km-ranked, incl. zero rows for non-runners
     fun_stats: dict = field(default_factory=dict)
-    """Novelty awards, e.g. {"breaks": {...} | None}."""
     king_km: dict | None = None
-    """Most distance: {"name", "value"} or None if nobody qualified."""
     king_elev: dict | None = None
-    """Most elevation gain: {"name", "value"} or None."""
-    marathoner: dict | None = None
-    """Most moving time: {"name", "value"} or None."""
+    marathoner: dict | None = None  # most moving time
     fastest: dict | None = None
-    """Best average speed: {"name", "value"} or None."""
     longest: dict | None = None
-    """Longest single run: {"name", "value"} or None."""
-    climber: dict | None = None
-    """Steepest sustained climber (>= 30 hill-km): {"name", "value"} or None."""
-    flatrunner: dict | None = None
-    """Flattest route over >= 50 km: {"name", "value"} or None."""
-    device_stats: list = field(default_factory=list)
-    """[{"device", "count"}] runners per recording device, hardware first."""
-
-    def to_dict(self) -> dict:
-        """Serialise to a plain dict for json.dumps."""
-        return asdict(self)
+    climber: dict | None = None     # steepest sustained climber (>= 30 hill-km)
+    flatrunner: dict | None = None  # flattest route over >= 50 km
+    device_stats: list = field(default_factory=list)  # runners per device, hardware first
 
 
 def _device_sort(item):
@@ -182,7 +137,7 @@ def _device_sort(item):
 
 def _new_athlete(name: str, roll: NominalRoll) -> AthleteStats:
     """Empty accumulator with unit/company filled in from the roll."""
-    uc = roll.unit_company(name) if roll else {}
+    uc = roll.unit_company(name)
     return AthleteStats(
         name,
         unit=uc.get("unit", ""),
@@ -190,23 +145,16 @@ def _new_athlete(name: str, roll: NominalRoll) -> AthleteStats:
     )
 
 
-def resolve_name(raw_name: str, roll: NominalRoll) -> str:
-    """Canonical roster name for a raw Strava display name."""
-    return roll.resolve(raw_name) if roll else (raw_name or "").strip()
-
-
 def _roster_name(act: dict, roll: NominalRoll, member_by_id: dict) -> str:
     """The roster name for an activity: via its athlete_id's member, else its own name."""
     member = member_by_id.get(str(act.get("athlete_id") or ""))
     raw = member.get("name", "") if member else act.get("athlete_name", "")
-    return resolve_name(raw, roll)
+    return roll.resolve(raw)
 
 
 def _accumulate_athletes(activities: list, roll: NominalRoll, member_by_id: dict) -> tuple:
-    """Fold every activity into per-athlete accumulators, keyed by resolved name.
-
-    Returns (athletes, total_km, total_elev).
-    """
+    """Fold every activity into per-athlete accumulators keyed by resolved name.
+    Returns (athletes, total_km, total_elev)."""
     athletes: dict = {}
     total_km = 0.0
     total_elev = 0.0
@@ -234,15 +182,14 @@ def _build_device_stats(athletes: dict) -> list:
 
 
 def _build_leaderboard(athletes: dict, members: list, roll: NominalRoll) -> list:
-    """The full leaderboard, km-ranked, with every non-running member appended
-    as a zero row so the table shows the whole unit."""
+    """The km-ranked leaderboard, plus a zero row per non-running member so it shows the whole unit."""
     ranked = sorted(athletes.values(), key=lambda a: a.km, reverse=True)
     leader_km = ranked[0].km if ranked else 0
     leaderboard = [a.to_leaderboard_entry(leader_km) for a in ranked]
 
     listed = set(athletes.keys())
-    for m in members or []:
-        name = resolve_name(m.get("name", ""), roll)
+    for m in members:
+        name = roll.resolve(m.get("name", ""))
         if name and name not in listed:
             leaderboard.append(_new_athlete(name, roll).to_leaderboard_entry(leader_km))
             listed.add(name)
@@ -293,17 +240,13 @@ def _compute_fun_stats(athletes: dict) -> dict:
     return {"breaks": breaks}
 
 
-def compute_stats(activities: list, members: list = None, roll: NominalRoll = None) -> ReportStats:
-    """Compute all leaderboard, award, and fun statistics for one period.
-
-    members (rows of members.csv) adds zero rows for club members who did not run
-    and provides the athlete_id -> name join. All-zero when there are neither
-    activities nor members.
-    """
+def compute_stats(activities: list, members: list, roll: NominalRoll) -> ReportStats:
+    """All leaderboard, award and fun statistics for one period.
+    members adds zero rows for non-runners and provides the athlete_id -> name join."""
     if not activities and not members:
         return ReportStats()
 
-    member_by_id = {str(m.get("athlete_id") or ""): m for m in (members or [])}
+    member_by_id = {str(m.get("athlete_id") or ""): m for m in members}
     athletes, total_km, total_elev = _accumulate_athletes(activities, roll, member_by_id)
     leaderboard = _build_leaderboard(athletes, members, roll)
 
@@ -311,10 +254,10 @@ def compute_stats(activities: list, members: list = None, roll: NominalRoll = No
         total_km=total_km,
         total_elev=total_elev,
         run_count=len(activities),
-        athlete_count=len(members or []),
+        athlete_count=len(members),
         # unit_company() is empty only for someone off the roll, never for a blank unit.
         no_unit_count=sum(1 for r in leaderboard
-                          if roll and roll.unit_company(r["name"]) and not r["unit"]),
+                          if roll.unit_company(r["name"]) and not r["unit"]),
         leaderboard=leaderboard,
         fun_stats=_compute_fun_stats(athletes),
         device_stats=_build_device_stats(athletes),

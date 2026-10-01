@@ -1,12 +1,9 @@
-"""Unit tests for backfill's pure helpers (no browser, no network).
-
-months_since() lists the Strava monthly interval ids to request; challenge_rows() keeps
-only this athlete's public foot activities that started locally on/after the challenge.
-"""
+"""Unit tests for backfill's pure helpers: months_since() interval ids, and challenge_rows()
+keeping only this athlete's public foot activities from the challenge start (local time)."""
 from datetime import date
 from zoneinfo import ZoneInfo
 
-from src.activities import backfill as B
+from src.activities import activities as B
 
 SGT = ZoneInfo("Asia/Singapore")
 START = "2026-09-14"

@@ -1,17 +1,5 @@
-"""Roster loading and athlete-name resolution.
-
-Maps Strava display names to full formal names, and full names to their unit /
-company / type of service.
-
-The username people self-report on the registration form rarely matches their
-Strava display name character for character, so the match runs in tiers --
-normalised exact, then word-order-insensitive, then fuzzy, then against the
-roll's real-name column -- and is fitted once over every known athlete name so
-the result is strictly one-to-one: no two Strava accounts resolve to the same
-person, and no account claims two. A username that several people on the roll
-declared is ambiguous and matches nobody; fit() reports those so the roll
-itself can be corrected.
-"""
+"""Resolve Strava display names to roll names (and so unit / company / service), strictly one-to-one.
+Tiers: exact, word order, fuzzy, then the roll's real Name; a username several people declared matches nobody."""
 import csv
 import difflib
 import re
@@ -40,13 +28,8 @@ REPORT_PATH = Path(__file__).parent.parent.parent / "logs" / "name_matches.log"
 
 
 def _norm(s: str) -> str:
-    """Accent-stripped, lowercased, punctuation-flattened form used for comparison.
-
-    Collapses the cosmetic differences that make a self-reported username miss:
-    "Darren  Huang" and "Marcus ." normalise onto "darren huang" and "marcus".
-    Non-Latin scripts are kept as-is - a few people registered a CJK username,
-    and stripping to ASCII would leave nothing to match on.
-    """
+    """Accent-stripped, lowercased, punctuation-flattened form: "Darren  Huang" -> "darren huang".
+    Non-Latin scripts are kept - a few people registered a CJK username."""
     s = unicodedata.normalize("NFKD", s or "")
     s = "".join(c for c in s if not unicodedata.combining(c)).lower()
     return " ".join(re.sub(r"[\W_]+", " ", s).split())
@@ -75,25 +58,17 @@ class NominalRoll:
     CSV_PATH = Path(__file__).parent.parent / "nominal_roll" / "nominal_roll.csv"
 
     def __init__(self):
-        # name_map:  {normalised_username: FULL_NAME}  - unambiguous entries only.
-        # token_map: {sorted-word key: FULL_NAME}      - unambiguous entries only.
-        # conflicts: {key: [FULL_NAME, ...]}           - declared by several people.
-        # entries:   [(raw_username, FULL_NAME)]       - candidates for fuzzy matching.
-        # unit_company_map: {FULL_NAME: {unit, company, service}}.
-        (self.name_map, self.token_map, self.conflicts,
-         self.entries, self.unit_company_map) = self._load(self.CSV_PATH)
+        self._load(self.CSV_PATH)
         #: {raw Strava name: FULL_NAME}, filled by fit(). Empty until then.
         self.match_map = {}
 
-    def _load(self, path) -> tuple:
-        """Read the roll once, indexing usernames and flagging the ambiguous ones.
-
-        A key claimed by two or more different people cannot be resolved by any
-        rule, so it is recorded in conflicts and kept out of every lookup table.
-        """
+    def _load(self, path) -> None:
+        """Read the roll once, indexing usernames and flagging the ambiguous ones."""
         owners, token_owners = {}, {}
-        entries = []
-        unit_company_map = {}
+        #: [(raw_username, FULL_NAME)] - candidates for fuzzy matching.
+        self.entries = []
+        #: {FULL_NAME: {unit, company, service}}.
+        self.unit_company_map = {}
         try:
             with open(path, newline="", encoding="utf-8-sig") as f:
                 for row in csv.DictReader(f):
@@ -104,13 +79,13 @@ class NominalRoll:
                     if strava and full and _norm(strava):
                         owners.setdefault(_norm(strava), set()).add(full)
                         token_owners.setdefault(_token_key(strava), set()).add(full)
-                        entries.append((strava, full))
+                        self.entries.append((strava, full))
                     if full:
                         unit = row.get("Unit", "").strip()
                         company = row.get("Company", "").strip()
                         if company.lower() in JUNK_COMPANIES:
                             company = ""
-                        unit_company_map[full] = {
+                        self.unit_company_map[full] = {
                             "unit":    unit,
                             "company": f"{unit}/{company}" if unit and company else company,
                             "service": row.get("Type of service", "").strip().upper(),
@@ -124,21 +99,15 @@ class NominalRoll:
         for table in (owners, token_owners):
             for key, names in table.items():
                 merged.setdefault(key, set()).update(names)
-        conflicts = {k: sorted(v) for k, v in merged.items() if len(v) > 1}
-
-        name_map = {k: next(iter(v)) for k, v in owners.items() if k not in conflicts}
-        token_map = {k: next(iter(v)) for k, v in token_owners.items() if k not in conflicts}
-        return name_map, token_map, conflicts, entries, unit_company_map
+        #: {key: [FULL_NAME, ...]} - declared by several people, so in neither lookup table.
+        self.conflicts = {k: sorted(v) for k, v in merged.items() if len(v) > 1}
+        #: {normalised username: FULL_NAME} and {sorted-word key: FULL_NAME}, unambiguous only.
+        self.name_map = {k: next(iter(v)) for k, v in owners.items() if k not in self.conflicts}
+        self.token_map = {k: next(iter(v)) for k, v in token_owners.items() if k not in self.conflicts}
 
     def fit(self, names) -> None:
-        """Assign each raw Strava name at most one roster entry, one-to-one.
-
-        Works through the tiers in confidence order; a roster entry taken by an
-        earlier tier is never offered again, and within the fuzzy tier the best
-        scoring pairs are settled first. Names whose own key is contested on the
-        roll are skipped outright - guessing there would credit one person's runs
-        to another - as are the roster entries doing the contesting.
-        """
+        """Assign each raw Strava name at most one roster entry, one-to-one, tiers in confidence order.
+        Names whose key is contested on the roll are skipped, as are the contesting entries."""
         names = sorted({(n or "").strip() for n in names} - {""})
         blocked = {f for v in self.conflicts.values() for f in v}
         self.match_map = {}
@@ -181,18 +150,15 @@ class NominalRoll:
         for score, n, f, u in sorted(pairs, key=lambda p: (-p[0], p[1], p[2])):
             claim(n, f, "fuzzy", score, u)
 
-        ambiguous = self._fit_real_names(names, taken, claim)
+        ambiguous = self._fit_real_names(names, claim)
         self._write_report(names, matched, ambiguous)
 
-    def _fit_real_names(self, names, taken, claim) -> list:
-        """Real-name tier: the roll's Name column, when the username was blank or wrong.
-
-        A contested username says nothing about whose real name is whose, so
-        unlike the earlier tiers this one ignores conflicts entirely - it is
-        independent evidence, not a rescue of the declared username. Returns the
-        names it refused because several roster entries fit equally well.
-        """
-        # Roster entries still free. Conflicted ones are eligible here.
+    def _fit_real_names(self, names, claim) -> list:
+        """Real-name tier: match the roll's Name column when the username was blank or wrong.
+        Returns the names refused because several roster entries fit equally well."""
+        # Roster entries still free. Conflicted ones are eligible: a contested username says
+        # nothing about whose real name is whose, so this tier is independent evidence.
+        taken = set(self.match_map.values())
         pool = [(f, _name_tokens(f)) for f in self.unit_company_map if f not in taken]
         ambiguous = []
         for n in sorted(n for n in names if n not in self.match_map):
@@ -210,7 +176,7 @@ class NominalRoll:
                 ambiguous.append((n, cands))
         return ambiguous
 
-    def _write_report(self, names, matched, ambiguous=()) -> None:
+    def _write_report(self, names, matched, ambiguous) -> None:
         """Write the fit() audit trail, so a wrong match is visible rather than silent."""
         unmatched = [n for n in names if n not in self.match_map]
         lines = [

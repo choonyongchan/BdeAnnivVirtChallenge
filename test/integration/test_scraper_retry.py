@@ -1,11 +1,5 @@
-"""Integration test for StravaScraper.scrape()'s auth-check and retry policy.
-
-Rules: no saved session -> ScrapeError before any fetch; a transient failure is
-retried up to 3 times with 30s then 60s backoff, then given up as a
-ScrapeError; a ScrapeError from fetch() is a definite failure and is re-raised
-at once without retrying; a fetch() that eventually succeeds has its payload
-handed to write().
-"""
+"""Integration test for StravaScraper.scrape(): no session fails before fetch; transient failures retry
+3x with 30s/60s backoff; a ScrapeError is re-raised at once; success hands the payload to write()."""
 import pytest
 
 from src import strava_session as S

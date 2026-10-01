@@ -1,14 +1,13 @@
-"""Unit tests for HTML rendering.
-
-`_slim_leaderboard` shrinks the historical payload by dropping the all-constant
-fields off non-runner rows and hoisting their shared gap string once.
-`build_announcement_html` hides the banner unless there is a real title, and
-escapes everything. `render` must consume every placeholder token and drop
-valid JSON into the data slots.
-"""
+"""Unit tests for HTML rendering: _slim_leaderboard, the announcement banner (hidden without a title,
+escaped), and render() filling every placeholder with valid JSON."""
 import json
+from types import SimpleNamespace
 
 from src.dashboard.renderer import build_announcement_html, render, _slim_leaderboard
+
+
+def _cfg(name="Club", club_id="1"):
+    return SimpleNamespace(club_name=name, club_id=club_id)
 
 
 def test_slim_leaderboard_collapses_only_zero_rows():
@@ -56,9 +55,10 @@ def test_announcement_escapes_markup(tmp_path):
 
 def test_render_consumes_every_placeholder_and_embeds_json():
     data = {"today": {"all": {"leaderboard": [], "total_km": 1.5}}}
-    daily = {"2026-09-14": {"date": "2026-09-14", "label": "14.9.2026"}}
+    daily = {"2026-09-14": {"date": "2026-09-14", "label": "14.9.2026",
+                            **{g: {"leaderboard": []} for g in ("all", "serving", "alumni")}}}
     page = render(data, daily, "5.9.2026 14:30", "<span>W</span>", "<div>A</div>",
-                  "8SAB Anniversary Challenge", 2211123)
+                  _cfg("8SAB Anniversary Challenge", 2211123))
 
     for token in ("__DATA__", "__DAILY_DATA__", "__UPDATED_HUMAN__", "__WEATHER__",
                   "__ANNOUNCEMENT__", "__CLUB_NAME__", "__CLUB_SHORT__", "__CLUB_ID__"):
@@ -71,9 +71,9 @@ def test_render_consumes_every_placeholder_and_embeds_json():
 
 
 def test_render_club_short_from_name_shape():
-    multi = render({}, {}, "", "", "", "Xqz Wvu Tsr", "1")
+    multi = render({}, {}, "", "", "", _cfg("Xqz Wvu Tsr"))
     assert "XWT" in multi                           # initials of a multi-word name
-    single = render({}, {}, "", "", "", "Zzyx", "1")
+    single = render({}, {}, "", "", "", _cfg("Zzyx"))
     assert "ZZYX" in single                         # first 4 chars of a single word
 
 
@@ -81,5 +81,5 @@ def test_render_escapes_script_breakout_in_embedded_json():
     data = {"today": {"all": {"leaderboard": [
         {"name": "</script><script>alert(1)</script>", "acts": 0},
     ]}}}
-    page = render(data, {}, "", "", "", "Club", "1")
+    page = render(data, {}, "", "", "", _cfg())
     assert "</script><script>alert(1)</script>" not in page

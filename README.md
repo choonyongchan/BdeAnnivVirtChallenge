@@ -57,7 +57,7 @@ browser instead. One `python -m src.main` run does five things in order:
 ```
 python -m src.main
   ├─ check_auth()                 src/main.py          is src/auth_state.json a valid session?
-  ├─ ActivityScraper().scrape()   src/activities/      fetch the club feed in a real browser
+  ├─ RecentActivityFeed().scrape()   src/activities/      fetch the club feed in a real browser
   │                                                    → append new rows to activities.csv
   ├─ MemberScraper().scrape()     src/members/         read the club's headline member count
   │                                                    → member_count.json; append new
@@ -92,7 +92,7 @@ python -m playwright install chromium    # add --with-deps on Linux
 | Command | Does |
 |---|---|
 | `python -m src.login` | Opens a visible browser to log in to Strava; writes `src/auth_state.json`, the session every scraper reuses. |
-| `python -m src.nominal_roll.nominal_roll "<raw FormSG export.csv>"` | Cleans a registration export and merges it into `src/nominal_roll/nominal_roll.csv` — exports are incremental, so new registrants are appended and a re-registration replaces that person's row. Delete the roll first to rebuild it from scratch. Without this file the dashboard still builds, but nobody gets a unit, company, or full name. |
+| `python -m src.nominal_roll.nominal_roll "<raw FormSG export.csv>"` | Cleans a registration export and merges it into `src/nominal_roll/nominal_roll.csv` — exports are incremental, so new registrants are appended and a re-registration replaces that person's row. Delete the roll first to rebuild it from scratch. Afterwards each new or changed STRAVA username is looked up on Strava; anyone found in the club is added to `members.csv` and gets a full activity scan (`--no-discover` skips this; `--recheck` with no export re-searches usernames that were private or not in the club, as the daily task does). Without this file the dashboard still builds, but nobody gets a unit, company, or full name. |
 | `python -m src.main` | Runs the full pipeline: scrape, generate, and push. |
 | `python -m src.dashboard.generate` | Rebuilds `index.html` from the CSVs you already have, without scraping or touching git. |
 | `python -m pytest test/ -q` | Runs the test suite (`test/unit`, `test/integration`, `test/e2e`). Every fixture is synthetic. |
@@ -119,18 +119,11 @@ Content is HTML-escaped.
 
 ## How it deploys
 
-`.github/workflows/update.yml` builds and deploys the dashboard on the hour
-(`cron: '0 * * * *'`; GitHub can delay a scheduled run 5–20 minutes) and on demand
-from **Actions → Update and Deploy Strava Dashboard → Run workflow**. It runs the
-tests, installs Chromium for Playwright, decodes the two secrets below, runs
-`python -m src.main`, commits `activities.csv`, `members.csv`, `member_count.json`, and `index.html`
-back to `main`, then publishes `index.html` (and the `user-count.json` badge data
-file) to GitHub Pages via `actions/deploy-pages`.
-
-| Secret | Contents |
-|---|---|
-| `AUTH_STATE` | Base64 of `src/auth_state.json`. Refresh with `python -m src.login`, then re-encode. |
-| `NOMINAL_ROLL` | Base64 of `src/nominal_roll/nominal_roll.csv`. |
+The pipeline runs locally: `scripts/run_pipeline.ps1` (Windows Task Scheduler, see
+below) runs `python -m src.main` and commits `activities.csv`, `members.csv`,
+`member_count.json`, and `index.html` to `main`. `.github/workflows/deploy.yml`
+then publishes `index.html` (and the `user-count.json` badge data file) to GitHub
+Pages via `actions/deploy-pages` whenever a push changes either file.
 
 Publishing needs **Settings → Pages → Source = GitHub Actions**. `index.html` is
 the entire site. The CSV ledgers are committed for history; `auth_state.json` and
@@ -143,16 +136,10 @@ badges at the top track. Codecov needs a `CODECOV_TOKEN` repo secret from
 
 ### Windows Task Scheduler (local hourly runs)
 
-In addition to GitHub Actions, an operator's Windows machine can run the same
-pipeline hourly via Task Scheduler — useful as a second, independent path to
-keep the ledgers and dashboard current if the GitHub-hosted cron is delayed or
-disabled. `scripts/run_pipeline.ps1` mirrors `update.yml`'s "Run pipeline" and
-"Commit ledgers" steps, skipping the CI-only secret-restore steps since
-`src/auth_state.json` and `src/nominal_roll/nominal_roll.csv` already exist on
-disk on that machine. It's scheduled at **minute 47** of every hour — 30
-minutes offset from GitHub Actions' `17 * * * *` cron — so the two are unlikely
-to `git push` at the same moment; if they ever collide, the loser's `git pull
---rebase --autostash` picks up the winner's commit on its next hourly run.
+An operator's Windows machine runs the pipeline hourly via Task Scheduler.
+`scripts/run_pipeline.ps1` runs the pipeline and commits the ledgers;
+`src/auth_state.json` and `src/nominal_roll/nominal_roll.csv` must exist on disk
+on that machine. It's scheduled at **minute 47** of every hour.
 
 Registered once with:
 
@@ -187,7 +174,8 @@ src/
   announcement.md                optional banner text
   auth_state.json                session cookies (gitignored; from AUTH_STATE)
   activities/
-    activities.py                scrape club feed → append-only ledger
+    activities.py                club feed (RecentActivityFeed) + member profiles (ProfilesFeed) → append-only ledger
+    reconcile.py                 leaderboard check: flags members whose last-2-weeks totals exceed the ledger (--fix rescans them)
     activities.csv               activity ledger (committed)
   members/
     members.py                   headline count + activity athletes → append-only ledger
@@ -196,6 +184,7 @@ src/
   nominal_roll/
     nominal_roll.py               raw FormSG export → cleaned roster
     nominal_roll.csv             roster (gitignored; from NOMINAL_ROLL)
+    discover_state.json          Strava lookup outcomes per roll username (gitignored)
   dashboard/
     generate.py                  load CSVs → compute → render → write index.html + src/user-count.json
     stats.py                     statistics engine (totals, awards, leaderboard)
@@ -208,7 +197,7 @@ test/                            pytest suite (unit / integration / e2e)
 scripts/
   run_pipeline.ps1               Windows Task Scheduler entry point (hourly, local)
 logs/                            run_pipeline.ps1 output (gitignored)
-.github/workflows/update.yml     hourly scrape + generate, then deploy to Pages
+.github/workflows/deploy.yml     publish index.html to GitHub Pages on push
 .github/workflows/test.yml       tests + coverage on every push/PR
 ```
 
@@ -218,8 +207,7 @@ You need Python 3.10 or newer (the code uses `X | None` annotations; CI pins
 3.14), a Strava account in the club, and the club set to show member activity.
 
 Run `python -m pytest test/ -q` (or scope to `test/unit`, `test/integration`,
-`test/e2e`) from the repo root before you push — `test.yml` runs it in CI, but
-`update.yml`'s hourly run fails outright if the suite breaks. `pytest` is in
+`test/e2e`) from the repo root before you push — `test.yml` runs it in CI. `pytest` is in
 `requirements.txt`; every fixture is synthetic, so the real roster and the real
 FormSG export are never read.
 

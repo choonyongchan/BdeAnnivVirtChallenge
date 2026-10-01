@@ -1,5 +1,6 @@
-"""Current weather via Open-Meteo (no API key). Network-optional: any failure
-returns "" so the page still renders. Ported from src_bak/generate.py."""
+"""Current weather via Open-Meteo (no API key); any failure yields "" so the page still renders."""
+import json
+import urllib.request
 
 WEATHER_CODES = {
     0: ("☀️", "Clear"), 1: ("🌤️", "Mostly clear"), 2: ("⛅", "Partly cloudy"),
@@ -12,40 +13,26 @@ WEATHER_CODES = {
 }
 
 
-def fetch_weather(lat, lon, tz) -> dict:
-    """Fetch current weather from Open-Meteo. Returns {"ok": False} on any failure."""
+def weather_html(lat, lon, tz) -> str:
+    """The header's ``<span class="weather-widget">`` from Open-Meteo, or "" on any failure."""
+    url = (
+        "https://api.open-meteo.com/v1/forecast"
+        f"?latitude={lat}&longitude={lon}"
+        "&current=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m"
+        f"&wind_speed_unit=kmh&timezone={tz}"
+    )
     try:
-        import requests  # only needed on this path; absent in no-network runs
-        url = (
-            "https://api.open-meteo.com/v1/forecast"
-            f"?latitude={lat}&longitude={lon}"
-            "&current=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m"
-            f"&wind_speed_unit=kmh&timezone={tz}"
-        )
-        c = requests.get(url, timeout=8).json()["current"]
-        code = int(c.get("weather_code", 0))
-        icon, desc = WEATHER_CODES.get(code, ("🌡️", ""))
-        return {
-            "icon": icon,
-            "desc": desc,
-            "temp": round(c.get("temperature_2m", 0)),
-            "wind": round(c.get("wind_speed_10m", 0)),
-            "ok": True,
-        }
+        with urllib.request.urlopen(url, timeout=8) as r:
+            c = json.load(r)["current"]
+        icon, desc = WEATHER_CODES.get(int(c.get("weather_code", 0)), ("🌡️", ""))
+        temp, wind = round(c.get("temperature_2m", 0)), round(c.get("wind_speed_10m", 0))
     except Exception as e:
         print(f"  Weather fetch failed: {e}")
-        return {"ok": False}
-
-
-def weather_html(lat, lon, tz) -> str:
-    """The finished ``<span class="weather-widget">`` for the header, or "" on failure."""
-    w = fetch_weather(lat, lon, tz)
-    if not w["ok"]:
         return ""
     return (
         '<span class="weather-widget">'
-        f'{w["icon"]} <strong>{w["temp"]}°C</strong>'
-        f' · {w["desc"]}'
-        f' · 💨 {w["wind"]} km/h'
+        f'{icon} <strong>{temp}°C</strong>'
+        f' · {desc}'
+        f' · 💨 {wind} km/h'
         '</span>'
     )

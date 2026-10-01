@@ -1,16 +1,5 @@
-"""Shared fixtures and import wiring for the ./test suite.
-
-Run from the repo root with a Python that has the src deps installed
-(pyyaml, requests, playwright, pytest):
-
-    python -m pytest test/ -q
-
-`src/` is a package; putting the repo root on sys.path is all that is needed
-for `import src.<pkg>.<mod>` to resolve from anywhere under test/.
-
-Every input in this suite is synthetic ("universal dummy") data. The real
-src/nominal_roll/nominal_roll.csv and the real FormSG export are never read.
-"""
+"""Shared fixtures for the ./test suite (run: python -m pytest test/ -q).
+Every input is synthetic; the real nominal_roll.csv and FormSG export are never read."""
 import csv
 import itertools
 import sys
@@ -71,10 +60,7 @@ def roll(roster_csv, monkeypatch):
 
 @pytest.fixture
 def make_activity():
-    """Factory for one activities.csv-shaped row dict, with sane defaults.
-
-        make_activity("Alice Anon", distance_m=10_000, moving_time_s=3000)
-    """
+    """Factory for one activities.csv-shaped row dict: make_activity("Alice Anon", distance_m=10_000)."""
     seq = itertools.count(1)
 
     def _make(athlete_name="Alice Anon", *, athlete_id="1", distance_m=5000,
@@ -103,10 +89,7 @@ def make_activity():
 @pytest.fixture
 def dummy_members():
     """members.csv-shaped rows matching the dummy roster's STRAVA usernames.
-
-    Cara's first_seen is later, so time-gated history tests can check she is
-    absent from earlier days.
-    """
+    Cara's first_seen is later, so history tests can check she is absent from earlier days."""
     return [
         {"athlete_id": "1", "name": "Alice Anon", "first_seen": "2026-09-10T00:00:00+00:00"},
         {"athlete_id": "2", "name": "Bob Bogus", "first_seen": "2026-09-10T00:00:00+00:00"},

@@ -1,9 +1,5 @@
-"""Shared dashboard + scraper settings from src/config.yaml. No secrets here.
-
-Read once; every key is required, so a missing config.yaml or a missing key
-fails loudly instead of silently falling back. (Unrelated to the retired
-src_bak/config.py, the old .env Strava-API credential loader.)
-"""
+"""Shared dashboard + scraper settings from src/config.yaml (no secrets).
+Every key is required, so a missing file or key fails loudly instead of falling back."""
 from dataclasses import dataclass
 from pathlib import Path
 

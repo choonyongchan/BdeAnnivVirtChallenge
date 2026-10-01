@@ -1,12 +1,7 @@
-"""Unit tests for the statistics / awards engine.
-
-The rules under test: blank CSV numbers coerce to 0 (never NaN), speed only
-counts for runs over 0.5 km, "real hill" runs need >= 5 km and >= 8 m+/km, the
-leaderboard shows the whole unit (non-runners as zero rows), each award has a
-qualifying threshold and is None when nobody clears it, and device stats put
-real hardware above virtual platforms.
-"""
+"""Unit tests for the statistics / awards engine: blank numbers, speed/hill thresholds,
+whole-unit leaderboard, award qualification and device ordering."""
 import csv
+from dataclasses import asdict
 
 import pytest
 
@@ -121,7 +116,7 @@ def test_totals_and_leaderboard_cover_the_whole_roster(make_activity, dummy_memb
         make_activity("Alice Anon", distance_m=5_000, moving_time_s=1500),
         make_activity("Bob Bogus", athlete_id="2", distance_m=8_000, moving_time_s=2400),
     ]
-    s = compute_stats(acts, members=dummy_members, roll=roll).to_dict()
+    s = asdict(compute_stats(acts, members=dummy_members, roll=roll))
 
     assert s["run_count"] == 3
     assert s["athlete_count"] == 4               # every member row, runner or not
@@ -139,7 +134,7 @@ def test_totals_and_leaderboard_cover_the_whole_roster(make_activity, dummy_memb
 
 def test_blank_numbers_never_become_nan(make_activity, dummy_members, roll):
     acts = [make_activity("Alice Anon", distance_m="", moving_time_s="", elev_gain_m="")]
-    s = compute_stats(acts, members=dummy_members, roll=roll).to_dict()
+    s = asdict(compute_stats(acts, members=dummy_members, roll=roll))
     assert s["total_km"] == 0.0 and s["total_elev"] == 0.0
     row = next(r for r in s["leaderboard"] if r["name"] == "ALICE ANON")
     assert row["avg_speed_ms"] == 0
@@ -200,8 +195,8 @@ def test_fun_stats_break_king_threshold(make_activity, dummy_members, roll, brea
     assert compute_stats(acts, members=dummy_members, roll=roll).fun_stats["breaks"] == expected
 
 
-def test_no_data_period_is_plain_report_stats():
-    assert compute_stats([], None).to_dict() == ReportStats().to_dict()
+def test_no_data_period_is_plain_report_stats(roll):
+    assert asdict(compute_stats([], [], roll)) == asdict(ReportStats())
 
 
 def test_blank_unit_is_counted_apart_from_being_off_the_roll(tmp_path, monkeypatch,

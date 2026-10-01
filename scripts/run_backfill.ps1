@@ -29,14 +29,14 @@ try {
 
     $Python = Join-Path $RepoRoot ".venv\Scripts\python.exe"
     # Find roll members with no club-feed activity yet, so the backfill below scans them too.
-    & $Python -m src.members.discover
+    & $Python -m src.nominal_roll.nominal_roll --recheck
     if ($LASTEXITCODE -ne 0) {
-        throw "src.members.discover exited with code $LASTEXITCODE (if the session expired: python -m src.login)"
+        throw "nominal_roll --recheck exited with code $LASTEXITCODE (if the session expired: python -m src.login)"
     }
 
-    & $Python -m src.activities.backfill
+    & $Python -m src.activities.activities
     if ($LASTEXITCODE -ne 0) {
-        throw "src.activities.backfill exited with code $LASTEXITCODE"
+        throw "src.activities.activities exited with code $LASTEXITCODE"
     }
 
     git diff --quiet -- src/activities/activities.csv src/members/members.csv
@@ -47,7 +47,7 @@ try {
         if ($LASTEXITCODE -ne 0) {
             throw "src.dashboard.generate exited with code $LASTEXITCODE"
         }
-        git add src/activities/activities.csv src/members/members.csv src/members/discover_state.json index.html src/user-count.json
+        git add src/activities/activities.csv src/members/members.csv index.html src/user-count.json
         git pull --rebase --autostash origin main
         git commit -m "Backfill update (Windows Task Scheduler)"
         git push

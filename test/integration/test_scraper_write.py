@@ -1,12 +1,5 @@
-"""Integration test for the two scrapers' CSV merge steps (no browser).
-
-Only `write()` is exercised — the Playwright `fetch()` is not. The rules:
-activities.csv is append-only and deduped by activity_id (header written once,
-scraped_at stamped), and members.csv is append-only and deduped by athlete_id -
-every activities.csv athlete without a row is appended with first_seen = their
-first activity, an existing row is never rewritten (name frozen), and the
-headline member count is saved alongside.
-"""
+"""Integration test for the scrapers' write() steps (no browser): both CSVs are append-only and deduped
+by id; members get first_seen = first activity, existing rows are never rewritten."""
 import csv
 import json
 
@@ -35,8 +28,8 @@ def test_activities_write_is_append_only_and_deduped(tmp_path, monkeypatch):
     path = tmp_path / "activities.csv"
     monkeypatch.setattr(A, "CSV_PATH", path)
 
-    A.ActivityScraper().write([_activity(1, 7)])
-    A.ActivityScraper().write([_activity(1, 7), _activity(2, 8)])   # 1 repeats, 2 is new
+    A.RecentActivityFeed().write([_activity(1, 7)])
+    A.RecentActivityFeed().write([_activity(1, 7), _activity(2, 8)])   # 1 repeats, 2 is new
 
     rows = _read(path)
     assert [r["activity_id"] for r in rows] == ["1", "2"]           # no duplicate row for 1
@@ -53,7 +46,7 @@ def test_activities_write_drops_idless_rows_and_expands_group(tmp_path, monkeypa
         {"activity_id": 10, "athlete_id": 1, "start_date": "2026-09-14T01:00:00Z", "stats": []},
         {"activity_id": 11, "athlete_id": 2, "start_date": "2026-09-14T02:00:00Z", "stats": []},
     ]}}
-    A.ActivityScraper().write([idless, group])
+    A.RecentActivityFeed().write([idless, group])
 
     assert [r["activity_id"] for r in _read(path)] == ["10", "11"]
 

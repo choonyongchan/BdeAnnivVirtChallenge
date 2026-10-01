@@ -1,3 +1,4 @@
+# CI: runs the pytest suite with coverage on every push to main and on pull requests.
 name: Tests
 
 on:

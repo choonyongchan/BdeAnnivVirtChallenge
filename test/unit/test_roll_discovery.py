@@ -1,13 +1,10 @@
-"""Unit tests for discover's pure helpers (no browser, no network).
-
-name_ok() is the precision gate on the top search hit; candidates()/is_due() decide
-which roll usernames get (re)searched given the remembered outcomes.
-"""
+"""Unit tests for roll discovery's pure helpers: name_ok() gates search hits; candidates()/is_due()
+decide which roll usernames get (re)searched."""
 from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from src.members import discover as D
+from src.nominal_roll import nominal_roll as D
 
 NOW = datetime(2026, 9, 29, tzinfo=timezone.utc)
 
@@ -49,3 +46,13 @@ def test_candidates_skips_ledger_blank_and_settled():
     state = {"Bob Tan": _entry("not_in_club", days_ago=1)}
     got = D.candidates(roll, {"alice lee"}, state, NOW)
     assert [r["STRAVA username"] for r in got] == ["New Guy"]
+
+
+def test_trigger_rows_new_or_changed_username_only():
+    before = [["AL", "40SAR", "", "NSF", "al_old"], ["BO", "40SAR", "", "NSF", "bo"], ["CY", "40SAR", "", "NSF", "cy"]]
+    after = [["AL", "40SAR", "", "NSF", "al_new"],      # username changed
+             ["BO", "41SAR", "", "NSF", "bo"],          # re-registered, same username
+             ["CY", "40SAR", "", "NSF", ""],            # username removed
+             ["DI", "40SAR", "", "NSF", "di"],          # new person
+             ["EE", "40SAR", "", "NSF", ""]]            # new person, no username
+    assert [r["STRAVA username"] for r in D.trigger_rows(before, after)] == ["al_new", "di"]

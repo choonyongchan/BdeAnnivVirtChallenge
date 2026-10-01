@@ -1,10 +1,5 @@
-"""Integration test for ActivityScraper.fetch()'s paging logic (no browser).
-
-Rules: follow pagination.hasMore by building the next url from the last entry's
-cursorData; stop early once a whole page is already in activities.csv (the feed is
-newest-first, so everything beyond it is old too); a non-JSON response is a definite
-ScrapeError; a feed that never stops is a ScrapeError after the circuit-breaker ceiling.
-"""
+"""Integration test for RecentActivityFeed.fetch()'s paging (no browser): follow hasMore, stop once a
+page is all known, non-JSON and a never-ending feed are ScrapeErrors."""
 import csv
 import shutil
 from contextlib import contextmanager
@@ -23,9 +18,8 @@ def _fixture_rows():
 
 
 class _FakePage:
-    """Stands in for Playwright's page: .evaluate() returns the next canned result
-    (sticky on the last one, so a test can force many iterations without listing them
-    all); .wait_for_timeout() is a no-op."""
+    """Stands in for Playwright's page: .evaluate() returns the next canned result (sticky on the last);
+    .wait_for_timeout() is a no-op."""
 
     def __init__(self, responses):
         self._responses = list(responses)
@@ -42,9 +36,9 @@ class _FakePage:
 
 def _use_fake_page(monkeypatch, fake_page):
     @contextmanager
-    def _fake_club_page(self):
+    def _fake_club_page(url):
         yield fake_page
-    monkeypatch.setattr(A.ActivityScraper, "_club_page", _fake_club_page)
+    monkeypatch.setattr(A, "club_page", _fake_club_page)
 
 
 def _entry(row, cursor=("100", "r1")):
@@ -67,7 +61,7 @@ def test_fetch_returns_entries_single_page_no_more(monkeypatch):
     fake_page = _FakePage([_page([_entry(row)], False)])
     _use_fake_page(monkeypatch, fake_page)
 
-    entries = A.ActivityScraper().fetch()
+    entries = A.RecentActivityFeed().fetch()
 
     assert [e["activity"]["id"] for e in entries] == [row["activity_id"]]
     assert len(fake_page.urls) == 1
@@ -81,7 +75,7 @@ def test_fetch_follows_cursor_across_pages(monkeypatch):
     ])
     _use_fake_page(monkeypatch, fake_page)
 
-    entries = A.ActivityScraper().fetch()
+    entries = A.RecentActivityFeed().fetch()
 
     assert [e["activity"]["id"] for e in entries] == [rows[0]["activity_id"], rows[1]["activity_id"]]
     assert fake_page.urls[1] == f"{A.FEED_URL}&before=100&cursor=r1"
@@ -96,7 +90,7 @@ def test_fetch_stops_when_whole_page_already_seen(tmp_path, monkeypatch):
     fake_page = _FakePage([_page([_entry(seen_row)], True)])  # hasMore True, but already seen
     _use_fake_page(monkeypatch, fake_page)
 
-    entries = A.ActivityScraper().fetch()
+    entries = A.RecentActivityFeed().fetch()
 
     assert [e["activity"]["id"] for e in entries] == [seen_row["activity_id"]]
     assert len(fake_page.urls) == 1  # early exit, cursor never followed
@@ -107,7 +101,7 @@ def test_fetch_raises_scrape_error_on_non_json_response(monkeypatch):
     _use_fake_page(monkeypatch, fake_page)
 
     with pytest.raises(A.ScrapeError, match="blocked"):
-        A.ActivityScraper().fetch()
+        A.RecentActivityFeed().fetch()
 
 
 def test_fetch_raises_scrape_error_after_circuit_breaker(monkeypatch):
@@ -118,6 +112,6 @@ def test_fetch_raises_scrape_error_after_circuit_breaker(monkeypatch):
     _use_fake_page(monkeypatch, fake_page)
 
     with pytest.raises(A.ScrapeError, match="circuit breaker"):
-        A.ActivityScraper().fetch()
+        A.RecentActivityFeed().fetch()
 
     assert len(fake_page.urls) == 500

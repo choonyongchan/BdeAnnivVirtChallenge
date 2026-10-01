@@ -1,9 +1,5 @@
-"""Unit tests for the members-page headline-count parser.
-
-`parse_member_count` reads the club's total from the
-`<span class='membership-count'>` headline (commas allowed, singular "member"
-too) and returns None when that span is absent.
-"""
+"""Unit tests for parse_member_count: the <span class='membership-count'> total (commas, singular ok),
+None when the span is absent."""
 from src.members.members import parse_member_count
 
 

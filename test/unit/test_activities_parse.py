@@ -1,11 +1,5 @@
-"""Unit tests for the activity-feed parsers.
-
-Strava's feed carries stat values wrapped in markup, labelled out of order, and
-in two entirely different entry schemas ("Activity" camelCase vs
-"GroupActivity" snake_case). These parsers must strip the markup, key stats by
-their label not their position, coerce distances/durations to numbers (or
-None), and fan a GroupActivity out to one row per member.
-"""
+"""Unit tests for the activity-feed parsers: strip markup, key stats by label, coerce numbers (or None),
+and fan a GroupActivity out to one row per member."""
 import pytest
 
 from src.activities.activities import (

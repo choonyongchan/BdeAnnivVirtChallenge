@@ -1,12 +1,5 @@
-"""Integration test for the whole FormSG-export -> nominal_roll.csv conversion.
-
-Feeds `convert()` a synthetic export (5 metadata lines, then the real header
-row, then invented registrants) and checks the file it writes: the exact byte
-shape the roll must have (UTF-8 BOM, LF, trailing newline), the rules applied
-end to end (blank STRAVA username flagged, junk unit left blank, a repeat NRIC
-deduped to the latest clean entry), and that a dropped duplicate's warnings are
-*not* emitted.
-"""
+"""Integration test for FormSG export -> nominal_roll.csv: exact byte shape (BOM, LF, trailing newline),
+end-to-end rules, and a dropped duplicate's warnings not emitted."""
 import csv
 import io
 

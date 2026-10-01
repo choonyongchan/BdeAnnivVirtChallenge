@@ -1,8 +1,5 @@
-"""Unit tests for strava_session.py's two CSV helpers, in isolation from any scraper.
-
-Uses test/fixtures/activities_sample.csv (anonymised real data) as the well-formed
-CSV input; the missing-field case has no real-world analogue, so it stays synthetic.
-"""
+"""Unit tests for strava_session.py's CSV helpers, using test/fixtures/activities_sample.csv
+(anonymised real data); the missing-field case stays synthetic."""
 import shutil
 from pathlib import Path
 

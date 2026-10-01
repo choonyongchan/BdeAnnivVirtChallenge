@@ -1,11 +1,5 @@
-"""Unit tests for the FormSG roster converter's rule engine.
-
-These pin down *why* each free-text answer resolves the way it does — unit
-backfill from a unit-exclusive company name, swapped Unit/Company boxes, the
-bare-number "SAR suffix assumed" rule, junk answers left blank (never guessed),
-and the keep-the-latest-clean-entry dedupe. Table-driven so a rule change
-breaks exactly the cases it changes.
-"""
+"""Unit tests for the FormSG roster converter's rules (unit backfill from company, swapped boxes, bare
+numbers, junk left blank, dedupe); table-driven so a rule change breaks exactly its cases."""
 from datetime import datetime
 
 import pytest

@@ -1,17 +1,8 @@
-"""Unit tests for shared settings loading.
-
-`config.load()` reads src/config.yaml and every key is required: a missing
-file, a missing key, or an explicit null all raise `ValueError`.
-`challenge_start` is coerced to a string because YAML parses a bare date.
-`generate.load_config()` additionally resolves the announcement path against
-the repo root.
-"""
-from pathlib import Path
-
+"""Unit tests for config.load(): every key required (missing file/key/null -> ValueError),
+challenge_start coerced to str because YAML parses a bare date."""
 import pytest
 
 from src import config
-from src.dashboard import generate
 
 FULL_YAML = (
     "club:\n  name: Test Club\n  id: '42'\n"
@@ -64,9 +55,3 @@ def test_explicit_null_raises(tmp_path, monkeypatch):
     with pytest.raises(ValueError):
         config.load()
 
-
-def test_generate_load_config_resolves_announcement_path(tmp_path, monkeypatch):
-    monkeypatch.setattr(config, "CONFIG_PATH", _yaml(tmp_path, FULL_YAML))
-    cfg = generate.load_config()
-    assert isinstance(cfg.announcement_path, Path)
-    assert cfg.announcement_path == generate.REPO_ROOT / "src/announcement.md"
