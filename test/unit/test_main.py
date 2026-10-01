@@ -1,5 +1,5 @@
 """Unit tests for main.py's standalone pieces: check_auth fails fast without cookies, publish_dashboard
-no-ops on an empty diff, report_counts_to_ci no-ops outside GitHub Actions."""
+no-ops on an empty diff."""
 from datetime import datetime
 from types import SimpleNamespace
 
@@ -76,20 +76,3 @@ def test_publish_dashboard_commits_and_pushes_when_changed(monkeypatch):
         ["git", "commit", "-m", "🏃 Dashboard update 2026-09-14 06:38"],
         ["git", "push"],
     ]
-
-
-def test_report_counts_to_ci_noop_without_github_output(monkeypatch):
-    monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
-    M.report_counts_to_ci(3, 5)  # must not raise
-
-
-@pytest.mark.parametrize("new_activities,new_members", [(0, 0), (3, 5)])
-def test_report_counts_to_ci_writes_step_outputs(tmp_path, monkeypatch, new_activities, new_members):
-    output_path = tmp_path / "github_output.txt"
-    monkeypatch.setenv("GITHUB_OUTPUT", str(output_path))
-
-    M.report_counts_to_ci(new_activities, new_members)
-
-    assert output_path.read_text(encoding="utf-8") == (
-        f"new_activities={new_activities}\nnew_members={new_members}\n"
-    )

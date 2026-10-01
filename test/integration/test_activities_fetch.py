@@ -1,117 +1,107 @@
-"""Integration test for RecentActivityFeed.fetch()'s paging (no browser): follow hasMore, stop once a
-page is all known, non-JSON and a never-ending feed are ScrapeErrors."""
+"""Integration test for sync_weeks() (no browser): profile weeks become weekly.csv rows (own foot activities
+only) and ledger rows; the leaderboard overrides; frozen weeks survive; expiry and mass failures are ScrapeErrors."""
 import csv
-import shutil
 from contextlib import contextmanager
-from pathlib import Path
+from datetime import datetime
 
 import pytest
 
 from src.activities import activities as A
 
-FIXTURE = Path(__file__).parent.parent / "fixtures" / "activities_sample.csv"
 
-
-def _fixture_rows():
-    with FIXTURE.open(encoding="utf-8", newline="") as f:
+def _read(path):
+    with path.open(encoding="utf-8", newline="") as f:
         return list(csv.DictReader(f))
 
 
+def _entry(aid, athlete_id, type_="Run", km="5.0"):
+    return {"entity": "Activity", "activity": {
+        "id": aid, "athlete": {"athleteId": athlete_id}, "type": type_, "startDate": "2026-09-29T00:00:00Z",
+        "stats": [{"key": "stat_one", "value": f"{km} km"}, {"key": "stat_one_subtitle", "value": "Distance"},
+                  {"key": "stat_two", "value": "30m"}, {"key": "stat_two_subtitle", "value": "Time"}]}}
+
+
 class _FakePage:
-    """Stands in for Playwright's page: .evaluate() returns the next canned result (sticky on the last);
-    .wait_for_timeout() is a no-op."""
+    """page.evaluate(BATCH_JS, {urls}) -> one canned result per URL, keyed by athlete id."""
 
-    def __init__(self, responses):
-        self._responses = list(responses)
-        self.urls = []
+    def __init__(self, by_athlete):
+        self.by_athlete, self.urls = by_athlete, []
 
-    def evaluate(self, script, url):
-        self.urls.append(url)
-        i = min(len(self.urls) - 1, len(self._responses) - 1)
-        return self._responses[i]
-
-    def wait_for_timeout(self, ms):
-        pass
+    def evaluate(self, script, arg):
+        self.urls += arg["urls"]
+        return [self.by_athlete[u.split("/")[2]] for u in arg["urls"]]
 
 
-def _use_fake_page(monkeypatch, fake_page):
-    @contextmanager
-    def _fake_club_page(url):
-        yield fake_page
-    monkeypatch.setattr(A, "club_page", _fake_club_page)
+@pytest.fixture
+def env(tmp_path, monkeypatch):
+    members = tmp_path / "members.csv"
+    members.write_text("athlete_id,name,first_seen\n1,Alice,x\n2,Bob,x\n3,Cara,x\n", encoding="utf-8")
+    weekly = tmp_path / "weekly.csv"   # an earlier, frozen week that this run must keep
+    weekly.write_text("athlete_id,week,distance_m,moving_time_s,elev_gain_m,activities,source\n"
+                      "1,2026-09-21,9000.0,3000,0,2,profile\n", encoding="utf-8")
+    for name, path in (("MEMBERS_CSV", members), ("WEEKLY_CSV", weekly), ("CSV_PATH", tmp_path / "activities.csv")):
+        monkeypatch.setattr(A, name, path)
+    monkeypatch.setattr(A, "require_auth", lambda: None)
+
+    class _Thursday(datetime):   # 2026-10-01: this week only, no Monday grace
+        @classmethod
+        def now(cls, tz=None):
+            return datetime(2026, 10, 1, 12, tzinfo=tz)
+    monkeypatch.setattr(A, "datetime", _Thursday)
+
+    def use(page):
+        @contextmanager
+        def _club_page(*a):
+            yield page
+        monkeypatch.setattr(A, "club_page", _club_page)
+    return tmp_path, use
 
 
-def _entry(row, cursor=("100", "r1")):
-    return {
-        "entity": "Activity",
-        "activity": {
-            "id": row["activity_id"], "athlete": {"athleteId": row["athlete_id"]},
-            "startDate": row["start_date_utc"], "stats": [],
-        },
-        "cursorData": {"updated_at": cursor[0], "rank": cursor[1]},
-    }
+def test_sync_writes_profile_weeks_ledger_and_leaderboard_wins(env):
+    tmp, use = env
+    page = _FakePage({
+        "1": {"entries": [_entry(10, 1), _entry(11, 1, "Walk", "1.5"), _entry(12, 1, "Ride", "30"),
+                          _entry(13, 9)]},          # a ride, and a group-run partner's activity
+        "2": {"entries": None},                       # private profile
+        "3": {"entries": [_entry(30, 3)]},
+    })
+    use(page)
+    leaderboard = {"2026-09-28": {"3": {"name": "Cara", "distance_m": 8000.0, "moving_time_s": 2400,
+                                        "elev_gain_m": 20.0, "activities": 2}}}
+
+    assert A.sync_weeks(leaderboard) == 3           # ledger: Alice's run + walk, Cara's run
+    rows = {(r["athlete_id"], r["week"]): r for r in _read(tmp / "weekly.csv")}
+
+    assert all("interval=202640&interval_type=week" in u for u in page.urls)
+    assert rows[("1", "2026-09-21")]["distance_m"] == "9000.0"                       # frozen week kept
+    assert rows[("1", "2026-09-28")] == {"athlete_id": "1", "week": "2026-09-28", "distance_m": "6500.0",
+                                         "moving_time_s": "3600", "elev_gain_m": "0", "activities": "2",
+                                         "source": "profile", "synced_at": "2026-10-01T12:00:00+00:00"}
+    assert ("2", "2026-09-28") not in rows                                           # nothing visible -> no row
+    assert rows[("3", "2026-09-28")]["source"] == "leaderboard"
+    assert rows[("3", "2026-09-28")]["distance_m"] == "8000.0"
 
 
-def _page(entries, has_more):
-    return {"ok": True, "data": {"entries": entries, "pagination": {"hasMore": has_more}}}
+def test_expired_session_is_a_scrape_error(env):
+    _, use = env
+    use(_FakePage({a: {"expired": True, "status": 401} for a in "123"}))
+    with pytest.raises(A.ScrapeError, match="expired"):
+        A.sync_weeks({})
 
 
-def test_fetch_returns_entries_single_page_no_more(monkeypatch):
-    row = _fixture_rows()[0]
-    fake_page = _FakePage([_page([_entry(row)], False)])
-    _use_fake_page(monkeypatch, fake_page)
-
-    entries = A.RecentActivityFeed().fetch()
-
-    assert [e["activity"]["id"] for e in entries] == [row["activity_id"]]
-    assert len(fake_page.urls) == 1
+def test_many_failed_requests_fail_the_run_but_keep_what_was_found(env):
+    tmp, use = env
+    use(_FakePage({"1": {"entries": [_entry(10, 1)]}, "2": {"error": "HTTP 500"}, "3": {"error": "HTTP 500"}}))
+    with pytest.raises(A.ScrapeError, match="2 of 3"):
+        A.sync_weeks({})
+    assert [r["activity_id"] for r in _read(tmp / "activities.csv")] == ["10"]
 
 
-def test_fetch_follows_cursor_across_pages(monkeypatch):
-    rows = _fixture_rows()[:2]
-    fake_page = _FakePage([
-        _page([_entry(rows[0], cursor=("100", "r1"))], True),
-        _page([_entry(rows[1])], False),
-    ])
-    _use_fake_page(monkeypatch, fake_page)
-
-    entries = A.RecentActivityFeed().fetch()
-
-    assert [e["activity"]["id"] for e in entries] == [rows[0]["activity_id"], rows[1]["activity_id"]]
-    assert fake_page.urls[1] == f"{A.FEED_URL}&before=100&cursor=r1"
-
-
-def test_fetch_stops_when_whole_page_already_seen(tmp_path, monkeypatch):
-    csv_path = tmp_path / "activities.csv"
-    shutil.copy(FIXTURE, csv_path)
-    monkeypatch.setattr(A, "CSV_PATH", csv_path)
-
-    seen_row = _fixture_rows()[0]
-    fake_page = _FakePage([_page([_entry(seen_row)], True)])  # hasMore True, but already seen
-    _use_fake_page(monkeypatch, fake_page)
-
-    entries = A.RecentActivityFeed().fetch()
-
-    assert [e["activity"]["id"] for e in entries] == [seen_row["activity_id"]]
-    assert len(fake_page.urls) == 1  # early exit, cursor never followed
-
-
-def test_fetch_raises_scrape_error_on_non_json_response(monkeypatch):
-    fake_page = _FakePage([{"ok": False, "snippet": "<html>blocked</html>"}])
-    _use_fake_page(monkeypatch, fake_page)
-
-    with pytest.raises(A.ScrapeError, match="blocked"):
-        A.RecentActivityFeed().fetch()
-
-
-def test_fetch_raises_scrape_error_after_circuit_breaker(monkeypatch):
-    # Entries with no nested "activity" key normalise to activity_id=None, so page_ids
-    # is always empty and the "whole page already seen" early-exit guard never fires.
-    never_ending = _page([{"entity": "Activity", "cursorData": {"updated_at": "100", "rank": "r1"}}], True)
-    fake_page = _FakePage([never_ending])
-    _use_fake_page(monkeypatch, fake_page)
-
-    with pytest.raises(A.ScrapeError, match="circuit breaker"):
-        A.RecentActivityFeed().fetch()
-
-    assert len(fake_page.urls) == 500
+def test_a_429_stops_the_scan_and_keeps_what_was_fetched(env):
+    tmp, use = env
+    use(_FakePage({"1": {"entries": [_entry(10, 1)]}, "2": {"limited": True}, "3": None}))   # 3: never fetched
+    with pytest.raises(A.ScrapeError, match="429"):
+        A.sync_weeks({})
+    rows = {(r["athlete_id"], r["week"]) for r in _read(tmp / "weekly.csv")}
+    assert ("1", "2026-09-28") in rows and ("1", "2026-09-21") in rows
+    assert [r["scraped_at"] for r in _read(tmp / "activities.csv")] == ["2026-10-01T12:00:00+00:00"]   # = synced_at

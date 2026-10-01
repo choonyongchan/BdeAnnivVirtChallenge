@@ -26,10 +26,22 @@ DUMMY_ROSTER = [
 ]
 
 
+def pytest_addoption(parser):
+    parser.addoption("--live", action="store_true", help="run live tests against Strava (needs src/auth_state.json)")
+
+
 def pytest_configure(config):
     config.addinivalue_line(
-        "markers", "live: exercises a real browser / network call; skipped unless opted in"
+        "markers", "live: exercises a real browser / network call; skipped unless --live"
     )
+
+
+def pytest_collection_modifyitems(config, items):
+    if not config.getoption("--live"):
+        skip = pytest.mark.skip(reason="live test: pass --live")
+        for item in items:
+            if "live" in item.keywords:
+                item.add_marker(skip)
 
 
 def write_roster_csv(path, rows=DUMMY_ROSTER):
@@ -84,6 +96,24 @@ def make_activity():
         return row
 
     return _make
+
+
+@pytest.fixture
+def weeks_from():
+    """weekly.csv-shaped rows for activity dicts, one per activity (the stats engine sums them),
+    so a test can state its data once as activities."""
+    return _weeks_from
+
+
+def _weeks_from(acts):
+    from datetime import date, timedelta
+    rows = []
+    for a in acts:
+        d = date.fromisoformat(a.get("start_date_utc", "2026-09-14")[:10])
+        rows.append({"athlete_id": a["athlete_id"], "week": (d - timedelta(days=d.weekday())).isoformat(),
+                     "distance_m": a["distance_m"], "moving_time_s": a["moving_time_s"],
+                     "elev_gain_m": a["elev_gain_m"], "activities": 1, "source": "profile"})
+    return rows
 
 
 @pytest.fixture

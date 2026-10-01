@@ -33,8 +33,8 @@ to filter. Alongside it sit unit rankings, company rankings, and a registration
 tree, all built from the roll. Three tabs (All, NSF/Regular, NSMan/Alumni) split
 everyone by `Type of service`.
 
-The History picker opens a calendar for any past date's cumulative standings, with
-a shortcut to last week. The Trend view adds a weekly Sunday snapshot table and
+The History picker opens a calendar of past cumulative standings, one per
+Monday–Sunday week (Strava's week) as of its Sunday, with a shortcut to last week. The Trend view adds a weekly Sunday snapshot table and
 cumulative charts for distance, activities, runners, participation rate, and
 elevation, with a breakdown by group, unit, or company.
 
@@ -55,14 +55,16 @@ Strava shut off its public club API in 2026, so the pipeline drives a logged-in
 browser instead. One `python -m src.main` run does five things in order:
 
 ```
-python -m src.main
+python -m src.main [--full]      (--full is implied on the 23:xx run)
   ├─ check_auth()                 src/main.py          is src/auth_state.json a valid session?
-  ├─ RecentActivityFeed().scrape()   src/activities/      fetch the club feed in a real browser
-  │                                                    → append new rows to activities.csv
-  ├─ MemberScraper().scrape()     src/members/         read the club's headline member count
-  │                                                    → member_count.json; append new
-  │                                                      activities.csv athletes to members.csv
-  ├─ generate.run()               src/dashboard/       load the 3 CSVs + config.yaml + weather
+  ├─ fetch_leaderboard()  [full]  src/activities/      club leaderboard, this + last week (top 100)
+  ├─ scrape_members(leaderboard)  src/members/         headline member count → member_count.json;
+  │                                                    club feed: new foot activities → ledger,
+  │                                                    new feed (+ leaderboard) athletes → members.csv
+  ├─ sync_weeks(leaderboard) [full] src/activities/    every member's profile week (this week; last
+  │                                                    week too on Mondays) → weekly.csv snapshot +
+  │                                                    ledger; leaderboard figures override the profile's
+  ├─ generate.run()               src/dashboard/       snapshot + feed activities since it, roll, weather
   │      stats.py   → totals, awards, leaderboard, devices
   │      names.py   → match truncated Strava names to the roll (unit / company / service)
   │      renderer.py→ substitute into template.html
@@ -70,10 +72,31 @@ python -m src.main
   └─ publish_dashboard()          src/main.py          commit and push index.html
 ```
 
-Both scrapers share one Playwright session (`src/strava_session.py`), which spoofs
-a normal browser and retries a failed fetch twice with backoff; there's no OAuth
-and no API tokens. Three append-only CSVs feed the generator — activities,
-members, and the nominal roll (roster) — and `NominalRoll` in
+Strava is the authority on distance, so the dashboard's totals are **Strava's own
+weekly figures per member** (`weekly.csv`: distance, moving time, elevation, foot
+activities per Monday–Sunday week). Each member's profile week lists that week's
+activities; their foot activities (Run, Walk, Hike, …) are summed. The club
+leaderboard — which Strava keeps for two weeks only, top 100 — overrides those sums,
+since it also counts runs this account can't see (followers-only, private profiles).
+Past weeks freeze once refreshed, so the history stays accurate as long as the
+pipeline keeps running.
+
+Scanning ~1,050 profiles costs as many requests, and Strava answers too many with a
+`429` block, so that **full scan runs once a day** (the 23:47 run) and stops at the
+first `429`, keeping what it fetched. Every row it writes is stamped `synced_at`. The
+**hourly runs read only the club feed** (a handful of requests): its foot activities
+go into the activity ledger (`activities.csv`), and the dashboard shows the nightly
+snapshot plus every ledger activity scraped after that athlete's `synced_at`. The
+next night's scan overwrites them with Strava's figures. Feed runs from private
+profiles, which no scan can see, keep counting this way. The ledger (feed + profile
+activities) also feeds the per-activity awards (Longest Run, Fastest, Break King,
+Mountain Goat, devices).
+
+Members come from the club feed, the leaderboard and the existing `members.csv`;
+some members never show up in either, so the dashboard's member total is Strava's
+headline count. All scrapers share one Playwright session (`src/strava_session.py`)
+that spoofs a normal browser; there's no OAuth and no API tokens. A failed run is
+retried by the next one. `NominalRoll` in
 `src/dashboard/names.py` resolves Strava's truncated club-feed names (e.g.
 `"Siva R."`) back to the right roster entry. `renderer.render()` substitutes the
 computed data into `src/dashboard/template.html` to produce `index.html`, which is
@@ -92,8 +115,10 @@ python -m playwright install chromium    # add --with-deps on Linux
 | Command | Does |
 |---|---|
 | `python -m src.login` | Opens a visible browser to log in to Strava; writes `src/auth_state.json`, the session every scraper reuses. |
-| `python -m src.nominal_roll.nominal_roll "<raw FormSG export.csv>"` | Cleans a registration export and merges it into `src/nominal_roll/nominal_roll.csv` — exports are incremental, so new registrants are appended and a re-registration replaces that person's row. Delete the roll first to rebuild it from scratch. Afterwards each new or changed STRAVA username is looked up on Strava; anyone found in the club is added to `members.csv` and gets a full activity scan (`--no-discover` skips this; `--recheck` with no export re-searches usernames that were private or not in the club, as the daily task does). Without this file the dashboard still builds, but nobody gets a unit, company, or full name. |
-| `python -m src.main` | Runs the full pipeline: scrape, generate, and push. |
+| `python -m src.nominal_roll.nominal_roll "<raw FormSG export.csv>"` | Cleans a registration export and merges it into `src/nominal_roll/nominal_roll.csv` — exports are incremental, so new registrants are appended and a re-registration replaces that person's row. Delete the roll first to rebuild it from scratch. Without this file the dashboard still builds, but nobody gets a unit, company, or full name. |
+| `python -m src.main` | Runs the pipeline: scrape the feed, generate, and push. `--full` also takes the nightly snapshot (leaderboard + every member's profile week), as the 23:xx run does. |
+| `python -m src.activities.activities --setup` | One-off: syncs every week since `challenge_start` into `weekly.csv` (without `--setup`: this week, plus last week on Mondays — what the pipeline does). |
+| `python -m pytest test/e2e/test_strava_parity.py --live` | Checks the dashboard against live Strava: every leaderboard athlete's this-week and last-week figures, and the member total. Run it right after `python -m src.main --full`. |
 | `python -m src.dashboard.generate` | Rebuilds `index.html` from the CSVs you already have, without scraping or touching git. |
 | `python -m pytest test/ -q` | Runs the test suite (`test/unit`, `test/integration`, `test/e2e`). Every fixture is synthetic. |
 
@@ -120,8 +145,8 @@ Content is HTML-escaped.
 ## How it deploys
 
 The pipeline runs locally: `scripts/run_pipeline.ps1` (Windows Task Scheduler, see
-below) runs `python -m src.main` and commits `activities.csv`, `members.csv`,
-`member_count.json`, and `index.html` to `main`. `.github/workflows/deploy.yml`
+below) runs `python -m src.main` and commits `weekly.csv`, `activities.csv`,
+`members.csv`, `member_count.json`, and `index.html` to `main`. `.github/workflows/deploy.yml`
 then publishes `index.html` (and the `user-count.json` badge data file) to GitHub
 Pages via `actions/deploy-pages` whenever a push changes either file.
 
@@ -166,25 +191,25 @@ Get-ScheduledTaskInfo -TaskName "BdeAnnivVirtChallenge-HourlyPipeline"
 ```
 index.html                       generated dashboard; don't edit
 requirements.txt
+archive/                         pre-weekly activities.csv / members.csv, kept for reference
 src/
   main.py                        pipeline entry point (scrape → generate → publish)
   login.py                       one-off manual Strava login → src/auth_state.json
-  strava_session.py              shared Playwright session + retry/backoff
+  strava_session.py              shared Playwright session + CSV helpers
   config.py / config.yaml        settings (no secrets, no env vars)
   announcement.md                optional banner text
   auth_state.json                session cookies (gitignored; from AUTH_STATE)
   activities/
-    activities.py                club feed (RecentActivityFeed) + member profiles (ProfilesFeed) → append-only ledger
-    reconcile.py                 leaderboard check: flags members whose last-2-weeks totals exceed the ledger (--fix rescans them)
-    activities.csv               activity ledger (committed)
+    activities.py                leaderboard + member profile weeks → weekly totals + activity ledger
+    weekly.csv                   Strava's weekly totals per member (committed; the dashboard's figures)
+    activities.csv               best-effort activity ledger, for per-activity awards (committed)
   members/
-    members.py                   headline count + activity athletes → append-only ledger
+    members.py                   headline count + feed/leaderboard athletes → append-only ledger
     members.csv                  member ledger (committed)
     member_count.json            Strava's headline member count (committed)
   nominal_roll/
     nominal_roll.py               raw FormSG export → cleaned roster
     nominal_roll.csv             roster (gitignored; from NOMINAL_ROLL)
-    discover_state.json          Strava lookup outcomes per roll username (gitignored)
   dashboard/
     generate.py                  load CSVs → compute → render → write index.html + src/user-count.json
     stats.py                     statistics engine (totals, awards, leaderboard)

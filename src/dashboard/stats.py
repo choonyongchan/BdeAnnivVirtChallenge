@@ -1,5 +1,6 @@
-"""Leaderboard, award and fun statistics over activities.csv / members.csv rows.
-Athletes join by athlete_id (activities <-> members) before falling back to name resolution."""
+"""Leaderboard, award and fun statistics over weekly.csv / activities.csv / members.csv rows.
+Totals come from Strava's weekly figures; the best-effort ledger only feeds the per-activity awards.
+Athletes join by athlete_id (weekly/activities <-> members) before falling back to name resolution."""
 from collections import Counter
 from dataclasses import dataclass, field
 
@@ -35,8 +36,15 @@ class AthleteStats:
 
     break_time: float = 0.0    # elapsed minus moving, i.e. time spent stopped
 
-    def add_activity(self, act: dict) -> tuple:
-        """Accumulate one activity, returning (dist_km, elev) for club totals."""
+    def add_week(self, week: dict) -> None:
+        """Accumulate one weekly.csv row into the totals."""
+        self.km += _num(week.get("distance_m")) / 1000
+        self.elev += _num(week.get("elev_gain_m"))
+        self.time_s += _num(week.get("moving_time_s"))
+        self.count_acts += int(_num(week.get("activities")))
+
+    def add_activity(self, act: dict) -> None:
+        """Accumulate one ledger activity into the per-activity awards (totals come from add_week)."""
         dist_m = _num(act.get("distance_m"))
         dist_km = dist_m / 1000
         elev = _num(act.get("elev_gain_m"))
@@ -45,10 +53,6 @@ class AthleteStats:
         speed = (dist_m / time_s) if time_s > 0 else 0
         dev = act.get("device_name", "") or ""
 
-        self.km += dist_km
-        self.elev += elev
-        self.time_s += time_s
-        self.count_acts += 1
         if dist_km > self.longest:
             self.longest = dist_km
         if speed > 0 and dist_km > 0.5:
@@ -60,8 +64,6 @@ class AthleteStats:
             self.climber_run_km += dist_km
 
         self.break_time += max(0, elapsed - time_s)
-
-        return dist_km, elev
 
     @property
     def avg_speed(self):
@@ -152,23 +154,21 @@ def _roster_name(act: dict, roll: NominalRoll, member_by_id: dict) -> str:
     return roll.resolve(raw)
 
 
-def _accumulate_athletes(activities: list, roll: NominalRoll, member_by_id: dict) -> tuple:
-    """Fold every activity into per-athlete accumulators keyed by resolved name.
-    Returns (athletes, total_km, total_elev)."""
+def _accumulate_athletes(weeks: list, activities: list, roll: NominalRoll, member_by_id: dict) -> dict:
+    """Fold every weekly row and ledger activity into per-athlete accumulators keyed by resolved name."""
     athletes: dict = {}
-    total_km = 0.0
-    total_elev = 0.0
 
-    for act in activities:
-        name = _roster_name(act, roll, member_by_id)
+    def athlete(row):
+        name = _roster_name(row, roll, member_by_id)
         if name not in athletes:
             athletes[name] = _new_athlete(name, roll)
+        return athletes[name]
 
-        dist_km, elev = athletes[name].add_activity(act)
-        total_km += dist_km
-        total_elev += elev
-
-    return athletes, total_km, total_elev
+    for week in weeks:
+        athlete(week).add_week(week)
+    for act in activities:
+        athlete(act).add_activity(act)
+    return athletes
 
 
 def _build_device_stats(athletes: dict) -> list:
@@ -240,20 +240,20 @@ def _compute_fun_stats(athletes: dict) -> dict:
     return {"breaks": breaks}
 
 
-def compute_stats(activities: list, members: list, roll: NominalRoll) -> ReportStats:
-    """All leaderboard, award and fun statistics for one period.
-    members adds zero rows for non-runners and provides the athlete_id -> name join."""
-    if not activities and not members:
+def compute_stats(weeks: list, activities: list, members: list, roll: NominalRoll) -> ReportStats:
+    """All leaderboard, award and fun statistics for one period: totals from weekly rows,
+    per-activity awards from the ledger. members adds zero rows for non-runners and the athlete_id -> name join."""
+    if not weeks and not activities and not members:
         return ReportStats()
 
     member_by_id = {str(m.get("athlete_id") or ""): m for m in members}
-    athletes, total_km, total_elev = _accumulate_athletes(activities, roll, member_by_id)
+    athletes = _accumulate_athletes(weeks, activities, roll, member_by_id)
     leaderboard = _build_leaderboard(athletes, members, roll)
 
     return ReportStats(
-        total_km=total_km,
-        total_elev=total_elev,
-        run_count=len(activities),
+        total_km=sum(a.km for a in athletes.values()),
+        total_elev=sum(a.elev for a in athletes.values()),
+        run_count=sum(a.count_acts for a in athletes.values()),
         athlete_count=len(members),
         # unit_company() is empty only for someone off the roll, never for a blank unit.
         no_unit_count=sum(1 for r in leaderboard

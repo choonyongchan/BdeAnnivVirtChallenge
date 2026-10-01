@@ -110,13 +110,13 @@ def test_device_stats_rank_hardware_above_virtual_and_drop_blanks():
 
 # --- compute_stats: totals, leaderboard, awards --------------------------
 
-def test_totals_and_leaderboard_cover_the_whole_roster(make_activity, dummy_members, roll):
+def test_totals_and_leaderboard_cover_the_whole_roster(make_activity, dummy_members, roll, weeks_from):
     acts = [
         make_activity("Alice Anon", distance_m=10_000, moving_time_s=3000),
         make_activity("Alice Anon", distance_m=5_000, moving_time_s=1500),
         make_activity("Bob Bogus", athlete_id="2", distance_m=8_000, moving_time_s=2400),
     ]
-    s = asdict(compute_stats(acts, members=dummy_members, roll=roll))
+    s = asdict(compute_stats(weeks_from(acts), acts, members=dummy_members, roll=roll))
 
     assert s["run_count"] == 3
     assert s["athlete_count"] == 4               # every member row, runner or not
@@ -132,16 +132,16 @@ def test_totals_and_leaderboard_cover_the_whole_roster(make_activity, dummy_memb
     assert zero_names == {"CARA CIPHER", "DAVE DUMMY"}
 
 
-def test_blank_numbers_never_become_nan(make_activity, dummy_members, roll):
+def test_blank_numbers_never_become_nan(make_activity, dummy_members, roll, weeks_from):
     acts = [make_activity("Alice Anon", distance_m="", moving_time_s="", elev_gain_m="")]
-    s = asdict(compute_stats(acts, members=dummy_members, roll=roll))
+    s = asdict(compute_stats(weeks_from(acts), acts, members=dummy_members, roll=roll))
     assert s["total_km"] == 0.0 and s["total_elev"] == 0.0
     row = next(r for r in s["leaderboard"] if r["name"] == "ALICE ANON")
     assert row["avg_speed_ms"] == 0
 
 
 def test_awards_are_none_when_nobody_ran(dummy_members, roll):
-    s = compute_stats([], members=dummy_members, roll=roll)
+    s = compute_stats([], [], members=dummy_members, roll=roll)
     for award in ("king_km", "king_elev", "marathoner", "longest",
                   "fastest", "climber", "flatrunner"):
         assert getattr(s, award) is None
@@ -149,25 +149,25 @@ def test_awards_are_none_when_nobody_ran(dummy_members, roll):
     assert len(s.leaderboard) == 4 and all(r["acts"] == 0 for r in s.leaderboard)
 
 
-def test_fastest_ignores_sub_half_km_only_athletes(make_activity, dummy_members, roll):
+def test_fastest_ignores_sub_half_km_only_athletes(make_activity, dummy_members, roll, weeks_from):
     acts = [
         make_activity("Alice Anon", distance_m=400, moving_time_s=120),        # no speed
         make_activity("Bob Bogus", athlete_id="2", distance_m=5000, moving_time_s=1500),
     ]
-    assert compute_stats(acts, members=dummy_members, roll=roll).fastest["name"] == "BOB BOGUS"
+    assert compute_stats(weeks_from(acts), acts, members=dummy_members, roll=roll).fastest["name"] == "BOB BOGUS"
 
 
-def test_climber_needs_thirty_hill_km(make_activity, dummy_members, roll):
+def test_climber_needs_thirty_hill_km(make_activity, dummy_members, roll, weeks_from):
     acts = [make_activity("Alice Anon", distance_m=6000, elev_gain_m=60, moving_time_s=1800)
             for _ in range(3)]                       # only 18 hill km
-    assert compute_stats(acts, members=dummy_members, roll=roll).climber is None
+    assert compute_stats(weeks_from(acts), acts, members=dummy_members, roll=roll).climber is None
 
     acts += [make_activity("Alice Anon", distance_m=6000, elev_gain_m=60, moving_time_s=1800)
              for _ in range(2)]                      # now 30 hill km, 10 m+/km
-    assert compute_stats(acts, members=dummy_members, roll=roll).climber["name"] == "ALICE ANON"
+    assert compute_stats(weeks_from(acts), acts, members=dummy_members, roll=roll).climber["name"] == "ALICE ANON"
 
 
-def test_flatrunner_picks_min_gradient_over_fifty_km(make_activity, dummy_members, roll):
+def test_flatrunner_picks_min_gradient_over_fifty_km(make_activity, dummy_members, roll, weeks_from):
     acts = []
     for _ in range(6):   # Alice: 60 km, 10 m+/km
         acts.append(make_activity("Alice Anon", distance_m=10_000, elev_gain_m=100, moving_time_s=3000))
@@ -175,13 +175,13 @@ def test_flatrunner_picks_min_gradient_over_fifty_km(make_activity, dummy_member
         acts.append(make_activity("Bob Bogus", athlete_id="2", distance_m=11_000, elev_gain_m=22, moving_time_s=3000))
     for _ in range(7):   # Erin: 49 km, 1 m+/km -> flatter but under the 50 km bar
         acts.append(make_activity("Erin Example", athlete_id="5", distance_m=7_000, elev_gain_m=7, moving_time_s=2100))
-    s = compute_stats(acts, members=dummy_members, roll=roll)
+    s = compute_stats(weeks_from(acts), acts, members=dummy_members, roll=roll)
     assert s.flatrunner["name"] == "BOB BOGUS"
 
 
-def test_king_elev_value_uses_space_thousands_separator(make_activity, dummy_members, roll):
+def test_king_elev_value_uses_space_thousands_separator(make_activity, dummy_members, roll, weeks_from):
     acts = [make_activity("Alice Anon", distance_m=10_000, elev_gain_m=1234, moving_time_s=3000)]
-    s = compute_stats(acts, members=dummy_members, roll=roll)
+    s = compute_stats(weeks_from(acts), acts, members=dummy_members, roll=roll)
     assert s.king_elev == {"name": "ALICE ANON", "value": "1 234 m elevation"}
 
 
@@ -189,14 +189,14 @@ def test_king_elev_value_uses_space_thousands_separator(make_activity, dummy_mem
     (50, None),
     (200, {"name": "ALICE ANON", "value": "3 min of rest"}),
 ])
-def test_fun_stats_break_king_threshold(make_activity, dummy_members, roll, break_s, expected):
+def test_fun_stats_break_king_threshold(make_activity, dummy_members, roll, weeks_from, break_s, expected):
     acts = [make_activity("Alice Anon", distance_m=5000, moving_time_s=1800,
                           elapsed_time_s=1800 + break_s)]
-    assert compute_stats(acts, members=dummy_members, roll=roll).fun_stats["breaks"] == expected
+    assert compute_stats(weeks_from(acts), acts, members=dummy_members, roll=roll).fun_stats["breaks"] == expected
 
 
 def test_no_data_period_is_plain_report_stats(roll):
-    assert asdict(compute_stats([], [], roll)) == asdict(ReportStats())
+    assert asdict(compute_stats([], [], [], roll)) == asdict(ReportStats())
 
 
 def test_blank_unit_is_counted_apart_from_being_off_the_roll(tmp_path, monkeypatch,
@@ -216,9 +216,20 @@ def test_blank_unit_is_counted_apart_from_being_off_the_roll(tmp_path, monkeypat
                {"athlete_id": "3", "name": "Total Stranger"}]
     roll.fit(m["name"] for m in members)
 
-    s = compute_stats([make_activity("Alice Anon", athlete_id="1")],
+    s = compute_stats([], [make_activity("Alice Anon", athlete_id="1")],
                       members=members, roll=roll)
 
     assert s.no_unit_count == 1                       # Ghost, not the stranger
     blank = [r for r in s.leaderboard if not r["unit"]]
     assert {r["name"] for r in blank} == {"GHOST GABLE", "Total Stranger"}
+
+
+def test_totals_come_from_weeks_and_awards_from_the_ledger(make_activity, dummy_members, roll):
+    """Strava's weekly figures are the totals even when the ledger missed runs (e.g. followers-only);
+    the ledger only feeds per-activity awards such as Longest."""
+    weeks = [{"athlete_id": "1", "week": "2026-09-14", "distance_m": 21_000, "moving_time_s": 7200,
+              "elev_gain_m": 50, "activities": 3, "source": "leaderboard"}]
+    acts = [make_activity("Alice Anon", distance_m=8_000)]   # the only run this account could see
+    s = compute_stats(weeks, acts, members=dummy_members, roll=roll)
+    assert s.total_km == pytest.approx(21.0) and s.run_count == 3
+    assert s.longest == {"name": "ALICE ANON", "value": "8.0 km"}

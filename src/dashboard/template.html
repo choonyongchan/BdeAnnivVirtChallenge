@@ -1114,12 +1114,11 @@ function renderGroupRankings(data) {
 }
 
 function showPrevWeek() {
-  // Latest Saturday on/before today (Saturday itself if today is one).
+  // End of the last completed Mon-Sun (Strava) week: the latest Sunday before today.
   const now = new Date();
-  const daysSinceSat = (now.getDay() + 1) % 7;
-  const sat = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysSinceSat);
-  const satStr = isoDate(sat);
-  const key = Object.keys(DAILY).sort().filter(k => k <= satStr).at(-1);
+  const sun = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (now.getDay() || 7));
+  const sunStr = isoDate(sun);
+  const key = Object.keys(DAILY).sort().filter(k => k <= sunStr).at(-1);
   if (!key) return;
   showDailySnapshot(key);
   document.getElementById('btn-7days').classList.add('active');

@@ -23,7 +23,7 @@ try {
         throw "src.main exited with code $LASTEXITCODE"
     }
 
-    git add src/activities/activities.csv src/members/members.csv src/members/member_count.json index.html src/user-count.json
+    git add src/activities/weekly.csv src/activities/activities.csv src/members/members.csv src/members/member_count.json index.html src/user-count.json
     git diff --cached --quiet
     if ($LASTEXITCODE -eq 0) {
         Write-Host "No ledger changes."

@@ -1,5 +1,6 @@
-"""Integration test for MemberScraper.fetch() (no browser): one request returns the headline count;
-a non-OK response or a page without the count is a ScrapeError."""
+"""Integration test for members.py's fetches (no browser): the headline count from the members page,
+feed athletes across cursor pages; non-OK, count-less or non-JSON responses are ScrapeErrors."""
+import json
 from contextlib import contextmanager
 
 import pytest
@@ -8,13 +9,20 @@ from src.members import members as M
 
 
 class _FakePage:
-    def __init__(self, response):
-        self._response = response
+    """Stands in for Playwright's page: .evaluate() answers from responses[url without cursor],
+    a list consumed in order and sticky on its last; .wait_for_timeout() is a no-op."""
+
+    def __init__(self, responses):
+        self._responses = responses
         self.urls = []
 
     def evaluate(self, script, url):
         self.urls.append(url)
-        return self._response
+        queue = self._responses[url.split("&before=")[0]]
+        return queue.pop(0) if len(queue) > 1 else queue[0]
+
+    def wait_for_timeout(self, ms):
+        pass
 
 
 def _use_fake_page(monkeypatch, fake_page):
@@ -28,23 +36,48 @@ def _resp(html, ok=True, status=200):
     return {"ok": ok, "status": status, "text": html}
 
 
-def test_fetch_returns_headline_count_from_one_request(monkeypatch):
-    fake_page = _FakePage(_resp("<span class='membership-count'>1,055 members</span>"))
+def _feed(athletes, has_more, cursor=("100", "r1")):
+    entries = [{"entity": "Activity", "activity": {"id": f"a{aid}", "athlete": {"athleteId": aid, "athleteName": name}},
+                "cursorData": {"updated_at": cursor[0], "rank": cursor[1]}} for aid, name in athletes]
+    return _resp(json.dumps({"entries": entries, "pagination": {"hasMore": has_more}}))
+
+
+COUNT = _resp("<span class='membership-count'>1,055 members</span>")
+
+
+def test_count_and_feed_follow_the_cursor(monkeypatch):
+    fake_page = _FakePage({M.MEMBERS_URL: [COUNT], M.FEED_URL: [
+        _feed([(1, "Alice Anon")], True), _feed([(2, "Bob Bogus"), (1, "Alice Anon")], False)]})
     _use_fake_page(monkeypatch, fake_page)
 
-    assert M.MemberScraper().fetch() == 1055
-    assert fake_page.urls == [M.MEMBERS_URL]
+    count, athletes = M.fetch_count_and_feed()   # one row per feed activity
+
+    assert count == 1055
+    assert [(r["athlete_id"], r["athlete_name"]) for r in athletes] == [(1, "Alice Anon"), (2, "Bob Bogus"),
+                                                                         (1, "Alice Anon")]
+    assert fake_page.urls[2] == f"{M.FEED_URL}&before=100&cursor=r1"
 
 
-def test_fetch_raises_scrape_error_on_http_failure(monkeypatch):
-    _use_fake_page(monkeypatch, _FakePage(_resp("", ok=False, status=403)))
-
+def test_http_failure_is_a_scrape_error(monkeypatch):
+    _use_fake_page(monkeypatch, _FakePage({M.MEMBERS_URL: [_resp("", ok=False, status=403)]}))
     with pytest.raises(M.ScrapeError, match="403"):
-        M.MemberScraper().fetch()
+        M.fetch_count_and_feed()
 
 
-def test_fetch_raises_scrape_error_when_count_missing(monkeypatch):
-    _use_fake_page(monkeypatch, _FakePage(_resp("<p>There are no active members in this club yet.</p>")))
-
+def test_missing_count_is_a_scrape_error(monkeypatch):
+    _use_fake_page(monkeypatch, _FakePage({M.MEMBERS_URL: [_resp("<p>There are no active members in this club yet.</p>")]}))
     with pytest.raises(M.ScrapeError, match="Member count not found"):
-        M.MemberScraper().fetch()
+        M.fetch_count_and_feed()
+
+
+def test_non_json_feed_is_a_scrape_error(monkeypatch):
+    _use_fake_page(monkeypatch, _FakePage({M.MEMBERS_URL: [COUNT], M.FEED_URL: [_resp("<html>blocked</html>")]}))
+    with pytest.raises(M.ScrapeError, match="blocked"):
+        M.fetch_count_and_feed()
+
+
+def test_never_ending_feed_stops_at_the_circuit_breaker(monkeypatch):
+    fake_page = _FakePage({M.MEMBERS_URL: [COUNT], M.FEED_URL: [_feed([(1, "Alice Anon")], True)]})
+    _use_fake_page(monkeypatch, fake_page)
+    assert len(M.fetch_count_and_feed()[1]) == 50
+    assert len(fake_page.urls) == 1 + 50

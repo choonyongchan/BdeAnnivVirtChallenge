@@ -30,27 +30,27 @@ resolves; there is no `pytest.ini` / `pyproject.toml`.
 | Path | Covers |
 |---|---|
 | `unit/test_nominal_roll.py` | `parse_field`, `resolve`, `canon_company`, `dedupe`, `is_nil`, `smart_title`, `clean_service`, `entry_order` |
-| `unit/test_stats.py` | `_num`, `AthleteStats` qualifiers, `compute_stats`, every award threshold, `_device_sort`, `_json_safe` |
+| `unit/test_stats.py` | `_num`, `AthleteStats` qualifiers, `compute_stats` (totals from weekly rows, awards from the ledger), every award threshold, `_device_sort` |
 | `unit/test_names.py` | `_all_truncations`, `resolve`, `unit_company`, `service`, junk-company scrub, missing file |
 | `unit/test_generate_helpers.py` | `day_label`, `_local_date` (timezone edges) |
 | `unit/test_config.py` | `config.load()` per-key fallback |
 | `unit/test_renderer.py` | `_slim_leaderboard`, `build_announcement_html`, `render` placeholder substitution |
 | `unit/test_weather.py` | `weather_html` — network-optional degradation (`urllib.request.urlopen` mocked) |
-| `unit/test_activities_parse.py` | `_text`, `parse_stats`, `to_meters/seconds/int`, `_row`, `normalise` (both feed schemas) |
+| `unit/test_activities_parse.py` | `_text`, `parse_stats`, `to_meters/seconds/int`, `_row`, `normalise` (both feed schemas), `week_id`, `weeks_to_sync` (Monday grace, setup range), `parse_leaderboard`, `foot_rows`, `merge_weeks` (leaderboard wins) |
 | `unit/test_members_parse.py` | `parse_member_count` |
 | `integration/test_nominal_roll_convert.py` | `convert()` — synthetic FormSG CSV → roster file bytes + rules + missing-column abort |
-| `integration/test_dashboard_pipeline.py` | `load_activities` + `load_members` + `build_grouped_data` + `build_daily_history` wired together |
-| `integration/test_scraper_write.py` | `RecentActivityFeed.write` and `MemberScraper.write` (both append-only, dedupe by id; members grown from activities.csv) — no browser |
-| `integration/test_scraper_retry.py` | `StravaScraper.scrape` auth-check + 3-attempt backoff + `ScrapeError` handling (`time.sleep` patched) |
+| `integration/test_activities_fetch.py` | `sync_weeks` with a fake page: weekly rows, ledger, leaderboard override, frozen weeks, expiry / mass-failure errors |
+| `integration/test_members_fetch.py` | `fetch_count_and_feed`: headline count, feed cursor paging, error paths |
+| `integration/test_dashboard_pipeline.py` | `load_activities` + `load_weekly` + `load_members` + `build_grouped_data` + `build_weekly_history` wired together |
+| `integration/test_scraper_write.py` | `append_activities`, `write_members`, `scrape_members` (append-only, dedupe by id; leaderboard athletes added) — no browser |
 | `e2e/test_generate_end_to_end.py` | real `generate.run()` → `index.html`: placeholders filled, announcement wired, group/roster/history invariants |
 | `e2e/test_roll_to_dashboard.py` | raw FormSG export → `convert()` → `nominal_roll.csv` → dashboard grouping matches the converted roll |
+| `e2e/test_strava_parity.py` | **live, `--live` only**: `index.html` vs Strava — each leaderboard athlete's this/last-week figures and the member total |
 
 The 6 tests from the former `src/dashboard/test_stats.py` are migrated into
 `unit/test_stats.py` and `integration/test_dashboard_pipeline.py`.
 
-## Not covered
+## Live tests
 
-- A `@live` real-browser scrape smoke test. `src/auth_state.json` exists on
-  this machine, so a `skipif` guard would not skip it — it would hit the live
-  Strava session. Run the scrapers directly (`python -m src.main`) to check that
-  path.
+Tests marked `live` hit the real Strava session and are skipped unless you pass
+`--live`, so `src/auth_state.json` being present never triggers them by accident.

@@ -1,10 +1,10 @@
-"""Generate the static repo-root index.html from the scraped CSVs, config.yaml and the nominal roll.
+"""Generate the static repo-root index.html from the scraped CSVs (weekly totals, ledger, members), config.yaml and the nominal roll.
     python -m src.dashboard.generate     # or via the pipeline: python -m src.main
 """
 import csv
 import json
 from dataclasses import asdict
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -19,6 +19,7 @@ ALUMNI_TYPES = {"NSMAN", "ALUMNI"}
 # Paths are spelled out here, not imported from the scrapers, so the dashboard never loads playwright.
 REPO_ROOT = Path(__file__).parent.parent.parent
 ACTIVITIES_CSV = Path(__file__).parent.parent / "activities" / "activities.csv"
+WEEKLY_CSV = Path(__file__).parent.parent / "activities" / "weekly.csv"
 MEMBERS_CSV = Path(__file__).parent.parent / "members" / "members.csv"
 MEMBER_COUNT_JSON = Path(__file__).parent.parent / "members" / "member_count.json"
 OUT_PATH = REPO_ROOT / "index.html"
@@ -57,6 +58,29 @@ def load_activities(challenge_start: str, tzinfo) -> list:
     return kept
 
 
+def load_weekly() -> list:
+    """Rows of weekly.csv: one per athlete per Mon-Sun week (week = the Monday)."""
+    with open(WEEKLY_CSV, newline="", encoding="utf-8") as f:
+        return list(csv.DictReader(f))
+
+
+def with_feed_updates(weeks: list, acts: list) -> list:
+    """The weekly.csv snapshot rows plus one row per ledger activity scraped after its athlete's latest
+    snapshot (synced_at): the hourly club feed since the nightly scan, and runs only the feed can see
+    (private profiles). Per athlete, not per week, so Strava's and our week edges can't double-count."""
+    synced = {}
+    for w in weeks:
+        synced[w["athlete_id"]] = max(synced.get(w["athlete_id"], ""), w.get("synced_at") or "")
+    extra = []
+    for a in acts:
+        if (a.get("scraped_at") or "") > synced.get(a["athlete_id"], ""):
+            d = date.fromisoformat(a["_date"])
+            extra.append({"athlete_id": a["athlete_id"], "week": (d - timedelta(days=d.weekday())).isoformat(),
+                          "distance_m": a["distance_m"], "moving_time_s": a["moving_time_s"],
+                          "elev_gain_m": a["elev_gain_m"], "activities": 1, "source": "feed"})
+    return weeks + extra
+
+
 def load_members() -> list:
     """Rows of members.csv (the whole append-only club roster)."""
     with open(MEMBERS_CSV, newline="", encoding="utf-8") as f:
@@ -70,55 +94,63 @@ def load_member_count() -> int | None:
     return json.loads(MEMBER_COUNT_JSON.read_text(encoding="utf-8"))["member_count"]
 
 
-def build_grouped_data(acts: list, members: list, label: str, roll: NominalRoll) -> dict:
-    """Split acts/members into 'all'/'serving'/'alumni' stats dicts, each tagged with label.
+def build_grouped_data(weeks: list, acts: list, members: list, label: str, roll: NominalRoll) -> dict:
+    """Split weeks/acts/members into 'all'/'serving'/'alumni' stats dicts, each tagged with label.
     Anyone off the roll lands in neither group (still counted in 'all')."""
     service_by_id = {str(m.get("athlete_id") or ""): roll.service(roll.resolve(m.get("name", "")))
                      for m in members}
 
-    def stats_for(f_acts, f_members):
-        return {**asdict(stats.compute_stats(f_acts, f_members, roll)), "label": label}
+    def in_group(rows, types):
+        return [r for r in rows if service_by_id.get(str(r.get("athlete_id") or ""), "") in types]
 
-    result = {"all": stats_for(acts, members)}
+    def stats_for(f_weeks, f_acts, f_members):
+        return {**asdict(stats.compute_stats(f_weeks, f_acts, f_members, roll)), "label": label}
+
+    result = {"all": stats_for(weeks, acts, members)}
     for group, types in (("serving", SERVING_TYPES), ("alumni", ALUMNI_TYPES)):
-        result[group] = stats_for(
-            [a for a in acts if service_by_id.get(str(a.get("athlete_id") or ""), "") in types],
-            [m for m in members if service_by_id[str(m.get("athlete_id") or "")] in types],
-        )
+        result[group] = stats_for(in_group(weeks, types), in_group(acts, types), in_group(members, types))
     return result
 
 
-def build_daily_history(acts: list, members: list, roll: NominalRoll) -> dict:
-    """{date: {date, label, all, serving, alumni}} per activity date, cumulative up to that date.
-    Uses each activity's local start date (_date) and the members first_seen by then."""
+def build_weekly_history(weeks: list, acts: list, members: list, roll: NominalRoll, today: date) -> dict:
+    """{date: {date, label, all, serving, alumni}} cumulative at each Mon-Sun week's Sunday so far,
+    with today standing in for the running week's Sunday. Week rows count by their Monday,
+    ledger activities by local start date (_date), members by first_seen."""
     result = {}
-    for ds in sorted({a["_date"] for a in acts}):
-        subset = [a for a in acts if a["_date"] <= ds]
-        day_members = [m for m in members if (m.get("first_seen", "")[:10] <= ds)]
-        label = day_label(datetime.fromisoformat(ds).date())
-        result[ds] = {"date": ds, "label": label, **build_grouped_data(subset, day_members, label, roll)}
+    for monday in sorted({w["week"] for w in weeks}):
+        ds = min(date.fromisoformat(monday) + timedelta(days=6), today).isoformat()
+        label = day_label(date.fromisoformat(ds))
+        so_far = [w for w in weeks if w["week"] <= monday]
+        ran = {w["athlete_id"] for w in so_far}   # ran by then, so a member by then, whenever we first saw them
+        result[ds] = {"date": ds, "label": label, **build_grouped_data(
+            so_far,
+            [a for a in acts if a["_date"] <= ds],
+            [m for m in members if m.get("first_seen", "")[:10] <= ds or m["athlete_id"] in ran],
+            label, roll)}
     return result
 
 
 def load(cfg: config.Config) -> tuple:
-    """-> (acts >= challenge_start, members, member_count, roll fitted over every name)."""
+    """-> (weeks, ledger acts >= challenge_start, members, member_count, roll fitted over every name)."""
     acts = load_activities(cfg.challenge_start, ZoneInfo(cfg.timezone))
+    weeks = with_feed_updates(load_weekly(), acts)
     members = load_members()
     # Strava stopped listing members, so members.csv misses joiners who have not run yet;
     # the headline count is the true total when we have it.
     member_count = max(load_member_count() or 0, len(members))
     roll = NominalRoll()
-    # Fit once over every name: build_daily_history() re-resolves each activity per day,
+    # Fit once over every name: build_weekly_history() re-resolves each athlete per week,
     # and a per-call match could land differently on different days.
     roll.fit({m.get("name", "") for m in members} | {a.get("athlete_name", "") for a in acts})
-    print(f"Loaded {len(acts)} activities (>= {cfg.challenge_start}), {len(members)} members.")
-    return acts, members, member_count, roll
+    print(f"Loaded {len(weeks)} athlete-weeks, {len(acts)} ledger activities (>= {cfg.challenge_start}), "
+          f"{len(members)} members.")
+    return weeks, acts, members, member_count, roll
 
 
-def build(acts: list, members: list, member_count: int, roll: NominalRoll, now_dt: datetime) -> tuple:
-    """-> (today_data, daily_history); today and the latest day carry the headline member_count."""
-    data = {"today": build_grouped_data(acts, members, day_label(now_dt), roll)}
-    daily = build_daily_history(acts, members, roll)
+def build(weeks: list, acts: list, members: list, member_count: int, roll: NominalRoll, now_dt: datetime) -> tuple:
+    """-> (today_data, weekly_history); today and the latest snapshot carry the headline member_count."""
+    data = {"today": build_grouped_data(weeks, acts, members, day_label(now_dt), roll)}
+    daily = build_weekly_history(weeks, acts, members, roll, now_dt.date())
     data["today"]["all"]["athlete_count"] = member_count
     if daily:
         daily[max(daily)]["all"]["athlete_count"] = member_count
@@ -129,8 +161,8 @@ def run() -> None:
     """load -> build -> render -> write index.html and the user-count badge."""
     cfg = config.load()
     now_dt = datetime.now(ZoneInfo(cfg.timezone))
-    acts, members, member_count, roll = load(cfg)
-    data, daily = build(acts, members, member_count, roll, now_dt)
+    weeks, acts, members, member_count, roll = load(cfg)
+    data, daily = build(weeks, acts, members, member_count, roll, now_dt)
     OUT_PATH.write_text(renderer.render(
         data, daily, f"{day_label(now_dt)} {now_dt.hour:02}:{now_dt.minute:02}",
         weather.weather_html(cfg.weather_lat, cfg.weather_lon, cfg.timezone),

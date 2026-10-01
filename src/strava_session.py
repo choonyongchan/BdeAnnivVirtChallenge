@@ -3,7 +3,6 @@ Strava deactivated the public club API in 2026, so scrapers read what the club p
 """
 import csv
 import random
-import time
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -96,31 +95,3 @@ def login() -> None:
         browser.close()
     print(f"Session saved to {AUTH_PATH}")
 
-
-class StravaScraper:
-    """Template: scrape() runs the subclass's fetch() with retry, then its write()."""
-
-    landing_url = CLUB_URL
-
-    def scrape(self) -> int:
-        """Auth-check, fetch() with 3 attempts + exponential backoff, then write(); returns rows appended."""
-        require_auth()
-        for attempt in range(3):
-            try:
-                payload = self.fetch()
-                break
-            except ScrapeError:
-                raise  # a definite failure (expired session, changed markup) — don't retry
-            except Exception as e:
-                if attempt == 2:
-                    raise ScrapeError(f"Failed after 3 attempts: {e}") from e
-                time.sleep(30 * 2 ** attempt)  # back off, never hammer
-        return self.write(payload)
-
-    def fetch(self):
-        """Subclass: pull the raw data from inside the club page and return it."""
-        raise NotImplementedError
-
-    def write(self, payload) -> int:
-        """Subclass: merge the payload into this scraper's append-only CSV; returns rows appended."""
-        raise NotImplementedError

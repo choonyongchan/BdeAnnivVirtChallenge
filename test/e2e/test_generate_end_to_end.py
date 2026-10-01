@@ -39,7 +39,9 @@ ACTS = [
     ("2", "Bob Bogus",    "2026-09-18T03:00:00Z", 300, 90, 0),
     ("3", "Cara Cipher",  "2026-09-16T04:00:00Z", 5000, 1500, 5),
     ("99", "Ghost Runner", "2026-09-17T04:00:00Z", 6000, 1800, 5),
+    ("2", "Bob Bogus",    "2026-09-22T03:00:00Z", 7000, 2100, 15),   # second Mon-Sun week
 ]
+NOW = datetime(2026, 9, 24, 12, 0, tzinfo=SGT)
 
 PLACEHOLDERS = ("__DATA__", "__DAILY_DATA__", "__UPDATED_HUMAN__", "__WEATHER__",
                 "__ANNOUNCEMENT__", "__CLUB_NAME__", "__CLUB_SHORT__", "__CLUB_ID__")
@@ -78,6 +80,16 @@ def env(tmp_path, monkeypatch):
             })
     monkeypatch.setattr(generate, "ACTIVITIES_CSV", activities)
 
+    # Strava's weekly figures for the same runs, one row per run (the engine sums them)
+    weekly = tmp_path / "weekly.csv"
+    with weekly.open("w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["athlete_id", "week", "distance_m", "moving_time_s", "elev_gain_m", "activities", "source"])
+        for aid, _, d, dist, mov, elev in ACTS:
+            if d[:10] >= CHALLENGE_START:
+                w.writerow([aid, "2026-09-21" if d[:10] >= "2026-09-21" else "2026-09-14", dist, mov, elev, 1, "profile"])
+    monkeypatch.setattr(generate, "WEEKLY_CSV", weekly)
+
     announce = tmp_path / "announce.md"
     announce.write_text("# Test Banner\nGo run.", encoding="utf-8")
     cfg_yaml = tmp_path / "config.yaml"
@@ -111,11 +123,11 @@ def test_run_writes_a_fully_filled_page(env):
 
 
 def test_rationale_invariants_hold(env):
-    data, daily = generate.build(*generate.load(config.load()), datetime(2026, 9, 20, 12, 0, tzinfo=SGT))
+    data, daily = generate.build(*generate.load(config.load()), NOW)
     today = data["today"]
 
-    # the 2026-09-09 activity is before the challenge start -> 6 of 7 kept
-    assert today["all"]["run_count"] == 6
+    # the 2026-09-09 activity is before the challenge start -> 7 of 8 kept
+    assert today["all"]["run_count"] == 7
 
     # serving + alumni never exceed all, and their runners are a subset of all's
     assert today["serving"]["run_count"] + today["alumni"]["run_count"] <= today["all"]["run_count"]
@@ -130,16 +142,16 @@ def test_rationale_invariants_hold(env):
     # member count is every members.csv row, regardless of who ran
     assert today["all"]["athlete_count"] == len(MEMBERS)
 
-    # daily history: keys sorted, first day is the challenge start, km cumulative
+    # history: one cumulative snapshot per Mon-Sun week's Sunday, today for the running week
     days = list(daily)
-    assert days == sorted(days) and days[0] == CHALLENGE_START
+    assert days == ["2026-09-20", "2026-09-24"]
     kms = [daily[d]["all"]["total_km"] for d in days]
     assert kms == sorted(kms)
 
 
 def test_headline_member_count_overrides_all_total(env, tmp_path):
     (tmp_path / "member_count.json").write_text(json.dumps({"member_count": 1055}), encoding="utf-8")
-    data, daily = generate.build(*generate.load(config.load()), datetime(2026, 9, 20, 12, 0, tzinfo=SGT))
+    data, daily = generate.build(*generate.load(config.load()), NOW)
 
     assert data["today"]["all"]["athlete_count"] == 1055
     assert daily[max(daily)]["all"]["athlete_count"] == 1055

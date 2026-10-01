@@ -1,5 +1,5 @@
-"""Integration test for the scrapers' write() steps (no browser): both CSVs are append-only and deduped
-by id; members get first_seen = first activity, existing rows are never rewritten."""
+"""Integration test for the CSV writers (no browser): the ledger and members.csv are append-only and
+deduped by id; existing member rows are never rewritten."""
 import csv
 import json
 
@@ -28,8 +28,8 @@ def test_activities_write_is_append_only_and_deduped(tmp_path, monkeypatch):
     path = tmp_path / "activities.csv"
     monkeypatch.setattr(A, "CSV_PATH", path)
 
-    A.RecentActivityFeed().write([_activity(1, 7)])
-    A.RecentActivityFeed().write([_activity(1, 7), _activity(2, 8)])   # 1 repeats, 2 is new
+    A.append_activities(A.normalise(_activity(1, 7)))
+    A.append_activities(A.normalise(_activity(1, 7)) + A.normalise(_activity(2, 8)))   # 1 repeats, 2 is new
 
     rows = _read(path)
     assert [r["activity_id"] for r in rows] == ["1", "2"]           # no duplicate row for 1
@@ -37,65 +37,36 @@ def test_activities_write_is_append_only_and_deduped(tmp_path, monkeypatch):
     assert path.read_text(encoding="utf-8").count("activity_id,athlete_id") == 1  # header once
 
 
-def test_activities_write_drops_idless_rows_and_expands_group(tmp_path, monkeypatch):
-    path = tmp_path / "activities.csv"
-    monkeypatch.setattr(A, "CSV_PATH", path)
-
-    idless = {"entity": "Activity"}                                 # normalises to activity_id=None
-    group = {"entity": "GroupActivity", "rowData": {"activities": [
-        {"activity_id": 10, "athlete_id": 1, "start_date": "2026-09-14T01:00:00Z", "stats": []},
-        {"activity_id": 11, "athlete_id": 2, "start_date": "2026-09-14T02:00:00Z", "stats": []},
-    ]}}
-    A.RecentActivityFeed().write([idless, group])
-
-    assert [r["activity_id"] for r in _read(path)] == ["10", "11"]
-
-
-def _write_activities(path, rows):
-    with path.open("w", encoding="utf-8", newline="") as f:
-        w = csv.writer(f)
-        w.writerow(["athlete_id", "athlete_name", "start_date_utc"])
-        w.writerows(rows)
-
-
 @pytest.fixture
 def member_paths(tmp_path, monkeypatch):
-    paths = {"csv": tmp_path / "members.csv", "acts": tmp_path / "activities.csv",
-             "count": tmp_path / "member_count.json"}
+    paths = {"csv": tmp_path / "members.csv", "count": tmp_path / "member_count.json"}
     monkeypatch.setattr(M, "CSV_PATH", paths["csv"])
-    monkeypatch.setattr(M, "ACTIVITIES_CSV", paths["acts"])
     monkeypatch.setattr(M, "COUNT_PATH", paths["count"])
     return paths
 
 
-def test_members_write_adds_activity_athletes_at_first_run(member_paths):
-    _write_activities(member_paths["acts"], [
-        ["2", "Bob Bogus", "2026-09-18T07:00:00Z"],
-        ["2", "Bob Bogus", "2026-09-17T06:00:00Z"],      # Bob's earliest run
-        ["", "No Id", "2026-09-17T06:00:00Z"],           # id-less: skipped
-    ])
-
-    assert M.MemberScraper().write(1055) == 1
-
-    assert _read(member_paths["csv"]) == [
-        {"athlete_id": "2", "name": "Bob Bogus", "first_seen": "2026-09-17T06:00:00+00:00"}]
-    assert json.loads(member_paths["count"].read_text(encoding="utf-8")) == {"member_count": 1055}
-
-
 def test_members_write_is_append_only(member_paths):
-    _write_activities(member_paths["acts"], [["1", "Alice Anon", "2026-09-15T00:00:00Z"]])
-    M.MemberScraper().write(1000)
+    assert M.write_members(1000, {"1": "Alice Anon"}) == 1
+    assert M.write_members(1001, {"1": "Alice A.", "3": "Cara Cipher"}) == 1   # Alice renamed, Cara new
+    assert M.write_members(1001, {"3": "Cara Cipher"}) == 0                      # nothing new on a rerun
 
-    _write_activities(member_paths["acts"], [               # Alice renamed, Cara new
-        ["1", "Alice A.", "2026-09-14T00:00:00Z"],
-        ["3", "Cara Cipher", "2026-09-20T00:00:00Z"],
-    ])
-    assert M.MemberScraper().write(1001) == 1
-    assert M.MemberScraper().write(1001) == 0               # nothing new on a rerun
-
-    by_id = {r["athlete_id"]: r for r in _read(member_paths["csv"])}
-    assert by_id["1"] == {"athlete_id": "1", "name": "Alice Anon",   # row untouched
-                          "first_seen": "2026-09-15T00:00:00+00:00"}
-    assert by_id["3"]["first_seen"] == "2026-09-20T00:00:00+00:00"
+    rows = _read(member_paths["csv"])
+    assert [(r["athlete_id"], r["name"]) for r in rows] == [("1", "Alice Anon"), ("3", "Cara Cipher")]
+    assert all(r["first_seen"] for r in rows)
     assert member_paths["csv"].read_text(encoding="utf-8").count("athlete_id,name,first_seen") == 1
     assert json.loads(member_paths["count"].read_text(encoding="utf-8")) == {"member_count": 1001}
+
+
+def test_scrape_members_adds_feed_and_leaderboard_athletes_and_ledgers_feed_runs(member_paths, monkeypatch,
+                                                                               tmp_path):
+    monkeypatch.setattr(A, "CSV_PATH", tmp_path / "activities.csv")
+    monkeypatch.setattr(M, "require_auth", lambda: None)
+    feed = A.normalise(_activity(1, 1)) + A.normalise(_activity(2, 1))
+    feed[0].update(type="Run", athlete_name="Alice Anon")
+    feed[1].update(type="Ride", athlete_name="Alice Anon")   # not a foot activity: kept out of the ledger
+    monkeypatch.setattr(M, "fetch_count_and_feed", lambda: (1055, feed))
+    board = {"2026-09-28": {"2": {"name": "Bob Bogus"}}, "2026-09-21": {"1": {"name": "Alice Anon"}}}
+
+    assert M.scrape_members(board) == 2
+    assert {r["athlete_id"] for r in _read(member_paths["csv"])} == {"1", "2"}
+    assert [r["activity_id"] for r in _read(tmp_path / "activities.csv")] == ["1"]

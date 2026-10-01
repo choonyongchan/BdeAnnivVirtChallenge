@@ -1,14 +1,19 @@
-"""Scrape activities and members, then generate and publish the dashboard; the first failure stops it.
-    python -m src.main
+"""Scrape, then generate and publish the dashboard; the first failure stops it.
+Hourly: the club feed only (members + new foot activities), a handful of requests.
+Nightly (the 23:xx run, or --full): also the leaderboard and every member's profile week -> weekly.csv,
+the authoritative snapshot the hourly feed activities are added on top of.
+    python -m src.main [--full]
 """
 import json
-import os
 import subprocess
+import sys
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
-from .activities.activities import RecentActivityFeed
+from .activities.activities import fetch_leaderboard, sync_weeks
+from .config import settings
 from .dashboard import generate
-from .members.members import MemberScraper
+from .members.members import scrape_members
 from .strava_session import AUTH_PATH, ScrapeError
 
 REPO_ROOT = generate.REPO_ROOT
@@ -49,28 +54,19 @@ def publish_dashboard() -> None:
     print("Pushed index.html.")
 
 
-def report_counts_to_ci(new_activities: int, new_members: int) -> None:
-    """Expose the new-row counts as step outputs for the ledger commit message; no-op outside GitHub Actions."""
-    output_path = os.environ.get("GITHUB_OUTPUT")
-    if not output_path:
-        return
-    with open(output_path, "a", encoding="utf-8") as f:
-        f.write(f"new_activities={new_activities}\n")
-        f.write(f"new_members={new_members}\n")
-
-
 def main() -> None:
     check_auth()
+    full = "--full" in sys.argv or datetime.now(ZoneInfo(settings.timezone)).hour == 23
     try:
-        print("=== scrape activities ===", flush=True)
-        new_activities = RecentActivityFeed().scrape()
+        print(f"=== scrape {'leaderboard + ' if full else ''}members + feed ===", flush=True)
+        leaderboard = fetch_leaderboard() if full else {}
+        scrape_members(leaderboard)
 
-        print("\n=== scrape members ===", flush=True)
-        new_members = MemberScraper().scrape()
+        if full:
+            print("\n=== nightly snapshot: every member's profile week ===", flush=True)
+            sync_weeks(leaderboard)
     except ScrapeError as e:
         raise SystemExit(f"scrape failed, pipeline stopped: {e}\n{REAUTH_MSG}")
-
-    report_counts_to_ci(new_activities, new_members)
 
     print("\n=== generate dashboard ===", flush=True)
     generate.run()

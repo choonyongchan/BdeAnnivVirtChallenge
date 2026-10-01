@@ -1,28 +1,29 @@
-"""Fill the append-only activities.csv from two Strava sources that share one parser and one writer:
-  RecentActivityFeed - the club's logged-in feed (hourly). It only retains ~2.5 days, so the pipeline
-                       must run often enough to never miss a window; it also sees athletes not yet in members.csv.
-  ProfilesFeed       - each members.csv athlete's monthly profile chart (daily), catching older runs the feed missed.
-    python -m src.activities.activities [--workers N]     # runs ProfilesFeed
+"""Strava's weekly totals per member (weekly.csv, the nightly snapshot) plus a best-effort activity ledger
+(activities.csv). Each member's profile week (Mon-Sun) lists that week's activities; summing their foot
+activities gives the week's totals. The club leaderboard (top 100, this and last week) overrides those sums,
+since it also counts runs this account can't see (followers-only, private profiles). Each row is stamped
+synced_at; the dashboard adds ledger activities scraped after it (the hourly club feed) on top.
+    python -m src.activities.activities [--setup]    # --setup: every week since challenge_start
 """
 import argparse
-import random
+import csv
 import re
 import sys
-import time
-from collections import Counter
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from ..config import settings
-from ..dashboard.generate import _local_date
-from ..strava_session import (CLUB_ID, CLUB_URL, ScrapeError, StravaScraper, append_new_rows,
-                              club_page, csv_column_set, read_csv, require_auth)
+from ..strava_session import (CLUB_URL, ScrapeError, append_new_rows, club_page, csv_column_set,
+                              read_csv, require_auth)
 
 CSV_PATH = Path(__file__).parent / "activities.csv"
-# Not imported from members.members: that module imports CSV_PATH from here (cycle).
+WEEKLY_CSV = Path(__file__).parent / "weekly.csv"
+# Not imported from members.members: that module imports from here (cycle).
 MEMBERS_CSV = Path(__file__).parent.parent / "members" / "members.csv"
-FEED_URL = f"/clubs/{CLUB_ID}/feed?feed_type=club&num_entries=100"
+WEEK_URL = "/athletes/{athlete_id}/interval?interval={week}&interval_type=week&chart_type=miles&year_offset=0"
+WEEKLY_FIELDS = ["athlete_id", "week", "distance_m", "moving_time_s", "elev_gain_m", "activities", "source",
+                 "synced_at"]
 
 FIELDS = [
     "activity_id", "athlete_id", "athlete_name", "athlete_firstname",
@@ -128,85 +129,44 @@ def normalise(entry: dict) -> list:
     return []
 
 
-def append_activities(rows: list, entity: str | None = None) -> list:
-    """Append rows whose activity_id isn't in activities.csv yet, stamped with scrape time
-    (and `entity`, if given); returns the rows appended. Re-reads the CSV so a concurrent run's rows are skipped."""
+def now_utc() -> str:
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+
+def append_activities(rows: list, stamp: str | None = None) -> list:
+    """Append rows whose activity_id isn't in activities.csv yet, stamped scraped_at = `stamp` (default now);
+    returns the rows appended."""
     seen = csv_column_set(CSV_PATH, "activity_id")
-    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    now = stamp or now_utc()
     new = []
     for r in rows:
         r["activity_id"] = str(r["activity_id"])
         if r["activity_id"] not in seen:
             r["scraped_at"] = now
-            if entity:
-                r["entity"] = entity
             seen.add(r["activity_id"])
             new.append(r)
     append_new_rows(CSV_PATH, FIELDS, new)
     return new
 
 
-class RecentActivityFeed(StravaScraper):
-    """Scrape the club activity feed into the append-only activities.csv."""
-
-    landing_url = f"{CLUB_URL}/recent_activity"
-
-    def fetch(self) -> list:
-        """Page through the club feed (same XHR the page makes) until caught up; return all entries."""
-        seen = csv_column_set(CSV_PATH, "activity_id")
-        entries = []
-        url = FEED_URL
-        with club_page(self.landing_url) as page:
-            for _ in range(500):  # circuit breaker; ~50k entries, far above a burst hour
-                result = page.evaluate(
-                    """async (url) => {
-                        const r = await fetch(url, {credentials: 'include'});
-                        const t = await r.text();
-                        try { return {ok: true, data: JSON.parse(t)}; }
-                        catch { return {ok: false, snippet: t.slice(0, 200)}; }
-                    }""",
-                    url,
-                )
-                if not result["ok"]:
-                    raise ScrapeError("Session expired or blocked - re-run: python -m src.login\n"
-                                      f"Response was not JSON: {result['snippet'][:120]!r}")
-                data = result["data"]
-                page_entries = data.get("entries") or []
-                entries.extend(page_entries)
-                # Strava caps each response at 100 entries, so follow the cursor while hasMore.
-                if not page_entries or not (data.get("pagination") or {}).get("hasMore"):
-                    return entries
-                page_ids = [str(r["activity_id"]) for e in page_entries for r in normalise(e) if r["activity_id"]]
-                # Newest-first: once a whole page is already in the CSV, everything older is too.
-                if page_ids and all(i in seen for i in page_ids):
-                    return entries
-                cursor = page_entries[-1]["cursorData"]
-                url = f"{FEED_URL}&before={cursor['updated_at']}&cursor={cursor['rank']}"
-                page.wait_for_timeout(random.randint(400, 900))
-        raise ScrapeError(f"Feed still had more pages after {len(entries)} entries - "
-                           "backlog too large for the circuit breaker, needs a look.")
-
-    def write(self, entries: list) -> int:
-        """Append every feed activity not already in activities.csv, stamped with scrape time."""
-        rows = [r for e in entries for r in normalise(e) if r["activity_id"]]
-        new = append_activities(rows)
-        print(f"{len(entries)} entries -> {len(rows)} activities, {len(new)} new -> {CSV_PATH}")
-        return len(new)
-
-
-# The club feed only ever carried these (plus a couple of stray Rides); profiles also
-# list gym sessions, swims, rides... which would inflate the running ledger.
+# What the club leaderboard counts: foot sports. Profiles also list rides, swims, workouts...
 FOOT_TYPES = {"Run", "TrailRun", "VirtualRun", "Walk", "Hike"}
 
-INTERVAL_URL = ("/athletes/{athlete_id}/interval?interval={month}"
-                "&interval_type=month&chart_type=miles&year_offset=0")
+# Rank-table rows: the athlete's id comes from the profile link, the rest are cell texts.
+ROWS_JS = """() => [...document.querySelectorAll('.leaderboard tbody tr')].map(tr => {
+    const c = [...tr.children].map(td => td.innerText.trim());
+    const a = tr.querySelector('a.athlete-name');
+    return a && {id: a.getAttribute('href').split('/').pop(), name: a.innerText.trim(),
+                 dist: c[2], acts: c[3], elev: c[4], time: c[5]};
+}).filter(Boolean)"""
 
-# Fetch a batch of interval URLs with a pool of `workers` concurrent requests, all
-# inside the logged-in page. Each XHR answers with jQuery calls; the month's activity
+# Fetch a batch of profile-week URLs with a pool of `workers` concurrent requests, all
+# inside the logged-in page. Each XHR answers with jQuery calls; the week's activity
 # list is the HTML string passed to jQuery('#interval-rides').html(...), whose feed
 # component carries the entries in data-react-props.appContext.preFetchedEntries.
 # The string literal is handed to the JS engine to unescape (its escapes aren't JSON).
-# Per URL: {entries: [...]} | {entries: null} (private / no list) | {expired} | {error}.
+# Per URL: {entries: [...]} | {entries: null} (private / no list) | {expired} | {error} | {limited} | null.
+# A 429 stops every worker (unfetched URLs stay null): retrying in parallel only deepens Strava's block.
 BATCH_JS = r"""async ({urls, workers}) => {
     const sleep = (ms) => new Promise(res => setTimeout(res, ms));
     const parse = (t) => {
@@ -226,17 +186,18 @@ BATCH_JS = r"""async ({urls, workers}) => {
             try {
                 const r = await fetch(url, {credentials: 'include', headers: {'X-Requested-With': 'XMLHttpRequest'}});
                 if (r.url.includes('/login') || r.status === 401) return {expired: true, status: r.status};
-                if (r.status === 429 || r.status >= 500) { last = 'HTTP ' + r.status; continue; }
+                if (r.status === 429) { limited = true; return {limited: true}; }
+                if (r.status >= 500) { last = 'HTTP ' + r.status; continue; }
                 if (!r.ok) return {error: 'HTTP ' + r.status};
                 return {entries: parse(await r.text())};
             } catch (e) { last = String(e); }
         }
         return {error: last};
     };
-    const out = new Array(urls.length);
-    let next = 0;
+    const out = new Array(urls.length).fill(null);
+    let next = 0, limited = false;
     const worker = async () => {
-        while (next < urls.length) {
+        while (next < urls.length && !limited) {
             const i = next++;
             out[i] = await one(urls[i]);
             await sleep(150 + Math.random() * 350);
@@ -247,155 +208,140 @@ BATCH_JS = r"""async ({urls, workers}) => {
 }"""
 
 
-def months_since(start: str, today: date) -> list:
-    """Strava interval ids ("YYYYMM") from the month of ISO date `start` to today's, inclusive."""
-    y, m = int(start[:4]), int(start[5:7])
-    out = []
-    while (y, m) <= (today.year, today.month):
-        out.append(f"{y}{m:02d}")
-        y, m = (y + 1, 1) if m == 12 else (y, m + 1)
-    return out
+def monday_of(d: date) -> date:
+    return d - timedelta(days=d.weekday())
 
 
-def challenge_rows(entries: list, athlete_id: str, challenge_start: str, tzinfo) -> list:
-    """This athlete's public foot activities in `entries` that started locally on/after
-    challenge_start, activity_id as str."""
+def week_id(monday: date) -> str:
+    """Strava's interval id for a week: ISO year + week, e.g. 2026-09-14 -> "202638"."""
+    y, w, _ = monday.isocalendar()
+    return f"{y}{w:02d}"
+
+
+def weeks_to_sync(today: date, challenge_start: str, setup: bool) -> list:
+    """Mondays to refresh: every week since challenge_start (setup), else this week,
+    plus last week on Mondays so a Sunday run uploaded after the rollover still lands."""
+    this = monday_of(today)
+    if setup:
+        first = monday_of(date.fromisoformat(challenge_start))
+        return [first + timedelta(weeks=i) for i in range((this - first).days // 7 + 1)]
+    return [this - timedelta(weeks=1), this] if today.weekday() == 0 else [this]
+
+
+def parse_leaderboard(rows: list) -> dict:
+    """Scraped rank-table rows -> {athlete_id: weekly.csv figures + name}."""
+    return {r["id"]: {"name": r["name"],
+                      "distance_m": to_meters(r["dist"]) or 0.0,
+                      "moving_time_s": to_seconds(r["time"]) or 0,
+                      "elev_gain_m": to_meters(r["elev"]) or 0.0,
+                      "activities": to_int(r["acts"]) or 0}
+            for r in rows}
+
+
+def fetch_leaderboard() -> dict:
+    """{monday_iso: {athlete_id: figures}} for this week and last week; the Last Week tab swaps the table in place."""
+    this = monday_of(datetime.now(ZoneInfo(settings.timezone)).date())
+    with club_page(f"{CLUB_URL}/leaderboard") as page:
+        this_week = page.evaluate(ROWS_JS)
+        page.locator("span.button.last-week").click()
+        page.wait_for_timeout(1500)
+        last_week = page.evaluate(ROWS_JS)
+    if not this_week and not last_week:
+        raise ScrapeError("Leaderboard empty - session expired or markup changed; re-run: python -m src.login")
+    return {this.isoformat(): parse_leaderboard(this_week),
+            (this - timedelta(weeks=1)).isoformat(): parse_leaderboard(last_week)}
+
+
+def foot_rows(entries: list, athlete_id: str) -> list:
+    """This athlete's own foot activities in a profile week's entries (group runs also list the others)."""
     rows = []
     for r in (r for e in entries for r in normalise(e)):
         r["activity_id"] = str(r["activity_id"] or "")
-        if (r["activity_id"]
-                and str(r["athlete_id"]) == athlete_id  # group runs list others; their own pass takes them
-                and r["type"] in FOOT_TYPES
-                and r["visibility"] == "everyone"  # followers-only never reaches the feed or a public page
-                and _local_date(r["start_date_utc"], tzinfo) >= challenge_start):
+        if r["activity_id"] and str(r["athlete_id"]) == athlete_id and r["type"] in FOOT_TYPES:
             rows.append(r)
     return rows
 
 
-def _fmt_secs(s: float) -> str:
-    m, s = divmod(int(s), 60)
-    return f"{m}m{s:02d}s"
+def week_totals(athlete_id: str, monday: str, rows: list, synced_at: str) -> dict:
+    """One weekly.csv row summing a profile week's foot activities."""
+    return {"athlete_id": athlete_id, "week": monday, "source": "profile", "synced_at": synced_at,
+            "activities": len(rows),
+            "distance_m": round(sum(r["distance_m"] or 0 for r in rows), 1),
+            "moving_time_s": sum(r["moving_time_s"] or 0 for r in rows),
+            "elev_gain_m": round(sum(r["elev_gain_m"] or 0 for r in rows), 1)}
 
 
-class ProfilesFeed:
-    """Scan each members.csv athlete's monthly profile chart and append the foot activities
-    the club feed missed. The month-bar XHR returns the same entries the feed carries, so
-    normalise() parses them unchanged; one request per member per month."""
+def merge_weeks(weekly: dict, profile_rows: list, leaderboard: dict, synced_at: str) -> dict:
+    """Upsert profile rows into {(athlete_id, week): row}, then the leaderboard on top (it wins)."""
+    for r in profile_rows:
+        weekly[(r["athlete_id"], r["week"])] = r
+    for week, board in leaderboard.items():
+        for aid, fig in board.items():
+            weekly[(aid, week)] = {"athlete_id": aid, "week": week, "source": "leaderboard", "synced_at": synced_at,
+                                   **{k: fig[k] for k in WEEKLY_FIELDS[2:6]}}
+    return weekly
 
-    def __init__(self, workers: int = 16, only: set | None = None):
-        self.workers, self.only = workers, only
 
-    def run(self) -> int:
-        """Scan all members (just `only`, if given); append them; returns the missing-row count."""
-        require_auth()
-        tzinfo = ZoneInfo(settings.timezone)
-        months = months_since(settings.challenge_start, datetime.now(tzinfo).date())
-        seen = csv_column_set(CSV_PATH, "activity_id")
-        members = {r["athlete_id"]: r["name"] for r in read_csv(MEMBERS_CSV)
-                   if self.only is None or r["athlete_id"] in self.only}
-        jobs = [(aid, m) for aid in members for m in months]
+def write_weekly(weekly: dict) -> None:
+    """Rewrite weekly.csv sorted by (week, athlete_id), dropping empty weeks."""
+    rows = sorted((r for r in weekly.values() if float(r["activities"] or 0) or float(r["distance_m"] or 0)),
+                  key=lambda r: (r["week"], r["athlete_id"]))
+    with WEEKLY_CSV.open("w", encoding="utf-8", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=WEEKLY_FIELDS)
+        w.writeheader()
+        w.writerows(rows)
 
-        print("Backfill from member profiles")
-        print(f"  challenge start : {settings.challenge_start} ({settings.timezone})")
-        print(f"  months          : {', '.join(months)}")
-        print(f"  members         : {len(members)} (from {MEMBERS_CSV.name})")
-        print(f"  requests        : {len(jobs)}, {self.workers} concurrent, batches of {self.workers * 6}")
-        print(f"  activities.csv  : {len(seen)} rows already", flush=True)
 
-        t0 = time.monotonic()
-        with club_page() as page:
-            found, hidden, errors, per_member = self._scan(page, jobs, members, seen, tzinfo)
-        self._summary(members, per_member, found, hidden, errors, time.monotonic() - t0)
+def sync_weeks(leaderboard: dict, setup: bool = False, workers: int = 4) -> int:
+    """Snapshot every members.csv athlete's profile week(s) into weekly.csv and the ledger, then overlay
+    the leaderboard; returns new ledger rows. Stops at Strava's first 429, keeping what it fetched."""
+    require_auth()
+    synced_at = now_utc()   # ledger rows found here share it, so the dashboard never adds them twice
+    mondays = weeks_to_sync(datetime.now(ZoneInfo(settings.timezone)).date(), settings.challenge_start, setup)
+    members = [r["athlete_id"] for r in read_csv(MEMBERS_CSV)]
+    jobs = [(aid, m) for m in mondays for aid in members]
+    print(f"weeks {', '.join(m.isoformat() for m in mondays)}: {len(jobs)} profile requests", flush=True)
 
-        count = len(found)
-        if found:
-            # The hourly scrape may have run during the scan; the shared writer skips what it added.
-            count = len(append_activities(found, entity="ProfileBackfill"))  # tells these apart from club-feed rows
-            print(f"\nAppended {count} rows -> {CSV_PATH}")
-        if len(errors) > 0.02 * len(jobs):
-            # >2% of requests failed. Found rows are already saved; failing lets the scheduler flag the gaps.
-            raise ScrapeError(f"{len(errors)} of {len(jobs)} profile requests failed - "
-                              "activities may be missing; re-run to retry.")
-        return count
-
-    def _scan(self, page, jobs, members, seen, tzinfo) -> tuple:
-        """Fetch every (athlete_id, month) job in batches; -> (found, hidden, errors, per_member).
-        Adds each found activity_id to `seen` so a group run listed twice is kept once."""
-        found, hidden, errors = [], [], []
-        per_member = {}  # athlete_id -> [on_profile, already_in_csv, missing]
-        batch_size = self.workers * 6
-        t0 = time.monotonic()
+    profile, ledger, errors, limited = [], [], 0, False
+    batch_size = workers * 6
+    with club_page() as page:
         for b in range(0, len(jobs), batch_size):
             batch = jobs[b:b + batch_size]
-            urls = [INTERVAL_URL.format(athlete_id=a, month=m) for a, m in batch]
-            results = page.evaluate(BATCH_JS, {"urls": urls, "workers": self.workers})
-
-            for (athlete_id, month), res in zip(batch, results):
-                name = members[athlete_id]
+            urls = [WEEK_URL.format(athlete_id=a, week=week_id(m)) for a, m in batch]
+            for (aid, monday), res in zip(batch, page.evaluate(BATCH_JS, {"urls": urls, "workers": workers})):
+                if res is None or res.get("limited"):   # None: never fetched, a 429 stopped the batch
+                    limited = True
+                    continue
                 if res.get("expired"):
-                    raise ScrapeError(f"Session expired or blocked (HTTP {res['status']}) at "
-                                      f"{athlete_id} {month} - re-run: python -m src.login")
+                    raise ScrapeError(f"Session expired or blocked (HTTP {res['status']}) - re-run: python -m src.login")
                 if "error" in res:
-                    errors.append((athlete_id, name, month, res["error"]))
-                    print(f"  ! {athlete_id} {name} {month}: failed after retries ({res['error']})")
+                    errors += 1
                     continue
-                if res["entries"] is None:
-                    hidden.append((athlete_id, name, month))
-                    continue
-                rows = challenge_rows(res["entries"], athlete_id, settings.challenge_start, tzinfo)
-                missing = [r for r in rows if r["activity_id"] not in seen]
-                stats = per_member.setdefault(athlete_id, [0, 0, 0])
-                stats[0] += len(rows)
-                stats[1] += len(rows) - len(missing)
-                stats[2] += len(missing)
-                for r in missing:
-                    seen.add(r["activity_id"])
-                    print(f"  + MISSING {athlete_id} {name} [{month}]: {r['activity_id']} "
-                          f"{_local_date(r['start_date_utc'], tzinfo)} {r['type']} "
-                          f"{r['distance_m']} m {r['activity_name']!r}")
-                found += missing
+                rows = foot_rows(res["entries"] or [], aid)  # None: private profile, nothing visible
+                profile.append(week_totals(aid, monday.isoformat(), rows, synced_at))
+                ledger += rows
+            print(f"  [{b + len(batch)}/{len(jobs)}] errors {errors}", flush=True)
+            if limited:
+                break
 
-            done = b + len(batch)
-            elapsed = time.monotonic() - t0
-            eta = elapsed / done * (len(jobs) - done)
-            print(f"[{done}/{len(jobs)} requests | {done / elapsed:.1f}/s | "
-                  f"elapsed {_fmt_secs(elapsed)} | eta {_fmt_secs(eta)}] "
-                  f"missing {len(found)}, hidden {len(hidden)}, errors {len(errors)}", flush=True)
-        return found, hidden, errors, per_member
-
-
-
-    def _summary(self, members, per_member, found, hidden, errors, elapsed):
-        active = {a: s for a, s in per_member.items() if s[0]}
-        print("\n==================== BACKFILL SUMMARY ====================")
-        print(f"Time              : {_fmt_secs(elapsed)}")
-        print(f"Members scanned   : {len(members)}")
-        print(f"  with activities : {len(active)} (foot, since challenge start)")
-        print(f"  hidden/private  : {len({a for a, _, _ in hidden})}")
-        print(f"  failed requests : {len(errors)}")
-        print(f"Profile activities: {sum(s[0] for s in active.values())}, "
-              f"already in CSV {sum(s[1] for s in active.values())}, missing {len(found)}")
-        if found:
-            print("Missing by type   : " + ", ".join(f"{t} {n}" for t, n in Counter(r["type"] for r in found).most_common()))
-            km = sum(r["distance_m"] or 0 for r in found) / 1000
-            print(f"Missing distance  : {km:.1f} km")
-            print("Members with missing activities:")
-            for a, s in sorted(per_member.items(), key=lambda kv: -kv[1][2]):
-                if s[2]:
-                    print(f"  {a:>12} {members[a]:<30} missing {s[2]:>3} of {s[0]}")
-        if errors:
-            print("Failed requests (re-run to retry; already-found rows are idempotent):")
-            for a, name, month, err in errors:
-                print(f"  {a:>12} {name:<30} {month} {err}")
-        print("==========================================================")
+    weekly = {(r["athlete_id"], r["week"]): r for r in read_csv(WEEKLY_CSV)}
+    write_weekly(merge_weeks(weekly, profile, leaderboard, synced_at))
+    new = append_activities(ledger, synced_at)
+    print(f"{len(profile)} athlete-weeks -> {WEEKLY_CSV}; {len(new)} new activities -> {CSV_PATH}")
+    if limited:
+        raise ScrapeError(f"Strava rate-limited (HTTP 429) after {len(profile)} of {len(jobs)} profile requests; "
+                          "kept what was fetched - the next full run resumes.")
+    if errors > 0.02 * len(jobs):
+        # What was found is saved; failing lets the scheduler flag the gaps.
+        raise ScrapeError(f"{errors} of {len(jobs)} profile requests failed - re-run to retry.")
+    return len(new)
 
 
 def main() -> int:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # athlete names may be non-ASCII
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--workers", type=int, default=16, help="concurrent profile requests (default 16)")
-    args = parser.parse_args()
-    ProfilesFeed(max(1, args.workers)).run()
+    parser.add_argument("--setup", action="store_true", help="sync every week since challenge_start")
+    sync_weeks(fetch_leaderboard(), setup=parser.parse_args().setup)
     return 0
 
 
