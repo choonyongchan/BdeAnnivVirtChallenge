@@ -54,9 +54,9 @@ def _source(athletes):
 
 
 def test_members_write_is_append_only(member_paths):
-    assert M.write_members(1000, [_source({"1": "Alice Anon"})]) == 1
-    assert M.write_members(1001, [_source({"1": "Alice A."}), _source({"3": "Cara Cipher"})]) == 1   # Alice renamed
-    assert M.write_members(1001, [_source({"3": "Cara Cipher"})]) == 0                               # nothing new
+    assert M.write_members(1000, [_source({"1": "Alice Anon"})]) == ["1"]
+    assert M.write_members(1001, [_source({"1": "Alice A."}), _source({"3": "Cara Cipher"})]) == ["3"]   # Alice renamed
+    assert M.write_members(1001, [_source({"3": "Cara Cipher"})]) == []                               # nothing new
 
     rows = _read(member_paths["csv"])
     assert [(r["athlete_id"], r["name"]) for r in rows] == [("1", "Alice Anon"), ("3", "Cara Cipher")]

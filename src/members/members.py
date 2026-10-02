@@ -129,10 +129,10 @@ def append_members(athletes: dict) -> list:
     return [r["athlete_id"] for r in new]
 
 
-def write_members(count: int, sources: list) -> int:
-    """Save the headline count and append the union of the sources' athletes; returns rows appended."""
+def write_members(count: int, sources: list) -> list:
+    """Save the headline count and append the union of the sources' athletes; returns the new athlete ids."""
     COUNT_PATH.write_text(json.dumps({"member_count": count}) + "\n", encoding="utf-8")
     athletes = {aid: name for source in sources for aid, name in source.athletes.items()}
     new = append_members(athletes)
     print(f"headline count {count}; {len(athletes)} feed/leaderboard athletes, {len(new)} new -> {CSV_PATH}")
-    return len(new)
+    return new

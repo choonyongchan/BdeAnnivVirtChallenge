@@ -8,8 +8,7 @@ import random
 
 from .member_activities import FOOT_TYPES, append_activities, normalise
 from ..members.members import LeaderboardMembers, RecentActivityMembers, fetch_member_count, write_members
-from ..members import members
-from ..strava_session import CLUB_ID, CLUB_URL, FETCH_JS, ScrapeError, club_page, csv_column_set, require_auth
+from ..strava_session import CLUB_ID, CLUB_URL, FETCH_JS, ScrapeError, club_page, require_auth
 
 FEED_URL = f"/clubs/{CLUB_ID}/feed?feed_type=club&num_entries=100"
 
@@ -44,9 +43,7 @@ def run(leaderboard: dict) -> list:
     """Feed foot activities -> ledger; members from the feed, then the leaderboard
     ({week: {athlete_id: {name, ...}}}, empty on hourly runs); returns the new members' athlete ids."""
     require_auth()
-    known = csv_column_set(members.CSV_PATH, "athlete_id")
     count, rows = fetch_count_and_feed()
     new = append_activities([r for r in rows if r["type"] in FOOT_TYPES])
     print(f"feed: {len(rows)} activities, {len(new)} new foot activities -> ledger")
-    write_members(count, [RecentActivityMembers(rows), LeaderboardMembers(leaderboard)])
-    return sorted(csv_column_set(members.CSV_PATH, "athlete_id") - known)
+    return sorted(write_members(count, [RecentActivityMembers(rows), LeaderboardMembers(leaderboard)]))
