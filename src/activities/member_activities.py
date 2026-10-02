@@ -1,29 +1,24 @@
-"""Strava's week-to-date totals per member (daily.csv, one nightly snapshot per day) plus a best-effort activity
-ledger (activities.csv). Each member's profile week (Mon-Sun) lists that week's activities; summing their foot
-activities gives the week's totals so far. The club leaderboard (top 100, this and last week) overrides those sums,
-since it also counts runs this account can't see (followers-only, private profiles). Each row is stamped
-synced_at; the dashboard adds ledger activities scraped after it (the hourly club feed) on top.
-    python -m src.activities.activities [--setup]    # --setup: every week since challenge_start
+"""MemberActivities: every member's profile week (Mon-Sun), the heavy but accurate scan. Their foot activities
+fill gaps in the ledger (activities.csv) and feed MemberStatistics (daily.csv), along with the club leaderboard
+(top 100, this and last week), which also counts runs this account can't see (followers-only, private profiles).
+Also holds the ledger parsing RecentActivities shares.
+    python -m src.activities.member_activities [--setup]    # --setup: every week since challenge_start
 """
 import argparse
-import csv
 import re
 import sys
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from . import member_statistics
 from ..config import settings
+from ..members.members import CSV_PATH as MEMBERS_CSV
 from ..strava_session import (CLUB_URL, ScrapeError, append_new_rows, club_page, csv_column_set,
                               read_csv, require_auth)
 
 CSV_PATH = Path(__file__).parent / "activities.csv"
-DAILY_CSV = Path(__file__).parent / "daily.csv"
-# Not imported from members.members: that module imports from here (cycle).
-MEMBERS_CSV = Path(__file__).parent.parent / "members" / "members.csv"
 WEEK_URL = "/athletes/{athlete_id}/interval?interval={week}&interval_type=week&chart_type=miles&year_offset=0"
-DAILY_FIELDS = ["athlete_id", "date", "week", "distance_m", "moving_time_s", "elev_gain_m", "activities", "source",
-                 "synced_at"]
 
 FIELDS = [
     "activity_id", "athlete_id", "athlete_name", "athlete_firstname",
@@ -228,13 +223,8 @@ def weeks_to_sync(today: date, challenge_start: str, setup: bool) -> list:
     return [this - timedelta(weeks=1), this] if today.weekday() == 0 else [this]
 
 
-def snapshot_date(monday: str, today: date) -> str:
-    """The day a week's snapshot stands for: its Sunday once over, else today."""
-    return min(date.fromisoformat(monday) + timedelta(days=6), today).isoformat()
-
-
 def parse_leaderboard(rows: list) -> dict:
-    """Scraped rank-table rows -> {athlete_id: daily.csv figures + name}."""
+    """Scraped rank-table rows -> {athlete_id: figures + name}."""
     return {r["id"]: {"name": r["name"],
                       "distance_m": to_meters(r["dist"]) or 0.0,
                       "moving_time_s": to_seconds(r["time"]) or 0,
@@ -267,41 +257,9 @@ def foot_rows(entries: list, athlete_id: str) -> list:
     return rows
 
 
-def week_totals(athlete_id: str, monday: str, rows: list, synced_at: str, today: date) -> dict:
-    """One daily.csv row summing a profile week's foot activities so far."""
-    return {"athlete_id": athlete_id, "date": snapshot_date(monday, today), "week": monday,
-            "source": "profile", "synced_at": synced_at,
-            "activities": len(rows),
-            "distance_m": round(sum(r["distance_m"] or 0 for r in rows), 1),
-            "moving_time_s": sum(r["moving_time_s"] or 0 for r in rows),
-            "elev_gain_m": round(sum(r["elev_gain_m"] or 0 for r in rows), 1)}
-
-
-def merge_weeks(daily: dict, profile_rows: list, leaderboard: dict, synced_at: str, today: date) -> dict:
-    """Upsert profile rows into {(athlete_id, date): row}, then the leaderboard on top (it wins)."""
-    for r in profile_rows:
-        daily[(r["athlete_id"], r["date"])] = r
-    for week, board in leaderboard.items():
-        day = snapshot_date(week, today)
-        for aid, fig in board.items():
-            daily[(aid, day)] = {"athlete_id": aid, "date": day, "week": week, "source": "leaderboard",
-                                 "synced_at": synced_at, **{k: fig[k] for k in DAILY_FIELDS[3:7]}}
-    return daily
-
-
-def write_daily(daily: dict) -> None:
-    """Rewrite daily.csv sorted by (date, athlete_id), dropping empty weeks."""
-    rows = sorted((r for r in daily.values() if float(r["activities"] or 0) or float(r["distance_m"] or 0)),
-                  key=lambda r: (r["date"], r["athlete_id"]))
-    with DAILY_CSV.open("w", encoding="utf-8", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=DAILY_FIELDS)
-        w.writeheader()
-        w.writerows(rows)
-
-
-def sync_weeks(leaderboard: dict, setup: bool = False, workers: int = 4) -> int:
-    """Snapshot every members.csv athlete's profile week(s) into daily.csv and the ledger, then overlay
-    the leaderboard; returns new ledger rows. Stops at Strava's first 429, keeping what it fetched."""
+def run(leaderboard: dict, setup: bool = False, workers: int = 4) -> int:
+    """Scan every members.csv athlete's profile week(s) into the ledger and MemberStatistics; returns new ledger rows.
+    Stops at Strava's first 429, keeping what it fetched."""
     require_auth()
     synced_at = now_utc()   # ledger rows found here share it, so the dashboard never adds them twice
     today = datetime.now(ZoneInfo(settings.timezone)).date()
@@ -310,7 +268,7 @@ def sync_weeks(leaderboard: dict, setup: bool = False, workers: int = 4) -> int:
     jobs = [(aid, m) for m in mondays for aid in members]
     print(f"weeks {', '.join(m.isoformat() for m in mondays)}: {len(jobs)} profile requests", flush=True)
 
-    profile, ledger, errors, limited = [], [], 0, False
+    weeks, ledger, errors, limited = {}, [], 0, False
     batch_size = workers * 6
     with club_page() as page:
         for b in range(0, len(jobs), batch_size):
@@ -326,18 +284,17 @@ def sync_weeks(leaderboard: dict, setup: bool = False, workers: int = 4) -> int:
                     errors += 1
                     continue
                 rows = foot_rows(res["entries"] or [], aid)  # None: private profile, nothing visible
-                profile.append(week_totals(aid, monday.isoformat(), rows, synced_at, today))
+                weeks[(aid, monday.isoformat())] = rows
                 ledger += rows
             print(f"  [{b + len(batch)}/{len(jobs)}] errors {errors}", flush=True)
             if limited:
                 break
 
-    daily = {(r["athlete_id"], r["date"]): r for r in read_csv(DAILY_CSV)}
-    write_daily(merge_weeks(daily, profile, leaderboard, synced_at, today))
+    member_statistics.run(weeks, leaderboard, synced_at, today)
     new = append_activities(ledger, synced_at)
-    print(f"{len(profile)} athlete-weeks -> {DAILY_CSV}; {len(new)} new activities -> {CSV_PATH}")
+    print(f"{len(new)} new activities -> {CSV_PATH}")
     if limited:
-        raise ScrapeError(f"Strava rate-limited (HTTP 429) after {len(profile)} of {len(jobs)} profile requests; "
+        raise ScrapeError(f"Strava rate-limited (HTTP 429) after {len(weeks)} of {len(jobs)} profile requests; "
                           "kept what was fetched - the next full run resumes.")
     if errors > 0.02 * len(jobs):
         # What was found is saved; failing lets the scheduler flag the gaps.
@@ -349,7 +306,7 @@ def main() -> int:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # athlete names may be non-ASCII
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--setup", action="store_true", help="sync every week since challenge_start")
-    sync_weeks(fetch_leaderboard(), setup=parser.parse_args().setup)
+    run(fetch_leaderboard(), setup=parser.parse_args().setup)
     return 0
 
 

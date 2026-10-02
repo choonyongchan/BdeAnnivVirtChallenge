@@ -14,6 +14,8 @@ class Config:
     club_id: str
     challenge_start: str
     timezone: str
+    recent_activities_hours: object   # "*" or a list of local hours
+    member_scan_hours: object
     weather_lat: float
     weather_lon: float
     announcement_path: str   # repo-root-relative; generate.py resolves it
@@ -40,6 +42,8 @@ def load() -> Config:
         club_id=g("club", "id"),
         challenge_start=str(g("challenge_start")),
         timezone=g("timezone"),
+        recent_activities_hours=g("schedule", "recent_activities"),
+        member_scan_hours=g("schedule", "member_scan"),
         weather_lat=g("weather", "latitude"),
         weather_lon=g("weather", "longitude"),
         announcement_path=g("announcement_path"),

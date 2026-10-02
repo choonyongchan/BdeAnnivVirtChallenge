@@ -8,6 +8,7 @@ FULL_YAML = (
     "club:\n  name: Test Club\n  id: '42'\n"
     "challenge_start: 2026-01-01\n"
     "timezone: Asia/Singapore\n"
+    "schedule:\n  recent_activities: '*'\n  member_scan: [23]\n"
     "weather:\n  latitude: 5.5\n  longitude: 6.6\n"
     "announcement_path: src/announcement.md\n"
     "browser:\n  channel: ''\n  headless: false\n"

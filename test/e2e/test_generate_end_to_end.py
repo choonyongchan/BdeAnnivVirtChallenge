@@ -80,20 +80,20 @@ def env(tmp_path, monkeypatch):
             })
     monkeypatch.setattr(generate, "ACTIVITIES_CSV", activities)
 
-    # Strava's figures for the same runs: each athlete's week totals, snapshotted on its Sunday or NOW
+    # Strava's figures for the same runs: each athlete's cumulative totals, snapshotted on the first Sunday and NOW
     totals = {}
-    for aid, _, d, dist, mov, elev in ACTS:
-        if d[:10] >= CHALLENGE_START:
-            day, week = ("2026-09-24", "2026-09-21") if d[:10] >= "2026-09-21" else ("2026-09-20", "2026-09-14")
-            t = totals.setdefault((aid, day, week), [0, 0, 0, 0])
-            for i, v in enumerate((dist, mov, elev, 1)):
-                t[i] += v
+    for day in ("2026-09-20", "2026-09-24"):
+        for aid, _, d, dist, mov, elev in ACTS:
+            if CHALLENGE_START <= d[:10] <= day:
+                t = totals.setdefault((aid, day), [0, 0, 0, 0])
+                for i, v in enumerate((dist, mov, elev, 1)):
+                    t[i] += v
     daily = tmp_path / "daily.csv"
     with daily.open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
-        w.writerow(["athlete_id", "date", "week", "distance_m", "moving_time_s", "elev_gain_m", "activities", "source"])
-        for (aid, day, week), t in totals.items():
-            w.writerow([aid, day, week, *t, "profile"])
+        w.writerow(["athlete_id", "date", "distance_m", "moving_time_s", "elev_gain_m", "activities", "source"])
+        for (aid, day), t in totals.items():
+            w.writerow([aid, day, *t, "profile"])
     monkeypatch.setattr(generate, "DAILY_CSV", daily)
 
     announce = tmp_path / "announce.md"
@@ -103,6 +103,7 @@ def env(tmp_path, monkeypatch):
         "club:\n  name: Test Club\n  id: '1'\n"
         f"challenge_start: {CHALLENGE_START}\n"
         "timezone: Asia/Singapore\n"
+        "schedule:\n  recent_activities: '*'\n  member_scan: [23]\n"
         "weather:\n  latitude: 1.3835\n  longitude: 103.7478\n"
         f'announcement_path: "{str(announce).replace(chr(92), "/")}"\n'
         "browser:\n  channel: ''\n  headless: true\n",

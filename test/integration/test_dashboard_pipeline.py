@@ -78,23 +78,22 @@ def test_daily_history_is_cumulative_snapshot_keyed_and_first_seen_gated(roll, m
     assert early["2026-09-15"]["all"]["athlete_count"] == 3
 
 
-def _snap(day, week, km, synced_at=""):
-    return {"athlete_id": "1", "date": day, "week": week, "distance_m": str(km * 1000), "moving_time_s": "0",
+def _snap(day, km, synced_at=""):
+    return {"athlete_id": "1", "date": day, "distance_m": str(km * 1000), "moving_time_s": "0",
             "elev_gain_m": "0", "activities": "1", "source": "profile", "synced_at": synced_at}
 
 
-def test_latest_snapshot_per_week_replaces_earlier_days_and_carries_forward():
-    snaps = [_snap("2026-09-27", "2026-09-21", 9), _snap("2026-09-29", "2026-09-28", 3),
-             _snap("2026-10-01", "2026-09-28", 8)]
-    km = lambda day: sorted(float(r["distance_m"]) for r in generate.latest_by_week(snaps, day))
-    assert km("2026-09-28") == [9000.0]             # no run on the 28th: last week's Sunday carries forward
-    assert km("2026-09-30") == [3000.0, 9000.0]     # the 29th's week-to-date carries forward
-    assert km("2026-10-01") == [8000.0, 9000.0]     # a later same-week snapshot replaces, never adds
+def test_latest_snapshot_per_athlete_replaces_earlier_days_and_carries_forward():
+    snaps = [_snap("2026-09-27", 9), _snap("2026-09-29", 12), _snap("2026-10-01", 17)]
+    km = lambda day: [float(r["distance_m"]) for r in generate.latest_by_athlete(snaps, day)]
+    assert km("2026-09-26") == []
+    assert km("2026-09-28") == [9000.0]     # no scan on the 28th: Sunday's total carries forward
+    assert km("2026-10-01") == [17000.0]    # a later snapshot replaces, never adds
 
 
 def test_daily_history_counts_feed_rows_from_their_date(roll, dummy_members):
-    snaps = [_snap("2026-09-29", "2026-09-28", 3, "2026-09-29T15:00:00+00:00")]
-    extras = [{"athlete_id": "1", "date": "2026-10-01", "week": "2026-09-28", "distance_m": "2000",
+    snaps = [_snap("2026-09-29", 3, "2026-09-29T15:00:00+00:00")]
+    extras = [{"athlete_id": "1", "date": "2026-10-01", "distance_m": "2000",
                "moving_time_s": "0", "elev_gain_m": "0", "activities": 1, "source": "feed"}]
     hist = generate.build_daily_history(snaps, extras, [], dummy_members, roll, date(2026, 10, 1))
     assert hist["2026-09-29"]["all"]["total_km"] == pytest.approx(3.0)
@@ -102,7 +101,7 @@ def test_daily_history_counts_feed_rows_from_their_date(roll, dummy_members):
 
 
 def test_feed_updates_add_only_runs_scraped_after_the_athletes_snapshot():
-    snaps = [{"athlete_id": "1", "date": "2026-09-30", "week": "2026-09-28", "distance_m": "5000",
+    snaps = [{"athlete_id": "1", "date": "2026-09-30", "distance_m": "5000",
               "synced_at": "2026-09-30T15:00:00+00:00"}]
     acts = [
         {"athlete_id": "1", "_date": "2026-09-29", "distance_m": "5000", "moving_time_s": "1800", "elev_gain_m": "0",
@@ -113,14 +112,14 @@ def test_feed_updates_add_only_runs_scraped_after_the_athletes_snapshot():
          "scraped_at": "2026-09-29T03:00:00+00:00"},   # private profile, no snapshot row -> feed is all we have
     ]
     extra = generate.feed_updates(snaps, acts)
-    assert [(r["athlete_id"], r["date"], r["week"], r["distance_m"]) for r in extra] == [
-        ("1", "2026-10-01", "2026-09-28", "3000"), ("2", "2026-09-29", "2026-09-28", "4000")]
+    assert [(r["athlete_id"], r["date"], r["distance_m"]) for r in extra] == [
+        ("1", "2026-10-01", "3000"), ("2", "2026-09-29", "4000")]
 
 
 def test_load_daily_returns_every_row(tmp_path, monkeypatch):
     p = tmp_path / "daily.csv"
-    p.write_text("athlete_id,date,week,distance_m,moving_time_s,elev_gain_m,activities,source\n"
-                 "1,2026-09-20,2026-09-14,5000,1800,10,1,profile\n", encoding="utf-8")
+    p.write_text("athlete_id,date,distance_m,moving_time_s,elev_gain_m,activities,source\n"
+                 "1,2026-09-20,5000,1800,10,1,profile\n", encoding="utf-8")
     monkeypatch.setattr(generate, "DAILY_CSV", p)
     assert generate.load_daily()[0]["date"] == "2026-09-20"
 

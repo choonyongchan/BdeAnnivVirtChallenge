@@ -1,7 +1,8 @@
-"""Scrape, then generate and publish the dashboard; the first failure stops it.
-Hourly: the club feed only (members + new foot activities), a handful of requests.
-Nightly (the 23:xx run, or --full): also the leaderboard and every member's profile week -> today's rows in
-daily.csv, the authoritative snapshot the hourly feed activities are added on top of.
+"""Scrape what config.yaml's schedule says is due this hour, then generate and publish the dashboard; the first
+failure stops it.
+RecentActivities (default hourly): the club feed (members + new foot activities), a handful of requests.
+MemberActivities + MemberStatistics (default 23:xx, or --full): the leaderboard and every member's profile week ->
+missed activities + today's cumulative rows in daily.csv, the authoritative snapshot the feed is added on top of.
     python -m src.main [--full]
 """
 import json
@@ -10,10 +11,9 @@ import sys
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from .activities.activities import fetch_leaderboard, sync_weeks
+from .activities import member_activities, recent_activities
 from .config import settings
 from .dashboard import generate
-from .members.members import scrape_members
 from .strava_session import AUTH_PATH, ScrapeError
 
 REPO_ROOT = generate.REPO_ROOT

@@ -1,12 +1,14 @@
-"""Integration test for sync_weeks() (no browser): profile weeks become today's daily.csv rows (own foot activities
-only) and ledger rows; the leaderboard overrides; earlier days survive; expiry and mass failures are ScrapeErrors."""
+"""Integration test for member_activities.run() (no browser): profile weeks become today's cumulative daily.csv rows
+(own foot activities only, on top of last week's row) and ledger rows; the leaderboard overrides; earlier days
+survive; expiry and mass failures are ScrapeErrors."""
 import csv
 from contextlib import contextmanager
 from datetime import datetime
 
 import pytest
 
-from src.activities import activities as A
+from src.activities import member_activities as A
+from src.activities import member_statistics as S
 
 
 def _read(path):
@@ -37,11 +39,12 @@ def env(tmp_path, monkeypatch):
     members = tmp_path / "members.csv"
     members.write_text("athlete_id,name,first_seen\n1,Alice,x\n2,Bob,x\n3,Cara,x\n", encoding="utf-8")
     daily = tmp_path / "daily.csv"   # last week's Sunday and an earlier day this week, both kept
-    daily.write_text("athlete_id,date,week,distance_m,moving_time_s,elev_gain_m,activities,source\n"
-                     "1,2026-09-27,2026-09-21,9000.0,3000,0,2,profile\n"
-                     "1,2026-09-29,2026-09-28,5000.0,1800,0,1,profile\n", encoding="utf-8")
-    for name, path in (("MEMBERS_CSV", members), ("DAILY_CSV", daily), ("CSV_PATH", tmp_path / "activities.csv")):
+    daily.write_text("athlete_id,date,distance_m,moving_time_s,elev_gain_m,activities,source\n"
+                     "1,2026-09-27,9000.0,3000,0,2,profile\n"
+                     "1,2026-09-29,14000.0,4800,0,3,profile\n", encoding="utf-8")
+    for name, path in (("MEMBERS_CSV", members), ("CSV_PATH", tmp_path / "activities.csv")):
         monkeypatch.setattr(A, name, path)
+    monkeypatch.setattr(S, "DAILY_CSV", daily)
     monkeypatch.setattr(A, "require_auth", lambda: None)
 
     class _Thursday(datetime):   # 2026-10-01: this week only, no Monday grace
@@ -70,15 +73,15 @@ def test_sync_writes_profile_weeks_ledger_and_leaderboard_wins(env):
     leaderboard = {"2026-09-28": {"3": {"name": "Cara", "distance_m": 8000.0, "moving_time_s": 2400,
                                         "elev_gain_m": 20.0, "activities": 2}}}
 
-    assert A.sync_weeks(leaderboard) == 3           # ledger: Alice's run + walk, Cara's run
+    assert A.run(leaderboard) == 3           # ledger: Alice's run + walk, Cara's run
     rows = {(r["athlete_id"], r["date"]): r for r in _read(tmp / "daily.csv")}
 
     assert all("interval=202640&interval_type=week" in u for u in page.urls)
     assert rows[("1", "2026-09-27")]["distance_m"] == "9000.0"                       # last week kept
-    assert rows[("1", "2026-09-29")]["distance_m"] == "5000.0"                       # earlier day kept
-    assert rows[("1", "2026-10-01")] == {"athlete_id": "1", "date": "2026-10-01", "week": "2026-09-28",
-                                         "distance_m": "6500.0", "moving_time_s": "3600", "elev_gain_m": "0",
-                                         "activities": "2", "source": "profile",
+    assert rows[("1", "2026-09-29")]["distance_m"] == "14000.0"                      # earlier day kept
+    assert rows[("1", "2026-10-01")] == {"athlete_id": "1", "date": "2026-10-01",   # last Sunday + this week
+                                         "distance_m": "15500.0", "moving_time_s": "6600", "elev_gain_m": "0.0",
+                                         "activities": "4", "source": "profile",
                                          "synced_at": "2026-10-01T12:00:00+00:00"}
     assert ("2", "2026-10-01") not in rows                                           # nothing visible -> no row
     assert rows[("3", "2026-10-01")]["source"] == "leaderboard"
@@ -89,14 +92,14 @@ def test_expired_session_is_a_scrape_error(env):
     _, use = env
     use(_FakePage({a: {"expired": True, "status": 401} for a in "123"}))
     with pytest.raises(A.ScrapeError, match="expired"):
-        A.sync_weeks({})
+        A.run({})
 
 
 def test_many_failed_requests_fail_the_run_but_keep_what_was_found(env):
     tmp, use = env
     use(_FakePage({"1": {"entries": [_entry(10, 1)]}, "2": {"error": "HTTP 500"}, "3": {"error": "HTTP 500"}}))
     with pytest.raises(A.ScrapeError, match="2 of 3"):
-        A.sync_weeks({})
+        A.run({})
     assert [r["activity_id"] for r in _read(tmp / "activities.csv")] == ["10"]
 
 
@@ -104,7 +107,7 @@ def test_a_429_stops_the_scan_and_keeps_what_was_fetched(env):
     tmp, use = env
     use(_FakePage({"1": {"entries": [_entry(10, 1)]}, "2": {"limited": True}, "3": None}))   # 3: never fetched
     with pytest.raises(A.ScrapeError, match="429"):
-        A.sync_weeks({})
+        A.run({})
     rows = {(r["athlete_id"], r["date"]) for r in _read(tmp / "daily.csv")}
     assert ("1", "2026-10-01") in rows and ("1", "2026-09-27") in rows
     assert [r["scraped_at"] for r in _read(tmp / "activities.csv")] == ["2026-10-01T12:00:00+00:00"]   # = synced_at

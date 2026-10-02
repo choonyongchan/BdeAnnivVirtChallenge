@@ -37,7 +37,7 @@ class AthleteStats:
     break_time: float = 0.0    # elapsed minus moving, i.e. time spent stopped
 
     def add_week(self, week: dict) -> None:
-        """Accumulate one weekly.csv row into the totals."""
+        """Accumulate one daily.csv row (or feed extra) into the totals."""
         self.km += _num(week.get("distance_m")) / 1000
         self.elev += _num(week.get("elev_gain_m"))
         self.time_s += _num(week.get("moving_time_s"))

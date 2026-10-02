@@ -1,11 +1,11 @@
-"""Integration test for members.py's fetches (no browser): the headline count from the members page,
+"""Integration test for recent_activities.py's fetches (no browser): the headline count from the members page,
 feed athletes across cursor pages; non-OK, count-less or non-JSON responses are ScrapeErrors."""
 import json
 from contextlib import contextmanager
 
 import pytest
 
-from src.members import members as M
+from src.activities import recent_activities as M
 
 
 class _FakePage:

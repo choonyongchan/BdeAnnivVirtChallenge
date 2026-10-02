@@ -5,7 +5,8 @@ import json
 
 import pytest
 
-from src.activities import activities as A
+from src.activities import member_activities as A
+from src.activities import recent_activities as R
 from src.members import members as M
 
 
@@ -57,16 +58,16 @@ def test_members_write_is_append_only(member_paths):
     assert json.loads(member_paths["count"].read_text(encoding="utf-8")) == {"member_count": 1001}
 
 
-def test_scrape_members_adds_feed_and_leaderboard_athletes_and_ledgers_feed_runs(member_paths, monkeypatch,
+def test_recent_activities_adds_feed_and_leaderboard_athletes_and_ledgers_feed_runs(member_paths, monkeypatch,
                                                                                tmp_path):
     monkeypatch.setattr(A, "CSV_PATH", tmp_path / "activities.csv")
-    monkeypatch.setattr(M, "require_auth", lambda: None)
+    monkeypatch.setattr(R, "require_auth", lambda: None)
     feed = A.normalise(_activity(1, 1)) + A.normalise(_activity(2, 1))
     feed[0].update(type="Run", athlete_name="Alice Anon")
     feed[1].update(type="Ride", athlete_name="Alice Anon")   # not a foot activity: kept out of the ledger
-    monkeypatch.setattr(M, "fetch_count_and_feed", lambda: (1055, feed))
+    monkeypatch.setattr(R, "fetch_count_and_feed", lambda: (1055, feed))
     board = {"2026-09-28": {"2": {"name": "Bob Bogus"}}, "2026-09-21": {"1": {"name": "Alice Anon"}}}
 
-    assert M.scrape_members(board) == 2
+    assert R.run(board) == 2
     assert {r["athlete_id"] for r in _read(member_paths["csv"])} == {"1", "2"}
     assert [r["activity_id"] for r in _read(tmp_path / "activities.csv")] == ["1"]

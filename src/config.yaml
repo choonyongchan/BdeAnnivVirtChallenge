@@ -9,6 +9,10 @@ challenge_start: "2026-09-14"     # local date; activities before this don't cou
 
 timezone: "Asia/Singapore"        # dashboard display tz (NOT the scraper's browser tz)
 
+schedule:                         # local hours the hourly Task Scheduler run (at :47) does each job; "*" = every hour
+  recent_activities: "*"          # club feed -> activities.csv (light, best effort)
+  member_scan: [23]               # every profile + leaderboard -> activities.csv gaps + daily.csv (heavy, accurate)
+
 weather:
   latitude: 1.3835
   longitude: 103.7478

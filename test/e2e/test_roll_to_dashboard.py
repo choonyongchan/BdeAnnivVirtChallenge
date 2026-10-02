@@ -66,9 +66,9 @@ def _write_daily(path):
     """daily.csv: each runner's one 6 km week, snapshotted on its Sunday."""
     with path.open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
-        w.writerow(["athlete_id", "date", "week", "distance_m", "moving_time_s", "elev_gain_m", "activities", "source"])
+        w.writerow(["athlete_id", "date", "distance_m", "moving_time_s", "elev_gain_m", "activities", "source"])
         for aid, _ in RUNNERS:
-            w.writerow([aid, "2026-09-20", "2026-09-14", 6000, 1800, 10, 1, "profile"])
+            w.writerow([aid, "2026-09-20", 6000, 1800, 10, 1, "profile"])
     return path
 
 
@@ -87,6 +87,8 @@ def test_converted_roll_drives_dashboard_grouping(tmp_path, monkeypatch):
         club_id="1",
         challenge_start="2026-09-14",
         timezone="Asia/Singapore",
+        recent_activities_hours="*",
+        member_scan_hours=[23],
         weather_lat=1.3835,
         weather_lon=103.7478,
         announcement_path="src/announcement.md",

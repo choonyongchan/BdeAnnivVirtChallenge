@@ -11,9 +11,9 @@ from datetime import date, timedelta
 import pytest
 
 from src import config
-from src.activities.activities import fetch_leaderboard
+from src.activities.member_activities import fetch_leaderboard
 from src.dashboard import generate
-from src.members.members import fetch_count_and_feed
+from src.activities.recent_activities import fetch_count_and_feed
 
 pytestmark = pytest.mark.live
 

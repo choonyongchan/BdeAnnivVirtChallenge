@@ -4,12 +4,11 @@ from datetime import date
 
 import pytest
 
-from src.activities.activities import (
+from src.activities.member_activities import (
     FIELDS,
     _row,
     _text,
     foot_rows,
-    merge_weeks,
     normalise,
     parse_leaderboard,
     parse_stats,
@@ -17,9 +16,9 @@ from src.activities.activities import (
     to_meters,
     to_seconds,
     week_id,
-    snapshot_date,
     weeks_to_sync,
 )
+from src.activities.member_statistics import cumulate, snapshot_date
 
 
 @pytest.mark.parametrize("raw,text", [
@@ -191,17 +190,27 @@ def test_snapshot_date(monday, today, day):
     assert snapshot_date(monday, today) == day
 
 
-def test_merge_weeks_leaderboard_beats_profile_and_earlier_days_stay():
-    old = {("1", "2026-09-27"): {"athlete_id": "1", "date": "2026-09-27", "week": "2026-09-21", "distance_m": "9000"},
-           ("1", "2026-09-30"): {"athlete_id": "1", "date": "2026-09-30", "week": "2026-09-28", "distance_m": "3000"}}
-    profile = [{"athlete_id": "1", "date": "2026-10-01", "week": "2026-09-28", "distance_m": 5000,
-                "moving_time_s": 1800, "elev_gain_m": 0, "activities": 1, "source": "profile"}]
-    board = {"2026-09-28": {"1": {"name": "A", "distance_m": 7000.0, "moving_time_s": 2400,
+def _run(km):
+    return {"distance_m": km * 1000, "moving_time_s": 600, "elev_gain_m": 1.0}
+
+
+def test_cumulate_adds_each_week_to_the_last_row_before_it():
+    old = {("1", "2026-09-20"): {"athlete_id": "1", "date": "2026-09-20", "distance_m": "9000.0",
+                                 "moving_time_s": "3000", "elev_gain_m": "0", "activities": "2"},
+           ("1", "2026-09-25"): {"athlete_id": "1", "date": "2026-09-25", "distance_m": "12000.0",
+                                 "moving_time_s": "4000", "elev_gain_m": "0", "activities": "3"}}
+    weeks = {("1", "2026-09-21"): [_run(4), _run(1)],   # last week, re-synced on Monday: base = 14 Sep week
+             ("1", "2026-09-28"): [_run(2)],            # this week: base = the Sunday just rewritten
+             ("2", "2026-09-28"): [_run(3)],            # first row: base 0
+             ("3", "2026-09-28"): []}                   # nothing seen: no row
+    board = {"2026-09-28": {"2": {"name": "B", "distance_m": 7000.0, "moving_time_s": 2400,
                                   "elev_gain_m": 5.0, "activities": 2}}}
-    merged = merge_weeks(old, profile, board, "T", date(2026, 10, 1))
-    assert merged[("1", "2026-09-27")]["distance_m"] == "9000"
-    assert merged[("1", "2026-09-30")]["distance_m"] == "3000"
-    assert merged[("1", "2026-10-01")] == {"athlete_id": "1", "date": "2026-10-01", "week": "2026-09-28",
-                                           "source": "leaderboard", "synced_at": "T",
-                                           "distance_m": 7000.0, "moving_time_s": 2400, "elev_gain_m": 5.0,
-                                           "activities": 2}
+    daily = cumulate(old, weeks, board, "T", date(2026, 9, 28))
+
+    assert daily[("1", "2026-09-27")]["distance_m"] == 14000.0 and daily[("1", "2026-09-27")]["activities"] == 4
+    assert daily[("1", "2026-09-28")] == {"athlete_id": "1", "date": "2026-09-28", "source": "profile",
+                                          "synced_at": "T", "distance_m": 16000.0, "moving_time_s": 4800,
+                                          "elev_gain_m": 3.0, "activities": 5}
+    assert daily[("2", "2026-09-28")]["distance_m"] == 7000.0 and daily[("2", "2026-09-28")]["source"] == "leaderboard"
+    assert ("3", "2026-09-28") not in daily
+    assert daily[("1", "2026-09-25")]["distance_m"] == "12000.0"   # earlier days stay

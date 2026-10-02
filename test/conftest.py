@@ -106,19 +106,16 @@ def weeks_from():
 
 
 def _weeks_from(acts):
-    from datetime import date, timedelta
-    rows = {}
-    for a in acts:
+    """daily.csv rows for acts: per athlete, cumulative totals as of each day they ran."""
+    rows, totals = {}, {}
+    for a in sorted(acts, key=lambda a: a.get("start_date_utc", "2026-09-14")):
         day = a.get("start_date_utc", "2026-09-14")[:10]
-        d = date.fromisoformat(day)
-        week = (d - timedelta(days=d.weekday())).isoformat()
-        r = rows.setdefault((a["athlete_id"], week), {
-            "athlete_id": a["athlete_id"], "date": day, "week": week, "distance_m": 0.0, "moving_time_s": 0.0,
-            "elev_gain_m": 0.0, "activities": 0, "source": "profile"})
-        r["date"] = max(r["date"], day)
+        t = totals.setdefault(a["athlete_id"], {"distance_m": 0.0, "moving_time_s": 0.0, "elev_gain_m": 0.0,
+                                                "activities": 0})
         for k in ("distance_m", "moving_time_s", "elev_gain_m"):
-            r[k] += float(a[k] or 0)
-        r["activities"] += 1
+            t[k] += float(a[k] or 0)
+        t["activities"] += 1
+        rows[(a["athlete_id"], day)] = {"athlete_id": a["athlete_id"], "date": day, **t, "source": "profile"}
     return list(rows.values())
 
 
