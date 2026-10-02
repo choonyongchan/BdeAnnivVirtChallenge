@@ -15,6 +15,12 @@ CLUB_URL = f"https://www.strava.com/clubs/{CLUB_ID}"
 AUTH_PATH = Path(__file__).parent / "auth_state.json"  # shared session-cookie store
 LOGIN_URL = "https://www.strava.com/login"             # redirects to /dashboard on success
 
+# GET a same-site URL from inside a logged-in page, so it carries the page's cookies and headers.
+FETCH_JS = """async (url) => {
+    const r = await fetch(url, {credentials: 'include'});
+    return {ok: r.ok, status: r.status, text: await r.text()};
+}"""
+
 
 class ScrapeError(RuntimeError):
     """A scrape could not complete: no saved session, blocked, or changed markup."""

@@ -1,21 +1,17 @@
 """RecentActivities: the club's recent-activity feed (~2.5 days retained), the light, best-effort hourly tracker.
 Appends the feed's foot activities to the ledger (activities.csv), which the dashboard adds on top of the nightly
-MemberStatistics snapshot, and grows members.csv from the feed and leaderboard athletes.
+MemberStatistics snapshot, and grows members.csv from the feed and leaderboard athletes (RecentActivityMembers,
+LeaderboardMembers).
 """
 import json
 import random
 
 from .member_activities import FOOT_TYPES, append_activities, normalise
-from ..members.members import MEMBERS_URL, parse_member_count, write_members
+from ..members.members import LeaderboardMembers, RecentActivityMembers, fetch_member_count, write_members
 from ..members import members
-from ..strava_session import CLUB_ID, CLUB_URL, ScrapeError, club_page, csv_column_set, require_auth
+from ..strava_session import CLUB_ID, CLUB_URL, FETCH_JS, ScrapeError, club_page, csv_column_set, require_auth
 
 FEED_URL = f"/clubs/{CLUB_ID}/feed?feed_type=club&num_entries=100"
-
-FETCH_JS = """async (url) => {
-    const r = await fetch(url, {credentials: 'include'});
-    return {ok: r.ok, status: r.status, text: await r.text()};
-}"""
 
 
 def feed_rows(page) -> list:
@@ -41,14 +37,7 @@ def feed_rows(page) -> list:
 def fetch_count_and_feed() -> tuple:
     """-> (headline member count, the feed's activity rows), one browser session."""
     with club_page(f"{CLUB_URL}/recent_activity") as page:
-        result = page.evaluate(FETCH_JS, MEMBERS_URL)
-        if not result["ok"]:
-            raise ScrapeError("Session expired or blocked - re-run: python -m src.login\n"
-                              f"Members page returned HTTP {result['status']}.")
-        count = parse_member_count(result["text"])
-        if count is None:
-            raise ScrapeError("Member count not found on the members page - Strava markup may have changed.")
-        return count, feed_rows(page)
+        return fetch_member_count(page), feed_rows(page)
 
 
 def run(leaderboard: dict) -> list:
@@ -59,8 +48,5 @@ def run(leaderboard: dict) -> list:
     count, rows = fetch_count_and_feed()
     new = append_activities([r for r in rows if r["type"] in FOOT_TYPES])
     print(f"feed: {len(rows)} activities, {len(new)} new foot activities -> ledger")
-    athletes = {str(r["athlete_id"]): r["athlete_name"] or "" for r in rows}
-    for board in leaderboard.values():
-        athletes.update({aid: fig["name"] for aid, fig in board.items()})
-    write_members(count, athletes)
+    write_members(count, [RecentActivityMembers(rows), LeaderboardMembers(leaderboard)])
     return sorted(csv_column_set(members.CSV_PATH, "athlete_id") - known)

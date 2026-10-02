@@ -6,6 +6,7 @@ from contextlib import contextmanager
 import pytest
 
 from src.activities import recent_activities as M
+from src.members.members import MEMBERS_URL
 
 
 class _FakePage:
@@ -46,7 +47,7 @@ COUNT = _resp("<span class='membership-count'>1,055 members</span>")
 
 
 def test_count_and_feed_follow_the_cursor(monkeypatch):
-    fake_page = _FakePage({M.MEMBERS_URL: [COUNT], M.FEED_URL: [
+    fake_page = _FakePage({MEMBERS_URL: [COUNT], M.FEED_URL: [
         _feed([(1, "Alice Anon")], True), _feed([(2, "Bob Bogus"), (1, "Alice Anon")], False)]})
     _use_fake_page(monkeypatch, fake_page)
 
@@ -59,25 +60,25 @@ def test_count_and_feed_follow_the_cursor(monkeypatch):
 
 
 def test_http_failure_is_a_scrape_error(monkeypatch):
-    _use_fake_page(monkeypatch, _FakePage({M.MEMBERS_URL: [_resp("", ok=False, status=403)]}))
+    _use_fake_page(monkeypatch, _FakePage({MEMBERS_URL: [_resp("", ok=False, status=403)]}))
     with pytest.raises(M.ScrapeError, match="403"):
         M.fetch_count_and_feed()
 
 
 def test_missing_count_is_a_scrape_error(monkeypatch):
-    _use_fake_page(monkeypatch, _FakePage({M.MEMBERS_URL: [_resp("<p>There are no active members in this club yet.</p>")]}))
+    _use_fake_page(monkeypatch, _FakePage({MEMBERS_URL: [_resp("<p>There are no active members in this club yet.</p>")]}))
     with pytest.raises(M.ScrapeError, match="Member count not found"):
         M.fetch_count_and_feed()
 
 
 def test_non_json_feed_is_a_scrape_error(monkeypatch):
-    _use_fake_page(monkeypatch, _FakePage({M.MEMBERS_URL: [COUNT], M.FEED_URL: [_resp("<html>blocked</html>")]}))
+    _use_fake_page(monkeypatch, _FakePage({MEMBERS_URL: [COUNT], M.FEED_URL: [_resp("<html>blocked</html>")]}))
     with pytest.raises(M.ScrapeError, match="blocked"):
         M.fetch_count_and_feed()
 
 
 def test_never_ending_feed_stops_at_the_circuit_breaker(monkeypatch):
-    fake_page = _FakePage({M.MEMBERS_URL: [COUNT], M.FEED_URL: [_feed([(1, "Alice Anon")], True)]})
+    fake_page = _FakePage({MEMBERS_URL: [COUNT], M.FEED_URL: [_feed([(1, "Alice Anon")], True)]})
     _use_fake_page(monkeypatch, fake_page)
     assert len(M.fetch_count_and_feed()[1]) == 50
     assert len(fake_page.urls) == 1 + 50

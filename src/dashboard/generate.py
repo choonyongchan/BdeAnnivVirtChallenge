@@ -146,9 +146,8 @@ def load(cfg: config.Config) -> tuple:
     acts = load_activities(cfg.challenge_start, ZoneInfo(cfg.timezone))
     snapshots = load_daily()
     members = load_members()
-    # Strava stopped listing members, so members.csv misses joiners who have not run yet;
-    # the headline count is the true total when we have it.
-    member_count = max(load_member_count() or 0, len(members))
+    # Strava's headline count is the true total; members.csv misses joiners who have not run yet.
+    member_count = load_member_count() or len(members)
     roll = NominalRoll()
     # Fit once over every name: build_daily_history() re-resolves each athlete per day,
     # and a per-call match could land differently on different days.

@@ -81,8 +81,8 @@ def test_publish_dashboard_commits_and_pushes_when_changed(monkeypatch):
 @pytest.mark.parametrize("hour,argv,new,calls", [
     (14, [], [], ["recent"]),                                    # hourly: club feed only
     (14, [], ["7"], ["recent", "members ['7']"]),                # a new member: their every week, straight away
-    (23, [], [], ["leaderboard", "recent", "members None"]),     # config.yaml member_scan hour
-    (14, ["--full"], ["7"], ["leaderboard", "recent", "members ['7']", "members None"]),
+    (23, [], [], ["leaderboard", "recent", "roll", "members ['8']", "members None"]),   # member_scan hour
+    (14, ["--full"], ["7"], ["leaderboard", "recent", "roll", "members ['7', '8']", "members None"]),
 ])
 def test_main_runs_what_the_schedule_says_is_due(monkeypatch, hour, argv, new, calls):
     seen = []
@@ -93,6 +93,7 @@ def test_main_runs_what_the_schedule_says_is_due(monkeypatch, hour, argv, new, c
     monkeypatch.setattr(M.settings, "member_scan_hours", [23])
     monkeypatch.setattr(M.member_activities, "fetch_leaderboard", lambda: seen.append("leaderboard") or {})
     monkeypatch.setattr(M.recent_activities, "run", lambda board: seen.append("recent") or new)
+    monkeypatch.setattr(M.members, "add_nominal_roll", lambda: seen.append("roll") or ["8"])
     monkeypatch.setattr(M.member_activities, "run", lambda board, only=None: seen.append(f"members {only}"))
     monkeypatch.setattr(M.generate, "run", lambda: None)
     monkeypatch.setattr(M, "publish_dashboard", lambda: None)

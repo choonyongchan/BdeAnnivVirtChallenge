@@ -2,7 +2,8 @@
 failure stops it.
 RecentActivities (default hourly): the club feed (members + new foot activities), a handful of requests.
 New members it adds: every profile week since challenge_start, straight away.
-MemberActivities + MemberStatistics (default 23:xx, or --full): the leaderboard and every member's profile week ->
+MemberActivities + MemberStatistics (default 23:xx, or --full): the leaderboard, roll usernames found by athlete search
+(NominalRollMembers) and every member's profile week ->
 missed activities + today's cumulative rows in daily.csv, the authoritative snapshot the feed is added on top of.
     python -m src.main [--full]
 """
@@ -15,6 +16,7 @@ from zoneinfo import ZoneInfo
 from .activities import member_activities, recent_activities
 from .config import settings
 from .dashboard import generate
+from .members import members
 from .strava_session import AUTH_PATH, ScrapeError
 
 REPO_ROOT = generate.REPO_ROOT
@@ -70,6 +72,10 @@ def main() -> None:
         if full or due(settings.recent_activities_hours, hour):   # the scan needs leaderboard athletes in members.csv
             print("=== RecentActivities: club feed + members ===", flush=True)
             new = recent_activities.run(leaderboard)
+
+        if full:
+            print("\n=== NominalRollMembers: roll usernames via athlete search ===", flush=True)
+            new += members.add_nominal_roll()
 
         if new:   # ponytail: a failed newcomer scan isn't retried; --setup repairs it
             print(f"\n=== MemberActivities + MemberStatistics: {len(new)} new members, every week ===", flush=True)
