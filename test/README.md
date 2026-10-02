@@ -36,7 +36,7 @@ resolves; there is no `pytest.ini` / `pyproject.toml`.
 | `unit/test_config.py` | `config.load()` per-key fallback |
 | `unit/test_renderer.py` | `_slim_leaderboard`, `build_announcement_html`, `render` placeholder substitution |
 | `unit/test_weather.py` | `weather_html` — network-optional degradation (`urllib.request.urlopen` mocked) |
-| `unit/test_activities_parse.py` | `_text`, `parse_stats`, `to_meters/seconds/int`, `_row`, `normalise` (both feed schemas), `week_id`, `weeks_to_sync` (Monday grace, setup range), `parse_leaderboard`, `foot_rows`, `snapshot_date`, `cumulate` (on top of last week's row, Monday chain, leaderboard wins, earlier days kept) |
+| `unit/test_activities_parse.py` | `_text`, `parse_stats`, `to_meters/seconds/int`, `_row`, `normalise` (both feed schemas), `week_id`, `weeks_to_sync` (last + this week, setup range), `parse_leaderboard`, `foot_rows`, `snapshot_date`, `cumulate` (on top of last week's row, Monday chain, leaderboard wins, earlier days kept) |
 | `unit/test_members_parse.py` | `parse_member_count` |
 | `integration/test_nominal_roll_convert.py` | `convert()` — synthetic FormSG CSV → roster file bytes + rules + missing-column abort |
 | `integration/test_member_activities.py` | `member_activities.run` with a fake page: cumulative daily rows, ledger, leaderboard override, earlier days kept, expiry / mass-failure errors |

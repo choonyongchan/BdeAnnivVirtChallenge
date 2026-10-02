@@ -24,14 +24,14 @@ def _entry(aid, athlete_id, type_="Run", km="5.0"):
 
 
 class _FakePage:
-    """page.evaluate(BATCH_JS, {urls}) -> one canned result per URL, keyed by athlete id."""
+    """page.evaluate(BATCH_JS, {urls}) -> one canned result per this-week URL, keyed by athlete id; other weeks empty."""
 
     def __init__(self, by_athlete):
         self.by_athlete, self.urls = by_athlete, []
 
     def evaluate(self, script, arg):
         self.urls += arg["urls"]
-        return [self.by_athlete[u.split("/")[2]] for u in arg["urls"]]
+        return [self.by_athlete[u.split("/")[2]] if "interval=202640&" in u else {"entries": []} for u in arg["urls"]]
 
 
 @pytest.fixture
@@ -76,7 +76,7 @@ def test_sync_writes_profile_weeks_ledger_and_leaderboard_wins(env):
     assert A.run(leaderboard) == 3           # ledger: Alice's run + walk, Cara's run
     rows = {(r["athlete_id"], r["date"]): r for r in _read(tmp / "daily.csv")}
 
-    assert all("interval=202640&interval_type=week" in u for u in page.urls)
+    assert {u.split("interval=")[1][:6] for u in page.urls} == {"202639", "202640"}   # last week and this week
     assert rows[("1", "2026-09-27")]["distance_m"] == "9000.0"                       # last week kept
     assert rows[("1", "2026-09-29")]["distance_m"] == "14000.0"                      # earlier day kept
     assert rows[("1", "2026-10-01")] == {"athlete_id": "1", "date": "2026-10-01",   # last Sunday + this week
@@ -98,7 +98,7 @@ def test_expired_session_is_a_scrape_error(env):
 def test_many_failed_requests_fail_the_run_but_keep_what_was_found(env):
     tmp, use = env
     use(_FakePage({"1": {"entries": [_entry(10, 1)]}, "2": {"error": "HTTP 500"}, "3": {"error": "HTTP 500"}}))
-    with pytest.raises(A.ScrapeError, match="2 of 3"):
+    with pytest.raises(A.ScrapeError, match="2 of 6"):
         A.run({})
     assert [r["activity_id"] for r in _read(tmp / "activities.csv")] == ["10"]
 
@@ -111,3 +111,13 @@ def test_a_429_stops_the_scan_and_keeps_what_was_fetched(env):
     rows = {(r["athlete_id"], r["date"]) for r in _read(tmp / "daily.csv")}
     assert ("1", "2026-10-01") in rows and ("1", "2026-09-27") in rows
     assert [r["scraped_at"] for r in _read(tmp / "activities.csv")] == ["2026-10-01T12:00:00+00:00"]   # = synced_at
+
+
+def test_new_members_get_every_week_since_challenge_start(env):
+    tmp, use = env
+    page = _FakePage({"3": {"entries": [_entry(30, 3)]}})
+    use(page)
+    assert A.run({}, only=["3"]) == 1
+    assert {u.split("/")[2] for u in page.urls} == {"3"}
+    assert sorted(u.split("interval=")[1][:6] for u in page.urls) == ["202638", "202639", "202640"]
+    assert ("3", "2026-10-01") in {(r["athlete_id"], r["date"]) for r in _read(tmp / "daily.csv")}

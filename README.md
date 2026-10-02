@@ -61,8 +61,9 @@ python -m src.main [--full]      (jobs run on the hours in config.yaml's schedul
   ├─ recent_activities.run()      RecentActivities    headline member count → member_count.json;
   │                                                    club feed: new foot activities → ledger,
   │                                                    new feed (+ leaderboard) athletes → members.csv
-  ├─ member_activities.run() [scan] MemberActivities  every member's profile week (this week; last
-  │                                                    week too on Mondays) → missed activities → ledger
+  ├─ member_activities.run(only=new) MemberActivities new members only: every week since challenge_start
+  ├─ member_activities.run() [scan] MemberActivities  every member's profile week (last week and
+  │                                                    this week) → missed activities → ledger
   │  └─ member_statistics.run()   MemberStatistics    week totals (leaderboard overrides) on top of
   │                                                    last week's row → today's cumulative daily.csv rows
   ├─ generate.run()               src/dashboard/       snapshot + feed activities since it, roll, weather
@@ -81,10 +82,13 @@ foot activities (Run, Walk, Hike, …) are summed. The club leaderboard — whic
 keeps for two weeks only, top 100 — overrides those sums, since it also counts runs
 this account can't see (followers-only, private profiles). The week's figures are
 added to the member's last row before that week (normally last Sunday's), so past
-weeks are never re-fetched. Each night adds a new dated row and earlier days are never
-rewritten (except last Sunday's, refreshed on Monday), so the history keeps one point
-per day; a day with no scan carries the previous one forward. If both the Sunday and
-Monday scans miss a member, their later totals start from a mid-week row;
+weeks are mostly never re-fetched: each night rescans last week too, rewriting last
+Sunday's row so runs uploaded late into the week just closed still count. Each night
+adds a new dated row and earlier days are never rewritten (except last Sunday's), so
+the history keeps one point per day; a day with no scan carries the previous one
+forward. A member first added to members.csv gets every week since `challenge_start`
+scanned right away, so late joiners' earlier runs count. Uploads backdated two or more
+weeks, or a failed newcomer scan, are not picked up;
 `python -m src.activities.member_activities --setup` rebuilds every week.
 
 Scanning ~1,050 profiles costs as many requests, and Strava answers too many with a
@@ -123,7 +127,7 @@ python -m playwright install chromium    # add --with-deps on Linux
 | `python -m src.login` | Opens a visible browser to log in to Strava; writes `src/auth_state.json`, the session every scraper reuses. |
 | `python -m src.nominal_roll.nominal_roll "<raw FormSG export.csv>"` | Cleans a registration export and merges it into `src/nominal_roll/nominal_roll.csv` — exports are incremental, so new registrants are appended and a re-registration replaces that person's row. Delete the roll first to rebuild it from scratch. Without this file the dashboard still builds, but nobody gets a unit, company, or full name. |
 | `python -m src.main` | Runs the pipeline: scrape the feed, generate, and push. `--full` also takes the nightly snapshot (leaderboard + every member's profile week), as the 23:xx run does. |
-| `python -m src.activities.member_activities --setup` | One-off: rebuilds `daily.csv` from every week since `challenge_start` (each finished week dated by its Sunday) (without `--setup`: this week, plus last week on Mondays — what the pipeline does). |
+| `python -m src.activities.member_activities --setup` | One-off: rebuilds `daily.csv` from every week since `challenge_start` (each finished week dated by its Sunday) (without `--setup`: last week and this week — what the pipeline does nightly). |
 | `python -m pytest test/e2e/test_strava_parity.py --live` | Checks the dashboard against live Strava: every leaderboard athlete's this-week and last-week figures, and the member total. Run it right after `python -m src.main --full`. |
 | `python -m src.dashboard.generate` | Rebuilds `index.html` from the CSVs you already have, without scraping or touching git. |
 | `python -m pytest test/ -q` | Runs the test suite (`test/unit`, `test/integration`, `test/e2e`). Every fixture is synthetic. |

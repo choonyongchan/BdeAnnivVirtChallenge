@@ -159,9 +159,9 @@ def test_week_id_is_iso_year_and_week(monday, wid):
 
 
 @pytest.mark.parametrize("today,setup,mondays", [
-    (date(2026, 10, 1), False, ["2026-09-28"]),                              # Thursday: this week
-    (date(2026, 10, 5), False, ["2026-09-28", "2026-10-05"]),                # Monday: plus last week
-    (date(2026, 10, 4), False, ["2026-09-28"]),                              # Sunday still this week
+    (date(2026, 10, 1), False, ["2026-09-21", "2026-09-28"]),                # last week and this week
+    (date(2026, 10, 5), False, ["2026-09-28", "2026-10-05"]),                # Monday: the week just closed
+    (date(2026, 10, 4), False, ["2026-09-21", "2026-09-28"]),                # Sunday still this week
     (date(2026, 10, 1), True, ["2026-09-14", "2026-09-21", "2026-09-28"]),   # setup: since the start
 ])
 def test_weeks_to_sync(today, setup, mondays):

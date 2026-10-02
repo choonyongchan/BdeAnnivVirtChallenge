@@ -1,6 +1,7 @@
 """Scrape what config.yaml's schedule says is due this hour, then generate and publish the dashboard; the first
 failure stops it.
 RecentActivities (default hourly): the club feed (members + new foot activities), a handful of requests.
+New members it adds: every profile week since challenge_start, straight away.
 MemberActivities + MemberStatistics (default 23:xx, or --full): the leaderboard and every member's profile week ->
 missed activities + today's cumulative rows in daily.csv, the authoritative snapshot the feed is added on top of.
     python -m src.main [--full]
@@ -65,12 +66,17 @@ def main() -> None:
     full = "--full" in sys.argv or due(settings.member_scan_hours, hour)
     try:
         leaderboard = member_activities.fetch_leaderboard() if full else {}
+        new = []
         if full or due(settings.recent_activities_hours, hour):   # the scan needs leaderboard athletes in members.csv
             print("=== RecentActivities: club feed + members ===", flush=True)
-            recent_activities.run(leaderboard)
+            new = recent_activities.run(leaderboard)
+
+        if new:   # ponytail: a failed newcomer scan isn't retried; --setup repairs it
+            print(f"\n=== MemberActivities + MemberStatistics: {len(new)} new members, every week ===", flush=True)
+            member_activities.run(leaderboard, only=new)
 
         if full:
-            print("\n=== MemberActivities + MemberStatistics: every member's profile week ===", flush=True)
+            print("\n=== MemberActivities + MemberStatistics: every member's last 2 profile weeks ===", flush=True)
             member_activities.run(leaderboard)
     except ScrapeError as e:
         raise SystemExit(f"scrape failed, pipeline stopped: {e}\n{REAUTH_MSG}")

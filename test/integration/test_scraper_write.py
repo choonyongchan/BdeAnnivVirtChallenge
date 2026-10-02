@@ -68,6 +68,6 @@ def test_recent_activities_adds_feed_and_leaderboard_athletes_and_ledgers_feed_r
     monkeypatch.setattr(R, "fetch_count_and_feed", lambda: (1055, feed))
     board = {"2026-09-28": {"2": {"name": "Bob Bogus"}}, "2026-09-21": {"1": {"name": "Alice Anon"}}}
 
-    assert R.run(board) == 2
+    assert R.run(board) == ["1", "2"]          # the new members' ids
     assert {r["athlete_id"] for r in _read(member_paths["csv"])} == {"1", "2"}
     assert [r["activity_id"] for r in _read(tmp_path / "activities.csv")] == ["1"]

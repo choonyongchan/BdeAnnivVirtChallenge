@@ -214,13 +214,13 @@ def week_id(monday: date) -> str:
 
 
 def weeks_to_sync(today: date, challenge_start: str, setup: bool) -> list:
-    """Mondays to refresh: every week since challenge_start (setup), else this week,
-    plus last week on Mondays so a Sunday run uploaded after the rollover still lands."""
+    """Mondays to refresh: every week since challenge_start (setup), else last week and this week,
+    so runs uploaded late into the week just closed still land."""
     this = monday_of(today)
     if setup:
         first = monday_of(date.fromisoformat(challenge_start))
         return [first + timedelta(weeks=i) for i in range((this - first).days // 7 + 1)]
-    return [this - timedelta(weeks=1), this] if today.weekday() == 0 else [this]
+    return [this - timedelta(weeks=1), this]   # ponytail: older weeks never re-checked; --setup repairs them
 
 
 def parse_leaderboard(rows: list) -> dict:
@@ -257,14 +257,15 @@ def foot_rows(entries: list, athlete_id: str) -> list:
     return rows
 
 
-def run(leaderboard: dict, setup: bool = False, workers: int = 4) -> int:
+def run(leaderboard: dict, setup: bool = False, workers: int = 4, only: list | None = None) -> int:
     """Scan every members.csv athlete's profile week(s) into the ledger and MemberStatistics; returns new ledger rows.
-    Stops at Strava's first 429, keeping what it fetched."""
+    `only`: just these athletes, every week since challenge_start (new members). Stops at Strava's first 429,
+    keeping what it fetched."""
     require_auth()
     synced_at = now_utc()   # ledger rows found here share it, so the dashboard never adds them twice
     today = datetime.now(ZoneInfo(settings.timezone)).date()
-    mondays = weeks_to_sync(today, settings.challenge_start, setup)
-    members = [r["athlete_id"] for r in read_csv(MEMBERS_CSV)]
+    mondays = weeks_to_sync(today, settings.challenge_start, setup or only is not None)
+    members = only if only is not None else [r["athlete_id"] for r in read_csv(MEMBERS_CSV)]
     jobs = [(aid, m) for m in mondays for aid in members]
     print(f"weeks {', '.join(m.isoformat() for m in mondays)}: {len(jobs)} profile requests", flush=True)
 
