@@ -54,17 +54,24 @@ def publish_dashboard() -> None:
     print("Pushed index.html.")
 
 
+def due(hours, hour: int) -> bool:
+    """Whether a config.yaml schedule ("*" or a list of hours) includes this hour."""
+    return hours == "*" or hour in hours   # ponytail: whole hours only, Task Scheduler wakes hourly at :47
+
+
 def main() -> None:
     check_auth()
-    full = "--full" in sys.argv or datetime.now(ZoneInfo(settings.timezone)).hour == 23
+    hour = datetime.now(ZoneInfo(settings.timezone)).hour
+    full = "--full" in sys.argv or due(settings.member_scan_hours, hour)
     try:
-        print(f"=== scrape {'leaderboard + ' if full else ''}members + feed ===", flush=True)
-        leaderboard = fetch_leaderboard() if full else {}
-        scrape_members(leaderboard)
+        leaderboard = member_activities.fetch_leaderboard() if full else {}
+        if full or due(settings.recent_activities_hours, hour):   # the scan needs leaderboard athletes in members.csv
+            print("=== RecentActivities: club feed + members ===", flush=True)
+            recent_activities.run(leaderboard)
 
         if full:
-            print("\n=== nightly snapshot: every member's profile week ===", flush=True)
-            sync_weeks(leaderboard)
+            print("\n=== MemberActivities + MemberStatistics: every member's profile week ===", flush=True)
+            member_activities.run(leaderboard)
     except ScrapeError as e:
         raise SystemExit(f"scrape failed, pipeline stopped: {e}\n{REAUTH_MSG}")
 
