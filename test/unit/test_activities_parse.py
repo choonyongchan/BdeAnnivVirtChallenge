@@ -1,5 +1,5 @@
 """Unit tests for the activity-feed parsers: strip markup, key stats by label, coerce numbers (or None),
-and fan a GroupActivity out to one row per member; plus the weekly-sync helpers."""
+and fan a GroupActivity out to one row per member; plus the daily-snapshot helpers."""
 from datetime import date
 
 import pytest
@@ -17,6 +17,7 @@ from src.activities.activities import (
     to_meters,
     to_seconds,
     week_id,
+    snapshot_date,
     weeks_to_sync,
 )
 
@@ -182,15 +183,25 @@ def test_foot_rows_keeps_only_own_foot_activities():
     assert [r["activity_id"] for r in rows] == ["1", "2"]
 
 
-def test_merge_weeks_leaderboard_beats_profile_and_frozen_weeks_stay():
-    old = {("1", "2026-09-21"): {"athlete_id": "1", "week": "2026-09-21", "distance_m": "9000"}}
-    profile = [{"athlete_id": "1", "week": "2026-09-28", "distance_m": 5000, "moving_time_s": 1800,
-                "elev_gain_m": 0, "activities": 1, "source": "profile"}]
+@pytest.mark.parametrize("monday,today,day", [
+    ("2026-09-28", date(2026, 10, 1), "2026-10-01"),   # running week: today
+    ("2026-09-21", date(2026, 9, 28), "2026-09-27"),   # last week, re-synced on Monday: its Sunday
+])
+def test_snapshot_date(monday, today, day):
+    assert snapshot_date(monday, today) == day
+
+
+def test_merge_weeks_leaderboard_beats_profile_and_earlier_days_stay():
+    old = {("1", "2026-09-27"): {"athlete_id": "1", "date": "2026-09-27", "week": "2026-09-21", "distance_m": "9000"},
+           ("1", "2026-09-30"): {"athlete_id": "1", "date": "2026-09-30", "week": "2026-09-28", "distance_m": "3000"}}
+    profile = [{"athlete_id": "1", "date": "2026-10-01", "week": "2026-09-28", "distance_m": 5000,
+                "moving_time_s": 1800, "elev_gain_m": 0, "activities": 1, "source": "profile"}]
     board = {"2026-09-28": {"1": {"name": "A", "distance_m": 7000.0, "moving_time_s": 2400,
                                   "elev_gain_m": 5.0, "activities": 2}}}
-    merged = merge_weeks(old, profile, board, "T")
-    assert merged[("1", "2026-09-21")]["distance_m"] == "9000"
-    assert merged[("1", "2026-09-28")] == {"athlete_id": "1", "week": "2026-09-28", "source": "leaderboard",
-                                           "synced_at": "T",
+    merged = merge_weeks(old, profile, board, "T", date(2026, 10, 1))
+    assert merged[("1", "2026-09-27")]["distance_m"] == "9000"
+    assert merged[("1", "2026-09-30")]["distance_m"] == "3000"
+    assert merged[("1", "2026-10-01")] == {"athlete_id": "1", "date": "2026-10-01", "week": "2026-09-28",
+                                           "source": "leaderboard", "synced_at": "T",
                                            "distance_m": 7000.0, "moving_time_s": 2400, "elev_gain_m": 5.0,
                                            "activities": 2}

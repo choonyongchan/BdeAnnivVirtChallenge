@@ -100,20 +100,26 @@ def make_activity():
 
 @pytest.fixture
 def weeks_from():
-    """weekly.csv-shaped rows for activity dicts, one per activity (the stats engine sums them),
-    so a test can state its data once as activities."""
+    """daily.csv-shaped rows for activity dicts: one week-to-date snapshot per athlete per week, dated by the
+    week's last activity, so a test can state its data once as activities."""
     return _weeks_from
 
 
 def _weeks_from(acts):
     from datetime import date, timedelta
-    rows = []
+    rows = {}
     for a in acts:
-        d = date.fromisoformat(a.get("start_date_utc", "2026-09-14")[:10])
-        rows.append({"athlete_id": a["athlete_id"], "week": (d - timedelta(days=d.weekday())).isoformat(),
-                     "distance_m": a["distance_m"], "moving_time_s": a["moving_time_s"],
-                     "elev_gain_m": a["elev_gain_m"], "activities": 1, "source": "profile"})
-    return rows
+        day = a.get("start_date_utc", "2026-09-14")[:10]
+        d = date.fromisoformat(day)
+        week = (d - timedelta(days=d.weekday())).isoformat()
+        r = rows.setdefault((a["athlete_id"], week), {
+            "athlete_id": a["athlete_id"], "date": day, "week": week, "distance_m": 0.0, "moving_time_s": 0.0,
+            "elev_gain_m": 0.0, "activities": 0, "source": "profile"})
+        r["date"] = max(r["date"], day)
+        for k in ("distance_m", "moving_time_s", "elev_gain_m"):
+            r[k] += float(a[k] or 0)
+        r["activities"] += 1
+    return list(rows.values())
 
 
 @pytest.fixture

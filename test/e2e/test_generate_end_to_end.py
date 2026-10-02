@@ -80,15 +80,21 @@ def env(tmp_path, monkeypatch):
             })
     monkeypatch.setattr(generate, "ACTIVITIES_CSV", activities)
 
-    # Strava's weekly figures for the same runs, one row per run (the engine sums them)
-    weekly = tmp_path / "weekly.csv"
-    with weekly.open("w", newline="", encoding="utf-8") as f:
+    # Strava's figures for the same runs: each athlete's week totals, snapshotted on its Sunday or NOW
+    totals = {}
+    for aid, _, d, dist, mov, elev in ACTS:
+        if d[:10] >= CHALLENGE_START:
+            day, week = ("2026-09-24", "2026-09-21") if d[:10] >= "2026-09-21" else ("2026-09-20", "2026-09-14")
+            t = totals.setdefault((aid, day, week), [0, 0, 0, 0])
+            for i, v in enumerate((dist, mov, elev, 1)):
+                t[i] += v
+    daily = tmp_path / "daily.csv"
+    with daily.open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
-        w.writerow(["athlete_id", "week", "distance_m", "moving_time_s", "elev_gain_m", "activities", "source"])
-        for aid, _, d, dist, mov, elev in ACTS:
-            if d[:10] >= CHALLENGE_START:
-                w.writerow([aid, "2026-09-21" if d[:10] >= "2026-09-21" else "2026-09-14", dist, mov, elev, 1, "profile"])
-    monkeypatch.setattr(generate, "WEEKLY_CSV", weekly)
+        w.writerow(["athlete_id", "date", "week", "distance_m", "moving_time_s", "elev_gain_m", "activities", "source"])
+        for (aid, day, week), t in totals.items():
+            w.writerow([aid, day, week, *t, "profile"])
+    monkeypatch.setattr(generate, "DAILY_CSV", daily)
 
     announce = tmp_path / "announce.md"
     announce.write_text("# Test Banner\nGo run.", encoding="utf-8")

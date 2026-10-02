@@ -36,12 +36,12 @@ resolves; there is no `pytest.ini` / `pyproject.toml`.
 | `unit/test_config.py` | `config.load()` per-key fallback |
 | `unit/test_renderer.py` | `_slim_leaderboard`, `build_announcement_html`, `render` placeholder substitution |
 | `unit/test_weather.py` | `weather_html` — network-optional degradation (`urllib.request.urlopen` mocked) |
-| `unit/test_activities_parse.py` | `_text`, `parse_stats`, `to_meters/seconds/int`, `_row`, `normalise` (both feed schemas), `week_id`, `weeks_to_sync` (Monday grace, setup range), `parse_leaderboard`, `foot_rows`, `merge_weeks` (leaderboard wins) |
+| `unit/test_activities_parse.py` | `_text`, `parse_stats`, `to_meters/seconds/int`, `_row`, `normalise` (both feed schemas), `week_id`, `weeks_to_sync` (Monday grace, setup range), `parse_leaderboard`, `foot_rows`, `snapshot_date`, `merge_weeks` (leaderboard wins, earlier days kept) |
 | `unit/test_members_parse.py` | `parse_member_count` |
 | `integration/test_nominal_roll_convert.py` | `convert()` — synthetic FormSG CSV → roster file bytes + rules + missing-column abort |
-| `integration/test_activities_fetch.py` | `sync_weeks` with a fake page: weekly rows, ledger, leaderboard override, frozen weeks, expiry / mass-failure errors |
+| `integration/test_activities_fetch.py` | `sync_weeks` with a fake page: dated daily rows, ledger, leaderboard override, earlier days kept, expiry / mass-failure errors |
 | `integration/test_members_fetch.py` | `fetch_count_and_feed`: headline count, feed cursor paging, error paths |
-| `integration/test_dashboard_pipeline.py` | `load_activities` + `load_weekly` + `load_members` + `build_grouped_data` + `build_weekly_history` wired together |
+| `integration/test_dashboard_pipeline.py` | `load_activities` + `load_daily` + `load_members` + `latest_by_week` + `feed_updates` + `build_grouped_data` + `build_daily_history` wired together |
 | `integration/test_scraper_write.py` | `append_activities`, `write_members`, `scrape_members` (append-only, dedupe by id; leaderboard athletes added) — no browser |
 | `e2e/test_generate_end_to_end.py` | real `generate.run()` → `index.html`: placeholders filled, announcement wired, group/roster/history invariants |
 | `e2e/test_roll_to_dashboard.py` | raw FormSG export → `convert()` → `nominal_roll.csv` → dashboard grouping matches the converted roll |

@@ -1,7 +1,7 @@
 """Scrape, then generate and publish the dashboard; the first failure stops it.
 Hourly: the club feed only (members + new foot activities), a handful of requests.
-Nightly (the 23:xx run, or --full): also the leaderboard and every member's profile week -> weekly.csv,
-the authoritative snapshot the hourly feed activities are added on top of.
+Nightly (the 23:xx run, or --full): also the leaderboard and every member's profile week -> today's rows in
+daily.csv, the authoritative snapshot the hourly feed activities are added on top of.
     python -m src.main [--full]
 """
 import json

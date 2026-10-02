@@ -62,13 +62,13 @@ def _write_activities(path):
     return path
 
 
-def _write_weekly(path):
-    """weekly.csv: each runner's one 6 km week."""
+def _write_daily(path):
+    """daily.csv: each runner's one 6 km week, snapshotted on its Sunday."""
     with path.open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
-        w.writerow(["athlete_id", "week", "distance_m", "moving_time_s", "elev_gain_m", "activities", "source"])
+        w.writerow(["athlete_id", "date", "week", "distance_m", "moving_time_s", "elev_gain_m", "activities", "source"])
         for aid, _ in RUNNERS:
-            w.writerow([aid, "2026-09-14", 6000, 1800, 10, 1, "profile"])
+            w.writerow([aid, "2026-09-20", "2026-09-14", 6000, 1800, 10, 1, "profile"])
     return path
 
 
@@ -80,7 +80,7 @@ def test_converted_roll_drives_dashboard_grouping(tmp_path, monkeypatch):
     monkeypatch.setattr(generate, "MEMBERS_CSV", _write_members(tmp_path / "members.csv"))
     monkeypatch.setattr(generate, "MEMBER_COUNT_JSON", tmp_path / "member_count.json")
     monkeypatch.setattr(generate, "ACTIVITIES_CSV", _write_activities(tmp_path / "activities.csv"))
-    monkeypatch.setattr(generate, "WEEKLY_CSV", _write_weekly(tmp_path / "weekly.csv"))
+    monkeypatch.setattr(generate, "DAILY_CSV", _write_daily(tmp_path / "daily.csv"))
 
     cfg = config.Config(
         club_name="Test Club",

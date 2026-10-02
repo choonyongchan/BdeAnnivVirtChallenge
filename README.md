@@ -33,8 +33,8 @@ to filter. Alongside it sit unit rankings, company rankings, and a registration
 tree, all built from the roll. Three tabs (All, NSF/Regular, NSMan/Alumni) split
 everyone by `Type of service`.
 
-The History picker opens a calendar of past cumulative standings, one per
-Monday–Sunday week (Strava's week) as of its Sunday, with a shortcut to last week. The Trend view adds a weekly Sunday snapshot table and
+The History picker opens a calendar of past cumulative standings, one per day the
+nightly scan ran, with a shortcut to last week (as of its Sunday). The Trend view adds a weekly Sunday snapshot table and
 cumulative charts for distance, activities, runners, participation rate, and
 elevation, with a breakdown by group, unit, or company.
 
@@ -62,7 +62,7 @@ python -m src.main [--full]      (--full is implied on the 23:xx run)
   │                                                    club feed: new foot activities → ledger,
   │                                                    new feed (+ leaderboard) athletes → members.csv
   ├─ sync_weeks(leaderboard) [full] src/activities/    every member's profile week (this week; last
-  │                                                    week too on Mondays) → weekly.csv snapshot +
+  │                                                    week too on Mondays) → daily.csv snapshot +
   │                                                    ledger; leaderboard figures override the profile's
   ├─ generate.run()               src/dashboard/       snapshot + feed activities since it, roll, weather
   │      stats.py   → totals, awards, leaderboard, devices
@@ -73,13 +73,15 @@ python -m src.main [--full]      (--full is implied on the 23:xx run)
 ```
 
 Strava is the authority on distance, so the dashboard's totals are **Strava's own
-weekly figures per member** (`weekly.csv`: distance, moving time, elevation, foot
-activities per Monday–Sunday week). Each member's profile week lists that week's
+weekly figures per member** (`daily.csv`: one row per member per day of the nightly
+scan, holding that Monday–Sunday week's distance, moving time, elevation and foot
+activities so far). Each member's profile week lists that week's
 activities; their foot activities (Run, Walk, Hike, …) are summed. The club
 leaderboard — which Strava keeps for two weeks only, top 100 — overrides those sums,
 since it also counts runs this account can't see (followers-only, private profiles).
-Past weeks freeze once refreshed, so the history stays accurate as long as the
-pipeline keeps running.
+Each night adds a new dated row and earlier days are never rewritten (except last
+Sunday's, refreshed on Monday), so the history keeps one point per day; a day with no
+scan carries the previous one forward.
 
 Scanning ~1,050 profiles costs as many requests, and Strava answers too many with a
 `429` block, so that **full scan runs once a day** (the 23:47 run) and stops at the
@@ -117,7 +119,7 @@ python -m playwright install chromium    # add --with-deps on Linux
 | `python -m src.login` | Opens a visible browser to log in to Strava; writes `src/auth_state.json`, the session every scraper reuses. |
 | `python -m src.nominal_roll.nominal_roll "<raw FormSG export.csv>"` | Cleans a registration export and merges it into `src/nominal_roll/nominal_roll.csv` — exports are incremental, so new registrants are appended and a re-registration replaces that person's row. Delete the roll first to rebuild it from scratch. Without this file the dashboard still builds, but nobody gets a unit, company, or full name. |
 | `python -m src.main` | Runs the pipeline: scrape the feed, generate, and push. `--full` also takes the nightly snapshot (leaderboard + every member's profile week), as the 23:xx run does. |
-| `python -m src.activities.activities --setup` | One-off: syncs every week since `challenge_start` into `weekly.csv` (without `--setup`: this week, plus last week on Mondays — what the pipeline does). |
+| `python -m src.activities.activities --setup` | One-off: syncs every week since `challenge_start` into `daily.csv` (dated by each week's Sunday) (without `--setup`: this week, plus last week on Mondays — what the pipeline does). |
 | `python -m pytest test/e2e/test_strava_parity.py --live` | Checks the dashboard against live Strava: every leaderboard athlete's this-week and last-week figures, and the member total. Run it right after `python -m src.main --full`. |
 | `python -m src.dashboard.generate` | Rebuilds `index.html` from the CSVs you already have, without scraping or touching git. |
 | `python -m pytest test/ -q` | Runs the test suite (`test/unit`, `test/integration`, `test/e2e`). Every fixture is synthetic. |
@@ -145,7 +147,7 @@ Content is HTML-escaped.
 ## How it deploys
 
 The pipeline runs locally: `scripts/run_pipeline.ps1` (Windows Task Scheduler, see
-below) runs `python -m src.main` and commits `weekly.csv`, `activities.csv`,
+below) runs `python -m src.main` and commits `daily.csv`, `activities.csv`,
 `members.csv`, `member_count.json`, and `index.html` to `main`. `.github/workflows/deploy.yml`
 then publishes `index.html` (and the `user-count.json` badge data file) to GitHub
 Pages via `actions/deploy-pages` whenever a push changes either file.
@@ -201,7 +203,7 @@ src/
   auth_state.json                session cookies (gitignored; from AUTH_STATE)
   activities/
     activities.py                leaderboard + member profile weeks → weekly totals + activity ledger
-    weekly.csv                   Strava's weekly totals per member (committed; the dashboard's figures)
+    daily.csv                    Strava's week-to-date totals per member per day (committed; the dashboard's figures)
     activities.csv               best-effort activity ledger, for per-activity awards (committed)
   members/
     members.py                   headline count + feed/leaderboard athletes → append-only ledger
