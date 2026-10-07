@@ -4,10 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>__CLUB_NAME__ – Strava Dashboard</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏃</text></svg>">
+<meta name="description" content="Distance, runs and rankings for every member of the __CLUB_NAME__ Strava club, updated hourly.">
+<meta name="theme-color" content="#FC4C02">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
 
-<meta property="og:title"       content="__CLUB_NAME__ – Weekly Strava Report">
-<meta property="og:description" content="Live running stats for __CLUB_NAME__ from Strava.">
+<meta property="og:title"       content="__CLUB_NAME__ – Strava Dashboard">
+<meta property="og:description" content="Distance, runs and rankings for every member of the club, updated hourly.">
 <meta property="og:type"        content="website">
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -400,6 +406,12 @@ thead th.sort-desc::after { content: ' ↓'; opacity: 1 !important; color: #FC4C
 .fade { animation: fadeUp .35s ease; }
 @keyframes fadeUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
 
+/* Keyboard users see where they are; mouse clicks stay clean. */
+:focus-visible { outline: 2px solid #FC4C02; outline-offset: 2px; border-radius: 4px; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
 @media(max-width:700px){
   .header-top { flex-direction: column; align-items: flex-start; gap: 6px; }
   .header h1 { font-size: 1.35rem; }
@@ -413,6 +425,7 @@ thead th.sort-desc::after { content: ' ↓'; opacity: 1 !important; color: #FC4C
 
 @media(max-width:600px){
   .totals { grid-template-columns: repeat(2,1fr); }
+  .totals > :last-child:nth-child(odd) { grid-column: 1 / -1; }   /* the 5th card spans, no orphan */
   .total-card { padding: 12px 8px; }
   .total-card .val { font-size: 1.25rem; }
 }
@@ -425,7 +438,7 @@ thead th.sort-desc::after { content: ' ↓'; opacity: 1 !important; color: #FC4C
     <span class="nav-badge">__CLUB_SHORT__</span>
     <span class="nav-title">__CLUB_NAME__</span>
   </div>
-  <a href="https://www.strava.com/clubs/__CLUB_ID__" target="_blank" class="nav-link">Strava Club</a>
+  <a href="https://www.strava.com/clubs/__CLUB_ID__" target="_blank" rel="noopener noreferrer" class="nav-link">Strava Club</a>
 </nav>
 
 <div class="wrap">
@@ -602,10 +615,10 @@ thead th.sort-desc::after { content: ' ↓'; opacity: 1 !important; color: #FC4C
   <div class="line-chart-tooltip" id="line-chart-tooltip"></div>
 
   <div class="footer">
-    Updated every 5 min &nbsp;·&nbsp; last update __UPDATED_HUMAN__ &nbsp;·&nbsp;
-    <a href="https://www.strava.com/clubs/__CLUB_ID__" target="_blank">Strava Club</a>
+    Updated hourly &nbsp;·&nbsp; last update __UPDATED_HUMAN__ &nbsp;·&nbsp;
+    <a href="https://www.strava.com/clubs/__CLUB_ID__" target="_blank" rel="noopener noreferrer">Strava Club</a>
     &nbsp;·&nbsp;
-    <a href="https://github.com/DatabenderSK/strava-club-dashboard" target="_blank">Get your own dashboard</a>
+    <a href="https://github.com/DatabenderSK/strava-club-dashboard" target="_blank" rel="noopener noreferrer">Get your own dashboard</a>
   </div>
 </div>
 
@@ -857,7 +870,7 @@ function render() {
     { v: fmtInt(data.total_elev), l: 'elevation (m)' },
     { v: data.run_count, l: 'activities' },
     { v: activeCount(data), l: 'active runners' },
-    { v: data.athlete_count, l: 'runners' },
+    { v: data.athlete_count, l: 'members' },
   ].map(t => `<div class="total-card fade">
     <div class="val">${t.v}</div><div class="lbl">${t.l}</div>
   </div>`).join('');
@@ -1465,8 +1478,25 @@ function setTrendRunnerView(view, el) {
   renderTrendRunners();
 }
 
+// Sortable headers, calendar days and in-text links are clickable divs/ths/anchors: make each one
+// reachable by Tab and operable with Enter/Space, like the real buttons around them.
+function makeKeyboardable(root) {
+  root.querySelectorAll('[onclick]:not(button):not([tabindex]), a:not([href]):not([tabindex])').forEach(el => {
+    el.tabIndex = 0;
+    el.setAttribute('role', 'button');
+  });
+}
+document.addEventListener('keydown', e => {
+  const el = e.target;
+  if ((e.key === 'Enter' || e.key === ' ') && el.getAttribute('role') === 'button' && el.tagName !== 'BUTTON') {
+    e.preventDefault();
+    el.click();
+  }
+});
+new MutationObserver(() => makeKeyboardable(document.body)).observe(document.body, {childList: true, subtree: true});
 
 showLeaderboard();
+makeKeyboardable(document.body);
 </script>
 </body>
 </html>
