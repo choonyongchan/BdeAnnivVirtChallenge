@@ -4,7 +4,6 @@ name: Tests
 on:
   push:
     branches: [main]
-  pull_request:
 
 jobs:
   test:
@@ -29,7 +28,7 @@ jobs:
         run: python -m playwright install --with-deps chromium
 
       - name: Run tests with coverage
-        run: python -m pytest --cov=backend --cov=frontend --cov-report=xml test/ -q
+        run: python -m pytest --cov=backend --cov=frontend --cov=shared --cov-report=xml test/ -q
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5

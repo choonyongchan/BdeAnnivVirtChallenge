@@ -7,14 +7,13 @@ failed), newcomers are still added but nobody is marked as left.
 import html
 import random
 import re
-from datetime import datetime, timezone
 from pathlib import Path
 
-from ..strava_session import (CLUB_URL, FETCH_JS, ScrapeError, append_new_rows, club_page, read_csv, require_auth,
-                              write_csv)
+from shared.data import MEMBER_COUNT_CSV, MEMBERS_CSV, append_new_rows, now_utc, read_csv, write_csv
+from ..strava_session import CLUB_URL, FETCH_JS, ScrapeError, club_page
 
-CSV_PATH = Path(__file__).parent / "members.csv"
-COUNT_PATH = Path(__file__).parent / "member_count.csv"
+CSV_PATH = MEMBERS_CSV
+COUNT_PATH = MEMBER_COUNT_CSV
 MEMBERS_URL = f"{CLUB_URL}/members"
 
 FIELDS = ["athlete_id", "name", "ingest_at", "left_at"]
@@ -64,10 +63,6 @@ def fetch_count_and_roster(page) -> tuple:
     return count, roster
 
 
-def now_utc() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
-
-
 def update_members(count: int, roster: dict, stamp: str) -> list:
     """Upsert members.csv from the roster; returns the newcomers' athlete ids.
     Tallied (roster size == headline): absent members get left_at, returning ones have it cleared."""
@@ -93,7 +88,6 @@ def update_members(count: int, roster: dict, stamp: str) -> list:
 
 def run() -> list:
     """Headline -> member_count.csv, roster -> members.csv; returns the newcomers' athlete ids."""
-    require_auth()
     with club_page(MEMBERS_URL) as page:
         count, roster = fetch_count_and_roster(page)
         if len(roster) != count:   # one retry: a join or leave mid-walk shifts the pages

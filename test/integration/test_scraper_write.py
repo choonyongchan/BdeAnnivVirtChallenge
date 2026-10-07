@@ -41,7 +41,6 @@ def test_activities_write_is_append_only_and_deduped(tmp_path, monkeypatch):
 
 def test_feed_ledgers_every_sport(tmp_path, monkeypatch):
     monkeypatch.setattr(A, "CSV_PATH", tmp_path / "activities.csv")
-    monkeypatch.setattr(F, "require_auth", lambda: None)
     rows = A.normalise(_activity(1, 1)) + A.normalise(_activity(2, 1))
     rows[0]["type"], rows[1]["type"] = "Run", "Ride"
     monkeypatch.setattr(F, "fetch_feed", lambda: rows)
@@ -80,7 +79,6 @@ def test_untallied_roster_adds_newcomers_but_marks_nobody_left(member_paths, cap
 
 
 def test_run_records_the_headline_and_retries_a_mismatch_once(member_paths, monkeypatch):
-    monkeypatch.setattr(M, "require_auth", lambda: None)
     answers = [(3, {"1": "A", "2": "B"}), (2, {"1": "A", "2": "B"})]   # someone left mid-walk, the retry tallies
     monkeypatch.setattr(M, "fetch_count_and_roster", lambda page: answers.pop(0))
 

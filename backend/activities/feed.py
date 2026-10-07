@@ -6,7 +6,7 @@ import json
 import random
 
 from .member_activities import append_activities, normalise
-from ..strava_session import CLUB_ID, CLUB_URL, FETCH_JS, ScrapeError, club_page, require_auth
+from ..strava_session import CLUB_ID, CLUB_URL, FETCH_JS, ScrapeError, club_page
 
 FEED_URL = f"/clubs/{CLUB_ID}/feed?feed_type=club&num_entries=100"
 
@@ -39,7 +39,6 @@ def fetch_feed() -> list:
 
 def run() -> int:
     """Feed activities -> ledger; returns how many were new."""
-    require_auth()
     rows = fetch_feed()
     new = append_activities(rows)
     print(f"feed: {len(rows)} activities, {len(new)} new -> ledger")

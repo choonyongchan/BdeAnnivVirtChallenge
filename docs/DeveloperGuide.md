@@ -13,14 +13,16 @@ requests carry the page's cookies and headers. There is no OAuth and no API toke
 ```
 backend/   scrapes Strava into CSVs     (Playwright; python -m backend.main)
 frontend/  CSVs -> one static page      (no Playwright; python -m frontend.generate)
+shared/    used by both: config.py + config.yaml (settings), data.py (CSV paths, foot sports, CSV and timestamp helpers)
            public/  the site GitHub Pages serves: index.html, user-count.json, icons, manifest
 docs/      this guide, README screenshots
 test/      unit / integration / e2e (pytest; every fixture is synthetic)
 scripts/   run_pipeline.ps1, the Windows Task Scheduler entry point
 ```
 
-`frontend` reads `backend/config.yaml` through `backend.config` and the CSVs by path, but
-never imports a scraper, so building the page never loads Playwright.
+`frontend` reads settings and CSVs through `shared/`, never through a scraper, so building
+the page never loads Playwright. Put code both sides need in `shared/`; keep it free of
+Playwright.
 
 ## One concern, one source
 
@@ -34,7 +36,7 @@ never imports a scraper, so building the page never loads Playwright.
 | | profile weeks (same interval fetch) | nightly | `statistics.csv` |
 
 `backend/main.py` runs, in order: members, feed, [profile scan], leaderboard + statistics,
-generate, publish. `backend/config.yaml`'s `schedule` sets which local hours each job runs
+generate; `scripts/run_pipeline.ps1` then commits and pushes. `shared/config.yaml`'s `schedule` sets which local hours each job runs
 ("*" = every hour). The first scrape failure stops the run before anything is published.
 A rate-limited or error-heavy profile scan still saves what it found, then fails the run.
 
@@ -54,8 +56,10 @@ A rate-limited or error-heavy profile scan still saves what it found, then fails
 
 ## Data files
 
-All CSVs are committed: they are the history. `auth_state.json`, `*_b64.txt` and the
-nominal roll are gitignored and must never be committed.
+`members.csv`, `activities.csv` and `statistics.csv` hold athlete names and activities, so
+they stay on the pipeline machine: gitignored, never committed. Back them up yourself, since
+they are the history. Only `member_count.csv` is committed. `auth_state.json`, `*_b64.txt`
+and the nominal roll are gitignored too and must never be committed.
 
 **`members.csv`** `athlete_id, name, ingest_at, left_at`. `ingest_at` is when the roster
 first listed the athlete; `left_at` is when they disappeared, cleared if they rejoin. The
@@ -96,12 +100,31 @@ service. `renderer.py` substitutes everything into `template.html`; data is embe
 JSON with `</` escaped. `frontend/public/index.html` is generated, so edit the template,
 never the output.
 
+**Known limitation: namesakes merge.** `stats.py` and the leaderboard key rows by the
+resolved display name, not `athlete_id`. Two or more members with the same Strava
+display name (on 2026-10-07: two each of "Enoch Tan", "Sean Yeo" and "Shawn Lim") show as
+one leaderboard row, with their figures summed and attributed to one roll entry. Club
+totals, statistics.csv and the CSVs stay per athlete. The live parity test skips these
+athletes. Fixing it means keying the leaderboard by `athlete_id` and disambiguating the
+displayed names.
+
 Template rules:
 - Any Strava-sourced text (names, units, companies, devices) goes through `esc()` before
   `innerHTML`. Strava names are attacker-controlled: any member can rename themselves.
 - Clickable non-buttons (headers, calendar days, in-text links) get `tabindex`/`role`
   automatically from `makeKeyboardable()`. Real buttons are still preferred.
 - Motion respects `prefers-reduced-motion`.
+- Layout follows the screen's shape (the `LAYOUT` block at the end of the CSS):
+  - **Narrow or portrait** (below 1200 px, or any portrait screen): leaderboard first, then
+    one ranking at a time. The `#` and Runner columns stay pinned while the other columns
+    scroll sideways.
+  - **Wide landscape** (from 1200 px): the page widens to 1760 px. From 1680 px the
+    rankings move into a sticky sidebar. Below 1680 px the leaderboard's ~1180 px of
+    columns need the full width.
+  - **Short landscape** (height up to 500 px, phones on their side): the nav no longer
+    sticks, the controls share one line, and the totals sit in one row.
+
+  `test_built_page_runs_in_a_browser_without_errors` checks four of these shapes.
 
 To regenerate the icons after changing `favicon.svg`, render it with Playwright at 16,
 32, 48 (packed into `favicon.ico` as PNG-in-ICO), 180, 192 and 512 px. No image library
@@ -129,8 +152,8 @@ CI (`.github/workflows/test.yml`) runs the offline suite on every push to `main`
 
 ## Deploying
 
-`scripts/run_pipeline.ps1` runs `backend.main`, then commits `statistics.csv`,
-`activities.csv`, `members.csv`, `member_count.csv` and `frontend/public/` and pushes.
+`scripts/run_pipeline.ps1` runs `backend.main`, then commits `member_count.csv` and
+`frontend/public/` and pushes.
 `.github/workflows/deploy.yml` publishes `frontend/public/` to GitHub Pages whenever it
 changes (Settings, then Pages, then Source = GitHub Actions). Only tracked files are
 published, so keep anything sensitive out of `frontend/public/`.

@@ -7,15 +7,14 @@ A week's figures go on top of the athlete's last row before that week, so past w
 """
 from collections import defaultdict
 from datetime import date, datetime, timedelta
-from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from ..activities.member_activities import (CSV_PATH as ACTIVITIES_CSV, FOOT_TYPES, monday_of, to_int, to_meters,
-                                            to_seconds)
-from ..config import settings
-from ..strava_session import CLUB_URL, ScrapeError, club_page, read_csv, write_csv
+from shared.config import settings
+from shared.data import ACTIVITIES_CSV, FOOT_TYPES, STATISTICS_CSV, local_date, read_csv, write_csv
+from ..activities.member_activities import monday_of, to_int, to_meters, to_seconds
+from ..strava_session import CLUB_URL, ScrapeError, club_page
 
-CSV_PATH = Path(__file__).parent / "statistics.csv"
+CSV_PATH = STATISTICS_CSV
 FIGURES = ["distance_m", "moving_time_s", "elev_gain_m", "activities"]
 FIELDS = ["athlete_id", "date", *FIGURES, "source", "synced_at"]
 
@@ -108,14 +107,6 @@ def cumulate(daily: dict, weeks: dict, leaderboard: dict, synced_at: str, today:
         daily[(aid, day)] = mine[day] = {"athlete_id": aid, "date": day, **_add(base, f),
                                          "source": f["source"], "synced_at": synced_at}
     return daily
-
-
-def local_date(iso_utc: str, tz: ZoneInfo) -> str:
-    """An activity's start_date_utc as a local YYYY-MM-DD, or "" if unusable."""
-    try:
-        return datetime.fromisoformat((iso_utc or "").replace("Z", "+00:00")).astimezone(tz).date().isoformat()
-    except ValueError:
-        return ""
 
 
 def fallback(daily: dict, acts: list, synced_at: str, today: date) -> dict:

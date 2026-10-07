@@ -1,5 +1,5 @@
 """Unit tests for statistics.py: the leaderboard fetch (both tabs, empty = expired session), the ledger fallback's
-filters (foot sports from challenge_start only), unusable dates, and when the last nightly scan synced."""
+filters (foot sports from challenge_start only) and when the last nightly scan synced."""
 from contextlib import contextmanager
 from datetime import date
 

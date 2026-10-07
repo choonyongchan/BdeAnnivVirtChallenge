@@ -1,5 +1,5 @@
-"""Scrape what config.yaml's schedule says is due this hour, then generate and publish the dashboard; the first
-failure stops it.
+"""Scrape what config.yaml's schedule says is due this hour, then generate the dashboard; the first failure stops
+it. scripts/run_pipeline.ps1 commits and pushes the result.
 Hourly:  Members (members page -> members.csv, member_count.csv), Feed (club feed -> activities.csv),
          Statistics (leaderboard + ledger fallback -> statistics.csv).
 Nightly (member_scan hours, or --full): MemberActivities too - every current member's last two profile weeks, every
@@ -8,20 +8,18 @@ Nightly (member_scan hours, or --full): MemberActivities too - every current mem
     python -m backend.main [--full] [--setup]
 """
 import json
-import subprocess
 import sys
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from frontend import generate
+from shared.config import settings
+from shared.data import now_utc
 
 from .activities import feed, member_activities
-from .config import settings
 from .members import members
 from .statistics import statistics
 from .strava_session import AUTH_PATH, ScrapeError
-
-REPO_ROOT = generate.REPO_ROOT
 
 REAUTH_MSG = (
     "\n==================== STRAVA RE-AUTH REQUIRED ====================\n"
@@ -42,19 +40,6 @@ def check_auth() -> None:
         raise SystemExit(REAUTH_MSG)
 
 
-def publish_dashboard() -> None:
-    """Commit and push the static site so GitHub Actions redeploys; no-op if unchanged."""
-    subprocess.run(["git", "add", str(generate.OUT_PATH), str(generate.USER_COUNT_PATH)],
-                   cwd=REPO_ROOT, check=True)
-    if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=REPO_ROOT).returncode == 0:
-        print("index.html unchanged, nothing to publish.")
-        return
-    message = f"🏃 Dashboard update {datetime.now():%Y-%m-%d %H:%M}"
-    subprocess.run(["git", "commit", "-m", message], cwd=REPO_ROOT, check=True)
-    subprocess.run(["git", "push"], cwd=REPO_ROOT, check=True)
-    print("Pushed index.html.")
-
-
 def due(hours, hour: int) -> bool:
     """Whether a config.yaml schedule ("*" or a list of hours) includes this hour."""
     return hours == "*" or hour in hours   # ponytail: whole hours only, Task Scheduler wakes hourly at :45
@@ -69,7 +54,7 @@ def scrape(now: datetime, full: bool, setup: bool) -> None:
         print("\n=== Feed: club feed ===", flush=True)
         feed.run()   # before the leaderboard, so its runs are older than the statistics' synced_at
 
-    weeks, synced_at, problem = {}, member_activities.now_utc(), None
+    weeks, synced_at, problem = {}, now_utc(), None
     if full:
         print("\n=== MemberActivities: profile weeks ===", flush=True)
         weeks, synced_at, problem = member_activities.run(statistics.last_profile_sync(), setup=setup)
@@ -91,9 +76,6 @@ def main() -> None:
 
     print("\n=== generate dashboard ===", flush=True)
     generate.run()
-
-    print("\n=== publish dashboard ===", flush=True)
-    publish_dashboard()
 
     print("\nPipeline complete.")
 

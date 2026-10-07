@@ -51,13 +51,13 @@ def env(tmp_path, monkeypatch):
     monkeypatch.setattr(A, "CSV_PATH", activities)
     monkeypatch.setattr(S, "ACTIVITIES_CSV", activities)
     monkeypatch.setattr(S, "CSV_PATH", stats)
-    monkeypatch.setattr(A, "require_auth", lambda: None)
 
     class _Thursday(datetime):   # 2026-10-01: this week only, no Monday grace
         @classmethod
         def now(cls, tz=None):
             return datetime(2026, 10, 1, 12, tzinfo=tz)
     monkeypatch.setattr(A, "datetime", _Thursday)
+    monkeypatch.setattr(A, "now_utc", lambda: "2026-10-01T12:00:00+00:00")
 
     def use(page):
         @contextmanager

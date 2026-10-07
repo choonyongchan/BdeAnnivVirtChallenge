@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from backend import config
+from shared import config
 from frontend import generate
 from frontend.names import NominalRoll
 
@@ -170,10 +170,11 @@ def test_headline_member_count_overrides_all_total(env, tmp_path):
     assert badge["message"] == "1055"
 
 
-@pytest.mark.parametrize("width", [390, 1440])
-def test_built_page_runs_in_a_browser_without_errors(env, width):
+@pytest.mark.parametrize("width,height", [(390, 844), (844, 390), (1440, 900), (1920, 1080)])
+def test_built_page_runs_in_a_browser_without_errors(env, width, height):
     """The generated page in headless Chromium, offline: its script runs without errors, the totals render with
-    the member count, and nothing overflows sideways at phone or desktop width."""
+    the member count, nothing overflows sideways, and the layout follows the screen's shape: rankings below the
+    leaderboard on tall or narrow screens, beside it on wide ones."""
     sync_playwright = pytest.importorskip("playwright.sync_api").sync_playwright
     generate.run()
     with sync_playwright() as pw:
@@ -181,15 +182,24 @@ def test_built_page_runs_in_a_browser_without_errors(env, width):
             browser = pw.chromium.launch()
         except Exception as e:   # no bundled Chromium (python -m playwright install chromium)
             pytest.skip(f"Chromium unavailable: {e}")
-        page = browser.new_page(viewport={"width": width, "height": 900})
+        page = browser.new_page(viewport={"width": width, "height": height})
         page.route("http*://**", lambda route: route.abort())   # hermetic: no fonts, no network
         errors = []
         page.on("pageerror", lambda e: errors.append(str(e)))
         page.goto(env.as_uri())
         totals = page.inner_text("#totals")
         overflow = page.evaluate("document.documentElement.scrollWidth - innerWidth")
+        board = page.locator("#leaderboard-section").bounding_box()
+        ranks = page.locator("#group-rankings-section").bounding_box()
+        page.click(".rank-toggle .tab >> text=Companies")
+        shown = page.evaluate("[...document.querySelectorAll('.rank-pane:not([hidden])')].map(p => p.dataset.rank)")
         page.click("#btn-trend")   # another view renders too
         browser.close()
     assert errors == []
     assert f"{len(MEMBERS)}\nmembers" in totals
     assert overflow <= 0
+    assert shown == ["company"]                              # one ranking at a time
+    if width >= 1680:
+        assert ranks["x"] > board["x"] + board["width"] - 1  # sidebar beside the leaderboard
+    else:
+        assert ranks["y"] >= board["y"] + board["height"] - 1   # stacked below it

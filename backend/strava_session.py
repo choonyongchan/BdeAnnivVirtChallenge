@@ -1,14 +1,13 @@
-"""Shared logged-in Strava browser session, retry policy and CSV helpers for the scrapers.
+"""Shared logged-in Strava browser session for the scrapers.
 Strava deactivated the public club API in 2026, so scrapers read what the club pages fetch.
 """
-import csv
 import random
 from contextlib import contextmanager
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-from .config import settings
+from shared.config import settings
 
 CLUB_ID = settings.club_id                             # the club every scraper reports on
 CLUB_URL = f"https://www.strava.com/clubs/{CLUB_ID}"
@@ -24,45 +23,6 @@ FETCH_JS = """async (url) => {
 
 class ScrapeError(RuntimeError):
     """A scrape could not complete: no saved session, blocked, or changed markup."""
-
-
-def read_csv(path: Path) -> list:
-    """Every row of the CSV at path as a dict; [] if the file doesn't exist yet."""
-    if not path.exists():
-        return []
-    with path.open(encoding="utf-8", newline="") as f:
-        return list(csv.DictReader(f))
-
-
-def csv_column_set(path: Path, field: str) -> set:
-    """Every value of `field` already in the CSV at path."""
-    return {r[field] for r in read_csv(path)}
-
-
-def append_new_rows(path: Path, fields: list, rows: list) -> None:
-    """Append rows to the CSV at path, writing the header first if the file is new."""
-    write_header = not path.exists()
-    with path.open("a", encoding="utf-8", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=fields)
-        if write_header:
-            w.writeheader()
-        w.writerows(rows)
-
-
-def write_csv(path: Path, fields: list, rows: list) -> None:
-    """Replace the CSV at path with rows, via a temp file so a crash never leaves it half-written."""
-    tmp = path.with_suffix(".tmp")
-    with tmp.open("w", encoding="utf-8", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=fields)
-        w.writeheader()
-        w.writerows(rows)
-    tmp.replace(path)
-
-
-def require_auth() -> None:
-    """Raise ScrapeError unless a saved session exists."""
-    if not AUTH_PATH.exists():
-        raise ScrapeError("No saved session. Run: python -m backend.login")
 
 
 def _new_context(pw, headless):

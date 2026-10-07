@@ -1,18 +1,18 @@
 """MemberActivities: every member's profile week (Mon-Sun, /athletes/{id}/interval), the heavy nightly scan.
 Their activities (any sport) fill whatever the hourly feed missed in the ledger (activities.csv); the weeks' foot
 activities go to Statistics. Also holds the ledger parsing the Feed shares.
-    python -m backend.activities.member_activities [--setup]    # --setup: every week since challenge_start
+Run by the pipeline in member_scan hours: python -m backend.main --full [--setup]   # --setup: every week since
+challenge_start for every member
 """
 import re
-from datetime import date, datetime, timedelta, timezone
-from pathlib import Path
+from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from ..config import settings
-from ..members.members import CSV_PATH as MEMBERS_CSV
-from ..strava_session import ScrapeError, append_new_rows, club_page, csv_column_set, read_csv, require_auth
+from shared.config import settings
+from shared.data import ACTIVITIES_CSV, FOOT_TYPES, MEMBERS_CSV, append_new_rows, now_utc, read_csv
+from ..strava_session import ScrapeError, club_page
 
-CSV_PATH = Path(__file__).parent / "activities.csv"
+CSV_PATH = ACTIVITIES_CSV
 WEEK_URL = "/athletes/{athlete_id}/interval?interval={week}&interval_type=week&chart_type=miles&year_offset=0"
 
 FIELDS = [
@@ -119,14 +119,10 @@ def normalise(entry: dict) -> list:
     return []
 
 
-def now_utc() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
-
-
 def append_activities(rows: list, stamp: str | None = None) -> list:
     """Append rows whose activity_id isn't in activities.csv yet, stamped scraped_at = `stamp` (default now);
     returns the rows appended."""
-    seen = csv_column_set(CSV_PATH, "activity_id")
+    seen = {r["activity_id"] for r in read_csv(CSV_PATH)}
     now = stamp or now_utc()
     new = []
     for r in rows:
@@ -138,9 +134,6 @@ def append_activities(rows: list, stamp: str | None = None) -> list:
     append_new_rows(CSV_PATH, FIELDS, new)
     return new
 
-
-# What the club leaderboard counts, and so Statistics: foot sports. The ledger keeps every sport.
-FOOT_TYPES = {"Run", "TrailRun", "VirtualRun", "Walk", "Hike"}
 
 # Fetch a batch of profile-week URLs with a pool of `workers` concurrent requests, all
 # inside the logged-in page. Each XHR answers with jQuery calls; the week's activity
@@ -239,7 +232,6 @@ def run(last_scan: str, setup: bool = False, workers: int = 4) -> tuple:
     {(athlete_id, monday_iso): foot activity rows} for Statistics and problem a message when the scan fell short
     (rate-limited, or too many errors) - the caller saves what was found, then raises it. Stops at Strava's first
     429, keeping what it fetched."""
-    require_auth()
     synced_at = now_utc()   # ledger rows found here share it, so Statistics never adds them twice
     today = datetime.now(ZoneInfo(settings.timezone)).date()
     jobs = jobs_for(read_csv(MEMBERS_CSV), last_scan, today, setup)

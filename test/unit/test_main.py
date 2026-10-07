@@ -1,7 +1,6 @@
-"""Unit tests for main.py's standalone pieces: check_auth fails fast without cookies, publish_dashboard
-no-ops on an empty diff."""
+"""Unit tests for main.py: check_auth fails fast without cookies, which jobs run at which hour, a short scan saving
+then failing."""
 from datetime import datetime
-from types import SimpleNamespace
 
 import pytest
 
@@ -9,7 +8,7 @@ import backend.main as M
 
 
 class _FrozenClock:
-    """Stand-in for the module's `datetime`, so the commit message is deterministic."""
+    """Stand-in for the module's `datetime`, so the hour is deterministic."""
     def __init__(self, iso):
         self._iso = iso
 
@@ -40,44 +39,6 @@ def test_check_auth(tmp_path, monkeypatch, content, should_raise):
         M.check_auth()
 
 
-class _FakeRun:
-    def __init__(self, diff_returncode):
-        self.calls = []
-        self._diff_returncode = diff_returncode
-
-    def __call__(self, cmd, cwd=None, check=False):
-        self.calls.append(cmd)
-        returncode = self._diff_returncode if cmd[1] == "diff" else 0
-        return SimpleNamespace(returncode=returncode)
-
-
-def test_publish_dashboard_noop_when_index_unchanged(monkeypatch):
-    fake_run = _FakeRun(diff_returncode=0)
-    monkeypatch.setattr(M.subprocess, "run", fake_run)
-
-    M.publish_dashboard()
-
-    assert fake_run.calls == [
-        ["git", "add", str(M.generate.OUT_PATH), str(M.generate.USER_COUNT_PATH)],
-        ["git", "diff", "--cached", "--quiet"],
-    ]
-
-
-def test_publish_dashboard_commits_and_pushes_when_changed(monkeypatch):
-    fake_run = _FakeRun(diff_returncode=1)
-    monkeypatch.setattr(M.subprocess, "run", fake_run)
-    monkeypatch.setattr(M, "datetime", _FrozenClock("2026-09-14T06:38:00"))
-
-    M.publish_dashboard()
-
-    assert fake_run.calls == [
-        ["git", "add", str(M.generate.OUT_PATH), str(M.generate.USER_COUNT_PATH)],
-        ["git", "diff", "--cached", "--quiet"],
-        ["git", "commit", "-m", "🏃 Dashboard update 2026-09-14 06:38"],
-        ["git", "push"],
-    ]
-
-
 @pytest.fixture
 def pipeline(monkeypatch):
     """Every scraper replaced by a recorder; returns (seen calls, set the hour/argv/scan result)."""
@@ -93,7 +54,6 @@ def pipeline(monkeypatch):
     monkeypatch.setattr(M.statistics, "run", lambda weeks, board, synced_at, today:
                         seen.append(f"statistics {sorted(weeks)} {sorted(board)}"))
     monkeypatch.setattr(M.generate, "run", lambda: seen.append("generate"))
-    monkeypatch.setattr(M, "publish_dashboard", lambda: None)
 
     def at(hour, argv=(), problem=None):
         monkeypatch.setattr(M, "datetime", _FrozenClock(f"2026-10-02T{hour:02}:45:00"))

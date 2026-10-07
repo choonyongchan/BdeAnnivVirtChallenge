@@ -128,18 +128,20 @@ nav {
 .total-card .val { font-size: 1.55rem; font-weight: 800; color: #FC4C02; }
 .total-card .lbl { font-size: .75rem; color: #777; margin-top: 3px; }
 
-/* HISTORY — modal */
-.history-wrap { position: relative; display: inline-block; }
+/* HISTORY — modal (native popover: centred in the top layer, Esc and click-outside close it) */
+.history-wrap { display: inline-block; }
 .history-picker {
-  display: none; position: fixed;
-  top: 50%; left: 50%; transform: translate(-50%, -50%);
-  background: white; border-radius: 18px;
+  margin: auto;   /* the UA centres popovers with margin:auto; the * reset above zeroes it */
+  background: white; border: none; border-radius: 18px;
   box-shadow: 0 16px 60px rgba(0,0,0,.25);
-  padding: 20px; z-index: 200;
+  padding: 20px;
   width: 340px; max-width: calc(100vw - 32px);
   max-height: 80vh; overflow-y: auto;
 }
-.history-picker.open { display: block; }
+.history-picker::backdrop {
+  background: rgba(0,0,0,.35);
+  backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
+}
 .history-picker-header {
   display: flex; align-items: center; justify-content: space-between;
   margin-bottom: 14px;
@@ -275,8 +277,13 @@ thead th.sort-desc::after { content: ' ↓'; opacity: 1 !important; color: #FC4C
    hundreds of rows tall. Without a height cap the horizontal scrollbar sits
    ~20000px down the page, out of reach with a mouse. Cap the pane and let
    the header stick to its top while scrolling. */
-#leaderboard-section .table-wrap { max-height: calc(100vh - 140px); overflow: auto; }
+#leaderboard-section .table-wrap { max-height: calc(100vh - 140px); max-height: calc(100dvh - 140px); overflow: auto; }
 #leaderboard-section thead th { position: sticky; top: 0; z-index: 2; }
+/* Runner column: as wide as its names, never wider than the cap. The 1% width shrinks the
+   column to its content (spare table width goes to the number columns); each name sizes to
+   its own text and only the few very long ones wrap to a second line. */
+#leaderboard-section th:nth-child(2), #leaderboard-section td:nth-child(2) { width: 1%; }
+.runner { display: block; width: max-content; max-width: 220px; white-space: normal; line-height: 1.25; }
 
 /* Mobile table — tighter, wrapped headers (scroll is handled by .table-wrap above) */
 @media(max-width:700px) {
@@ -286,14 +293,6 @@ thead th.sort-desc::after { content: ' ↓'; opacity: 1 !important; color: #FC4C
   thead th, tbody td { padding: 9px 10px; font-size: .82rem; }
 }
 
-/* HISTORY — backdrop */
-.hist-backdrop {
-  display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,.35);
-  backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
-  z-index: 199;
-}
-.hist-backdrop.open { display: block; }
 @media (max-width: 640px) {
   .hist-grid { gap: 5px; }
   .hist-cell { font-size: .68rem; }
@@ -319,29 +318,25 @@ thead th.sort-desc::after { content: ' ↓'; opacity: 1 !important; color: #FC4C
 }
 .dev-more-btn:hover { border-color: #999; color: #333; }
 
-/* COLUMN FILTER MENU */
-.th-filterable { cursor: pointer; user-select: none; }
-.th-filterable:hover { background: #f0f0f0 !important; color: #444 !important; }
-.th-filterable.filter-active { color: #FC4C02 !important; }
-.filter-menu {
-  position: fixed; background: white; border-radius: 10px;
-  box-shadow: 0 6px 24px rgba(0,0,0,.14); border: 1px solid #eee;
-  z-index: 100; min-width: 150px; padding: 4px 0; font-size: .83rem;
-  max-height: 280px; overflow-y: auto;
+/* COLUMN FILTERS — native selects styled as header text */
+.th-filter {
+  font: inherit; text-transform: inherit; letter-spacing: inherit; color: inherit;
+  background: transparent; border: none; padding: 0; cursor: pointer;
+  max-width: 9em;   /* a select is as wide as its longest option */
 }
-.filter-menu-item {
-  padding: 8px 16px; cursor: pointer; color: #444; white-space: nowrap;
-}
-.filter-menu-item:hover { background: #f5f5f5; }
-.filter-menu-item.active { color: #FC4C02; font-weight: 700; }
+.th-filter:hover { color: #444; }
+.th-filter.filter-active { color: #FC4C02; }
 
 /* GROUP RANKINGS */
 /* Registration + Unit + Company tables sit side by side, wrapping when they
    don't fit; each card already hugs its own table (see .table-wrap). */
-.group-rankings { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px; margin-bottom: 24px; }
-/* min-width:0 lets a column shrink on a narrow screen so its .table-wrap
-   scrolls instead of pushing the page wide. */
-.group-rankings > div { min-width: 0; }
+/* BOARD: leaderboard, then rankings. Stacked by default (phones, tablets);
+   side by side on wide landscape screens (see LAYOUT below). */
+.board > * { min-width: 0; }   /* let a column shrink so its table scrolls, not the page */
+.rank-toggle { margin-bottom: 10px; }
+.rank-pane { width: 100%; }
+.rank-pane table { width: 100%; }
+.rank-pane[hidden] { display: none; }
 
 /* TREND */
 .trend-toggle { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -429,6 +424,62 @@ thead th.sort-desc::after { content: ' ↓'; opacity: 1 !important; color: #FC4C
   .total-card { padding: 12px 8px; }
   .total-card .val { font-size: 1.25rem; }
 }
+
+/* LAYOUT by screen shape */
+
+/* Wide landscape (laptops, monitors, ultrawides): use the width. The leaderboard
+   takes the main column at full height; rankings sit in a sticky sidebar. */
+@media (orientation: landscape) and (min-width: 1200px) {
+  .wrap { max-width: 1760px; padding: 24px 32px 40px; }
+  #leaderboard-section .table-wrap { width: 100%; }
+  #leaderboard-section table { width: 100%; }
+  /* Long units and companies wrap. */
+  #leaderboard-section td:nth-child(3), #leaderboard-section td:nth-child(4) { white-space: normal; max-width: 140px; }
+  #leaderboard-section thead th, #leaderboard-section tbody td { padding-left: 12px; padding-right: 12px; }
+}
+/* The sidebar only from 1680px: below that the leaderboard (~1180px of columns) needs the full width. */
+@media (orientation: landscape) and (min-width: 1680px) {
+  .board { display: grid; grid-template-columns: minmax(0, 1fr) clamp(340px, 24vw, 440px); gap: 24px; align-items: start; }
+  .group-rankings { position: sticky; top: 76px; }
+  .rank-pane { max-height: calc(100vh - 150px); max-height: calc(100dvh - 150px); overflow: auto; }
+  .rank-pane thead th { position: sticky; top: 0; z-index: 2; }
+  .rank-pane td:nth-child(2) { white-space: normal; }
+}
+
+/* Narrow (phones, portrait tablets): the runner stays in view while the
+   leaderboard's twelve columns scroll sideways. */
+@media (max-width: 1199px), (orientation: portrait) {
+  #leaderboard-section .table-wrap { width: 100%; }
+  #leaderboard-section tbody td:nth-child(-n+2),
+  #leaderboard-section thead th:nth-child(-n+2) { position: sticky; background: #fff; z-index: 1; }
+  #leaderboard-section thead th:nth-child(-n+2) { background: #fafafa; z-index: 3; }
+  #leaderboard-section th:nth-child(1), #leaderboard-section td:nth-child(1) { left: 0; min-width: 40px; width: 40px; }
+  #leaderboard-section th:nth-child(2), #leaderboard-section td:nth-child(2) {
+    left: 40px; box-shadow: inset -1px 0 0 #eee;
+  }
+}
+@media (max-width: 600px) {
+  .runner { max-width: 130px; }
+  #leaderboard-section th:nth-child(2), #leaderboard-section td:nth-child(2) { padding-left: 6px; padding-right: 8px; }
+  .rank-pane td:nth-child(2) { white-space: normal; }
+}
+
+/* Short landscape (phones on their side): every pixel of height counts. */
+@media (orientation: landscape) and (max-height: 500px) {
+  nav { position: static; height: 44px; }
+  .wrap { padding-top: 12px; }
+  .announcement { margin-bottom: 10px; }
+  .header { margin-bottom: 10px; }
+  .header h1 { font-size: 1.15rem; }
+  .weather-widget, .breadcrumb { display: none; }
+  .group-tabs, .controls-row { display: inline-flex; vertical-align: middle; margin: 0 10px 12px 0; }
+  .controls-row, .totals { margin-bottom: 12px; }
+  .totals { grid-template-columns: repeat(5,1fr); }
+  .total-card { padding: 8px 6px; }
+  .total-card .val { font-size: 1.1rem; }
+  .totals > :last-child:nth-child(odd) { grid-column: auto; }
+  #leaderboard-section .table-wrap { max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); }
+}
 </style>
 </head>
 <body>
@@ -468,11 +519,11 @@ thead th.sort-desc::after { content: ' ↓'; opacity: 1 !important; color: #FC4C
       <button class="tab active" onclick="showLeaderboard()" id="btn-leaderboard">🏆 Leaderboard</button>
       <button class="tab" onclick="showPrevWeek()" id="btn-7days" style="display:none">Last Week</button>
       <div class="history-wrap" id="history-wrap" style="display:none">
-        <button class="tab" onclick="toggleHistoryPicker(event)" id="btn-history">📅 History</button>
-        <div class="history-picker" id="history-picker">
+        <button class="tab" popovertarget="history-picker" id="btn-history">📅 History</button>
+        <div class="history-picker" id="history-picker" popover>
           <div class="history-picker-header">
             <div class="history-picker-title">Pick a date</div>
-            <button class="history-picker-close" onclick="closeHistoryPicker()" title="Close">✕</button>
+            <button class="history-picker-close" popovertarget="history-picker" popovertargetaction="hide" title="Close">✕</button>
           </div>
           <div id="history-picker-list"></div>
         </div>
@@ -480,7 +531,6 @@ thead th.sort-desc::after { content: ' ↓'; opacity: 1 !important; color: #FC4C
       <button class="tab" onclick="showTrend()" id="btn-trend">📈 Trend</button>
     </div>
   </div>
-  <div class="hist-backdrop" id="hist-backdrop" onclick="closeHistoryPicker()"></div>
 
   <div id="empty-state" class="empty-state" style="display:none"></div>
 
@@ -505,21 +555,7 @@ thead th.sort-desc::after { content: ' ↓'; opacity: 1 !important; color: #FC4C
   </div>
   -->
 
-  <div id="group-rankings-section" class="group-rankings">
-    <div>
-      <div class="section-title">Registration</div>
-      <div class="table-wrap" id="registration-tree"></div>
-    </div>
-    <div>
-      <div class="section-title">Unit Rankings</div>
-      <div class="table-wrap" id="unit-rankings"></div>
-    </div>
-    <div>
-      <div class="section-title">Company Rankings</div>
-      <div class="table-wrap" id="company-rankings"></div>
-    </div>
-  </div>
-
+  <div class="board">
   <div id="leaderboard-section">
     <div class="section-title">Runner Leaderboard <span id="leaderboard-count" style="text-transform:none;letter-spacing:normal;color:#bbb;font-weight:400"></span></div>
     <div class="table-wrap">
@@ -528,8 +564,8 @@ thead th.sort-desc::after { content: ' ↓'; opacity: 1 !important; color: #FC4C
         <tr>
           <th>#</th>
           <th>Runner</th>
-          <th class="th-filterable" id="th-unit"    onclick="toggleFilterMenu('unit', this)">Unit ▾</th>
-          <th class="th-filterable" id="th-company" onclick="toggleFilterMenu('company', this)">Company ▾</th>
+          <th><select class="th-filter" id="filter-unit" aria-label="Filter by unit" onchange="setFilter('unit', this.value)"></select></th>
+          <th><select class="th-filter" id="filter-company" aria-label="Filter by company" onchange="setFilter('company', this.value)"></select></th>
           <th class="sortable sort-desc" data-key="km"           onclick="sortBy('km')">km</th>
           <th>Gap</th>
           <th class="sortable" data-key="elev"          onclick="sortBy('elev')">Elevation</th>
@@ -542,6 +578,19 @@ thead th.sort-desc::after { content: ' ↓'; opacity: 1 !important; color: #FC4C
       </thead>
       <tbody id="leaderboard"></tbody>
     </table>
+  </div>
+  </div>
+
+  <!-- One ranking at a time: phones get a short page, desktops a sidebar beside the leaderboard. -->
+  <div id="group-rankings-section" class="group-rankings">
+    <div class="toggle rank-toggle" role="group" aria-label="Rankings">
+      <button class="tab active" onclick="showRanking('unit', this)">Units</button>
+      <button class="tab" onclick="showRanking('company', this)">Companies</button>
+      <button class="tab" onclick="showRanking('registration', this)">Registration</button>
+    </div>
+    <div class="table-wrap rank-pane" data-rank="unit" id="unit-rankings"></div>
+    <div class="table-wrap rank-pane" data-rank="company" id="company-rankings" hidden></div>
+    <div class="table-wrap rank-pane" data-rank="registration" id="registration-tree" hidden></div>
   </div>
   </div>
 
@@ -683,168 +732,80 @@ function expandBucket(bucket) {
   return bucket;
 }
 
-class Dashboard {
-  constructor() {
-    this.currentSort      = { key: 'km', dir: -1 };
-    this.currentDailyDate = null;
-    this.calendarMonth    = null; // 'YYYY-MM', set on first render
-    this.filterUnit       = '';
-    this.filterCompany    = '';
-    this.currentGroup     = 'all';
-    this.currentSub       = 'leaderboard';
-    this.openFilterKey    = null;
-    this.trendRunnerView  = 'all';
-  }
+// View state: sort, snapshot date (null = today), calendar month ('YYYY-MM'), column filters, group tab, sub-view.
+const state = { sort: { key: 'km', dir: -1 }, date: null, month: null, unit: '', company: '',
+                group: 'all', sub: 'leaderboard', trendView: 'all' };
 
-  currentBucket() {
-    return this.currentDailyDate ? DAILY[this.currentDailyDate] : DATA['today'];
-  }
-
-  data() {
-    const bucket = this.currentBucket();
-    return expandBucket(bucket[this.currentGroup] || bucket['all']);
-  }
-
-  setGroup(g) {
-    this.currentGroup = g;
-  }
-
-  setSub(sub) {
-    this.currentSub = sub;
-  }
-
-  sortBy(key) {
-    if (this.currentSort.key === key) {
-      this.currentSort.dir *= -1;
-    } else {
-      this.currentSort = { key, dir: -1 };
-    }
-  }
-
-  sortedLeaderboard(rows) {
-    const { key, dir } = this.currentSort;
-    return [...rows].sort((a, b) => {
-      const va = a[key] ?? 0;
-      const vb = b[key] ?? 0;
-      return (va < vb ? -1 : va > vb ? 1 : 0) * dir;
-    });
-  }
-
-  changeCalendarMonth(delta) {
-    const [y, m] = this.calendarMonth.split('-').map(Number);
-    const nd = new Date(y, m - 1 + delta, 1);
-    this.calendarMonth = isoMonth(nd);
-  }
-
-  ensureCalendarMonth(dailyKeys) {
-    if (!this.calendarMonth) {
-      this.calendarMonth = dailyKeys.length ? dailyKeys.sort().at(-1).slice(0, 7) : isoMonth(new Date());
-    }
-  }
-
-  setFilter(key, value) {
-    if (key === 'unit') this.filterUnit = value;
-    else this.filterCompany = value;
-  }
-
-  resetInvalidFilters(units, companies) {
-    if (this.filterUnit    && !units.has(this.filterUnit))        this.filterUnit    = '';
-    if (this.filterCompany && !companies.has(this.filterCompany)) this.filterCompany = '';
-  }
-
-  showLeaderboard() {
-    this.currentDailyDate = null;
-  }
-
-  showDailySnapshot(date) {
-    this.currentDailyDate = date;
-  }
-}
-
-const dashboard = new Dashboard();
+const currentBucket = () => state.date ? DAILY[state.date] : DATA['today'];
+const d = () => expandBucket(currentBucket()[state.group] || currentBucket()['all']);
 
 const GROUP_LABELS = { all: 'All', serving: 'NSF/Regular', alumni: 'NSMan/Alumni' };
 const SUB_LABELS    = { leaderboard: 'Leaderboard', '7days': 'Last Week', history: 'History', trend: 'Trend' };
 
-function d() {
-  return dashboard.data();
-}
-
 function setGroup(g, el) {
-  dashboard.setGroup(g);
+  state.group = g;
   document.querySelectorAll('.group-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
-  if (dashboard.currentSub === 'trend') renderTrend(); else render();
-  updateBreadcrumb(dashboard.currentSub);
+  if (state.sub === 'trend') renderTrend(); else render();
+  updateBreadcrumb(state.sub);
 }
 
 function updateBreadcrumb(sub) {
-  dashboard.setSub(sub);
-  const bucket = dashboard.currentBucket();
-  const available = !!bucket[dashboard.currentGroup];
-  const note = (dashboard.currentGroup !== 'all' && !available) ? ' <span style="color:#bbb">(group breakdown unavailable for this date — showing All)</span>' : '';
+  state.sub = sub;
+  const available = !!currentBucket()[state.group];
+  const note = (state.group !== 'all' && !available) ? ' <span style="color:#bbb">(group breakdown unavailable for this date — showing All)</span>' : '';
   document.getElementById('breadcrumb').innerHTML =
-    `<span class="crumb-group">${GROUP_LABELS[dashboard.currentGroup]}</span> › <span class="crumb-sub">${SUB_LABELS[sub]}</span>${note}`;
+    `<span class="crumb-group">${GROUP_LABELS[state.group]}</span> › <span class="crumb-sub">${SUB_LABELS[sub]}</span>${note}`;
 }
-
-function toggleHistoryPicker(e) {
-  e.stopPropagation();
-  const open = document.getElementById('history-picker').classList.toggle('open');
-  document.getElementById('hist-backdrop').classList.toggle('open', open);
-}
-
-function closeHistoryPicker() {
-  document.getElementById('history-picker').classList.remove('open');
-  document.getElementById('hist-backdrop').classList.remove('open');
-}
-
-document.addEventListener('click', function(e) {
-  if (!document.getElementById('history-wrap').contains(e.target)) closeHistoryPicker();
-});
 
 function sortBy(key) {
-  dashboard.sortBy(key);
+  state.sort = state.sort.key === key ? { key, dir: -state.sort.dir } : { key, dir: -1 };
   document.querySelectorAll('thead th.sortable').forEach(th => {
     th.classList.remove('sort-asc', 'sort-desc');
     if (th.dataset.key === key) {
-      th.classList.add(dashboard.currentSort.dir === -1 ? 'sort-desc' : 'sort-asc');
+      th.classList.add(state.sort.dir === -1 ? 'sort-desc' : 'sort-asc');
     }
   });
   renderLeaderboard(d());
 }
 
 function sortedLeaderboard(rows) {
-  return dashboard.sortedLeaderboard(rows);
+  const { key, dir } = state.sort;
+  return [...rows].sort((a, b) => {
+    const va = a[key] ?? 0;
+    const vb = b[key] ?? 0;
+    return (va < vb ? -1 : va > vb ? 1 : 0) * dir;
+  });
 }
 
-function changeCalendarMonth(delta, e) {
-  e.stopPropagation();
-  dashboard.changeCalendarMonth(delta);
+function changeCalendarMonth(delta) {
+  const [y, m] = state.month.split('-').map(Number);
+  state.month = isoMonth(new Date(y, m - 1 + delta, 1));
   render();
 }
 
 function renderDayCalendar() {
-  const [year, month] = dashboard.calendarMonth.split('-').map(Number);
+  const [year, month] = state.month.split('-').map(Number);
   const monthLabel = new Date(year, month - 1, 1).toLocaleDateString('en', { month: 'long', year: 'numeric' });
   const firstWeekday = new Date(year, month - 1, 1).getDay();
   const daysInMonth = new Date(year, month, 0).getDate();
   const dailyKeys = Object.keys(DAILY);
-  const minMonth = dailyKeys.length ? dailyKeys.sort()[0].slice(0, 7) : dashboard.calendarMonth;
-  const maxMonth = dailyKeys.length ? dailyKeys.sort().at(-1).slice(0, 7) : dashboard.calendarMonth;
+  const minMonth = dailyKeys.length ? dailyKeys.sort()[0].slice(0, 7) : state.month;
+  const maxMonth = dailyKeys.length ? dailyKeys.sort().at(-1).slice(0, 7) : state.month;
 
   let html = `<div class="hist-cal-header">
-      <button class="hist-cal-nav" onclick="changeCalendarMonth(-1, event)" ${dashboard.calendarMonth <= minMonth ? 'disabled' : ''}>‹</button>
+      <button class="hist-cal-nav" onclick="changeCalendarMonth(-1)" ${state.month <= minMonth ? 'disabled' : ''}>‹</button>
       <div class="hist-cal-month">${monthLabel}</div>
-      <button class="hist-cal-nav" onclick="changeCalendarMonth(1, event)" ${dashboard.calendarMonth >= maxMonth ? 'disabled' : ''}>›</button>
+      <button class="hist-cal-nav" onclick="changeCalendarMonth(1)" ${state.month >= maxMonth ? 'disabled' : ''}>›</button>
     </div>
     <div class="hist-cal-weekdays">${['S','M','T','W','T','F','S'].map(d => `<div>${d}</div>`).join('')}</div>
     <div class="hist-grid hist-cal-grid">`;
 
   for (let i = 0; i < firstWeekday; i++) html += `<div class="hist-cell"></div>`;
   for (let day = 1; day <= daysInMonth; day++) {
-    const date = `${dashboard.calendarMonth}-${String(day).padStart(2, '0')}`;
+    const date = `${state.month}-${String(day).padStart(2, '0')}`;
     const hasData = !!DAILY[date];
-    const isActive = date === dashboard.currentDailyDate;
+    const isActive = date === state.date;
     let cls = 'hist-cell';
     if (isActive) cls += ' active';
     else if (hasData) cls += ' has-data';
@@ -859,8 +820,8 @@ function renderDayCalendar() {
 
 function render() {
   const data = d();
-  if (dashboard.currentDailyDate) {
-    document.getElementById('period-label').textContent = DAILY[dashboard.currentDailyDate].label;
+  if (state.date) {
+    document.getElementById('period-label').textContent = DAILY[state.date].label;
   } else {
     document.getElementById('period-label').textContent = `Cumulative · as of ${data.label}`;
   }
@@ -875,7 +836,7 @@ function render() {
     <div class="val">${t.v}</div><div class="lbl">${t.l}</div>
   </div>`).join('');
 
-  renderRegistrationTree(dashboard.currentBucket(), dashboard.currentGroup);
+  renderRegistrationTree(currentBucket(), state.group);
 
   /* AWARDS — hidden
   document.getElementById('awards').innerHTML = AWARDS.map(def => {
@@ -933,7 +894,7 @@ function render() {
     let msg, bottomHtml;
     const hasPrev = Object.keys(DAILY).length > 0;
     const archiveHtml = hasPrev
-      ? `Check out <a onclick="showPrevWeek()">last week's results</a> or <a onclick="toggleHistoryPicker(event)">older archives</a>.`
+      ? `Check out <a onclick="showPrevWeek()">last week's results</a> or <a onclick="document.getElementById('history-picker').showPopover()">older archives</a>.`
       : '';
     msg = EMPTY_MSGS[daySeed % EMPTY_MSGS.length];
     bottomHtml = `<div class="es-divider"></div>${archiveHtml ? `<div class="es-action">${archiveHtml}</div>` : ''}<div class="es-hint">This page refreshes every few minutes.</div>`;
@@ -944,103 +905,52 @@ function render() {
 //  document.getElementById('awards-section').style.display         = isEmpty ? 'none' : '';
   document.getElementById('leaderboard-section').style.display    = isEmpty ? 'none' : '';
   document.getElementById('group-rankings-section').style.display = isEmpty ? 'none' : '';
-  if (isEmpty) {
+//  if (isEmpty) {
 //    document.getElementById('fun-section').style.display    = 'none';
 //    document.getElementById('device-section').style.display = 'none';
-  }
+//  }
   // History picker — populate day calendar
   const dailyKeys = Object.keys(DAILY);
   document.getElementById('history-wrap').style.display = dailyKeys.length ? '' : 'none';
   if (dailyKeys.length) {
     document.getElementById('btn-7days').style.display = '';
   }
-  dashboard.ensureCalendarMonth(dailyKeys);
+  state.month ||= dailyKeys.length ? dailyKeys.sort().at(-1).slice(0, 7) : isoMonth(new Date());
   document.getElementById('history-picker-list').innerHTML = renderDayCalendar();
 
   renderLeaderboard(data);
   renderGroupRankings(data);
 }
 
-function toggleFilterMenu(key, th) {
-  const wasOpen = dashboard.openFilterKey === key;
-  closeFilterMenu();
-  if (wasOpen) return;
-  dashboard.openFilterKey = key;
-  const all = d().leaderboard || [];
-  const values = [...new Set(all.map(r => r[key]).filter(Boolean))].sort();
-  const current = key === 'unit' ? dashboard.filterUnit : dashboard.filterCompany;
-  const menu = document.createElement('div');
-  menu.className = 'filter-menu';
-  menu.id = 'active-filter-menu';
-  const allItem = document.createElement('div');
-  allItem.className = 'filter-menu-item' + (current === '' ? ' active' : '');
-  allItem.textContent = 'All ' + (key === 'unit' ? 'Units' : 'Companies');
-  allItem.onclick = e => { e.stopPropagation(); setFilter(key, ''); };
-  menu.appendChild(allItem);
-  values.forEach(v => {
-    const item = document.createElement('div');
-    item.className = 'filter-menu-item' + (v === current ? ' active' : '');
-    item.textContent = v;
-    item.onclick = e => { e.stopPropagation(); setFilter(key, v); };
-    menu.appendChild(item);
-  });
-  document.body.appendChild(menu);
-  const rect = th.getBoundingClientRect();
-  const mw   = menu.offsetWidth;
-  const left  = Math.min(rect.left, window.innerWidth - mw - 8);
-  menu.style.top  = (rect.bottom + 4) + 'px';
-  menu.style.left = Math.max(8, left) + 'px';
-}
-
 function setFilter(key, value) {
-  dashboard.setFilter(key, value);
-  closeFilterMenu();
+  state[key] = value;
   renderLeaderboard(d());
 }
-
-function closeFilterMenu() {
-  const m = document.getElementById('active-filter-menu');
-  if (m) m.remove();
-  dashboard.openFilterKey = null;
-  ['unit', 'company'].forEach(k => {
-    const th = document.getElementById('th-' + k);
-    if (th) th.classList.toggle('filter-active', k === 'unit' ? !!dashboard.filterUnit : !!dashboard.filterCompany);
-  });
-}
-
-document.addEventListener('click', e => {
-  if (dashboard.openFilterKey &&
-      !e.target.closest('#active-filter-menu') &&
-      !e.target.closest('#th-unit') &&
-      !e.target.closest('#th-company')) {
-    closeFilterMenu();
-  }
-});
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFilterMenu(); });
 
 function renderLeaderboard(data) {
   const all = data.leaderboard || [];
   const active = activeCount(data);
   document.getElementById('leaderboard-count').textContent = `(${active} active / ${data.athlete_count} total)`;
-  // self-heal: reset filter if its value no longer exists in current dataset
-  const units     = new Set(all.map(r => r.unit).filter(Boolean));
-  const companies = new Set(all.map(r => r.company).filter(Boolean));
-  dashboard.resetInvalidFilters(units, companies);
-  // sync header active state
+  // Fill each column filter with this dataset's values; a filter whose value is gone resets itself.
   ['unit', 'company'].forEach(k => {
-    const th = document.getElementById('th-' + k);
-    if (th) th.classList.toggle('filter-active', k === 'unit' ? !!dashboard.filterUnit : !!dashboard.filterCompany);
+    const values = [...new Set(all.map(r => r[k]).filter(Boolean))].sort();
+    if (!values.includes(state[k])) state[k] = '';
+    const sel = document.getElementById('filter-' + k);
+    sel.innerHTML = `<option value="">All ${k === 'unit' ? 'Units' : 'Companies'}</option>` +
+      values.map(v => `<option>${esc(v)}</option>`).join('');
+    sel.value = state[k];
+    sel.classList.toggle('filter-active', !!state[k]);
   });
   // apply filters then sort
   let rows = all;
-  if (dashboard.filterUnit)    rows = rows.filter(r => r.unit    === dashboard.filterUnit);
-  if (dashboard.filterCompany) rows = rows.filter(r => r.company === dashboard.filterCompany);
+  if (state.unit)    rows = rows.filter(r => r.unit    === state.unit);
+  if (state.company) rows = rows.filter(r => r.company === state.company);
   rows = sortedLeaderboard(rows);
-  const isByKm = dashboard.currentSort.key === 'km';
+  const isByKm = state.sort.key === 'km';
   document.getElementById('leaderboard').innerHTML = rows.map((r, i) => `
     <tr>
       <td>${isByKm && MEDALS[i] ? MEDALS[i] : '<span style="color:#ccc;font-size:.75rem">'+(i+1)+'</span>'}</td>
-      <td>${esc(r.name)}</td>
+      <td><span class="runner">${esc(r.name)}</span></td>
       <td>${esc(r.unit||'')}</td>
       <td>${esc(shortCompany(r))}</td>
       <td class="km-cell">${r.km}</td>
@@ -1134,7 +1044,7 @@ function showPrevWeek() {
   const key = Object.keys(DAILY).sort().filter(k => k <= sunStr).at(-1);
   if (!key) return;
   showDailySnapshot(key);
-  document.getElementById('btn-7days').classList.add('active');
+  setTab('btn-7days');
   updateBreadcrumb('7days');
 }
 
@@ -1145,45 +1055,47 @@ function setMainSectionsVisible(visible) {
   MAIN_SECTION_IDS.forEach(id => { document.getElementById(id).style.display = visible ? '' : 'none'; });
 }
 
+function showRanking(name, el) {
+  document.querySelectorAll('.rank-pane').forEach(p => { p.hidden = p.dataset.rank !== name; });
+  document.querySelectorAll('.rank-toggle .tab').forEach(t => t.classList.toggle('active', t === el));
+}
+
+// Highlight one of the view tabs (none for a picked history date).
+function setTab(id) {
+  document.querySelectorAll('.controls-row .tab').forEach(t => t.classList.toggle('active', t.id === id));
+}
+
+// Trend replaces the leaderboard views and hides the group tabs (it charts every group itself).
+function setView(trend) {
+  document.getElementById('trend-section').style.display = trend ? '' : 'none';
+  document.getElementById('group-tabs').style.display = trend ? 'none' : '';
+  setMainSectionsVisible(!trend);
+}
+
 function showLeaderboard() {
-  dashboard.showLeaderboard();
-  document.getElementById('btn-7days').classList.remove('active');
-  document.getElementById('btn-history').classList.remove('active');
-  document.getElementById('btn-trend').classList.remove('active');
-  document.getElementById('btn-leaderboard').classList.add('active');
-  document.getElementById('trend-section').style.display = 'none';
-  document.getElementById('group-tabs').style.display = '';
-  setMainSectionsVisible(true);
+  state.date = null;
+  setTab('btn-leaderboard');
+  setView(false);
   render();
   updateBreadcrumb('leaderboard');
 }
 
 function showDailySnapshot(date) {
-  dashboard.showDailySnapshot(date);
-  closeHistoryPicker();
-  document.getElementById('btn-7days').classList.remove('active');
-  document.getElementById('btn-history').classList.remove('active');
-  document.getElementById('btn-leaderboard').classList.remove('active');
-  document.getElementById('btn-trend').classList.remove('active');
-  document.getElementById('trend-section').style.display = 'none';
-  document.getElementById('group-tabs').style.display = '';
-  setMainSectionsVisible(true);
+  state.date = date;
+  document.getElementById('history-picker').hidePopover();
+  setTab(null);
+  setView(false);
   render();
   updateBreadcrumb('history');
 }
 
 function showTrend() {
-  dashboard.setSub('trend');
-  dashboard.setGroup('all');
+  state.sub = 'trend';
+  state.group = 'all';
   document.querySelectorAll('.group-tab').forEach(t => t.classList.remove('active'));
   document.querySelector('.group-tab[onclick="setGroup(\'all\', this)"]').classList.add('active');
-  document.getElementById('group-tabs').style.display = 'none';
-  document.getElementById('btn-7days').classList.remove('active');
-  document.getElementById('btn-history').classList.remove('active');
-  document.getElementById('btn-leaderboard').classList.remove('active');
-  document.getElementById('btn-trend').classList.add('active');
-  setMainSectionsVisible(false);
-  document.getElementById('trend-section').style.display = '';
+  setTab('btn-trend');
+  setView(true);
   renderTrend();
   updateBreadcrumb('trend');
 }
@@ -1426,7 +1338,7 @@ function ensureTrendCharts() {
 }
 
 function renderTrendWeeklyTable() {
-  const rows = sundaySnapshots(dashboard.currentGroup);
+  const rows = sundaySnapshots(state.group);
   const body = document.getElementById('trend-weekly-body');
   body.textContent = '';
   if (!rows.length) {
@@ -1453,7 +1365,7 @@ function renderTrendWeeklyTable() {
 
 function renderTrend() {
   const charts = ensureTrendCharts();
-  const g = dashboard.currentGroup;
+  const g = state.group;
   const label = GROUP_LABELS[g];
   renderTrendWeeklyTable();
   charts.distance.render([{ label, colorIdx: 0, points: trendSeries(g, metricOf('total_km')) }]);
@@ -1466,13 +1378,13 @@ function renderTrend() {
 
 function renderTrendRunners() {
   const charts = ensureTrendCharts();
-  const view = dashboard.trendRunnerView;
+  const view = state.trendView;
   charts.activeRunners.render(runnerSeriesBySubgroup(view, 'active'));
   charts.registeredRunners.render(runnerSeriesBySubgroup(view, 'registered'));
 }
 
 function setTrendRunnerView(view, el) {
-  dashboard.trendRunnerView = view;
+  state.trendView = view;
   document.querySelectorAll('#trend-runner-toggle .tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   renderTrendRunners();

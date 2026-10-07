@@ -29,18 +29,6 @@ def test_load_activities_filters_by_local_challenge_start(
     assert sorted(r["_date"] for r in kept) == ["2026-09-14", "2026-09-20"]
 
 
-def test_load_members_returns_every_row(tmp_path, monkeypatch):
-    p = tmp_path / "members.csv"
-    p.write_text(
-        "athlete_id,name,ingest_at,left_at\n"
-        "1,Alice Anon,2026-09-10T00:00:00+00:00,\n"
-        "2,Gone Member,2026-09-10T00:00:00+00:00,2026-09-12T00:00:00+00:00\n",
-        encoding="utf-8",
-    )
-    monkeypatch.setattr(generate, "MEMBERS_CSV", p)
-    assert len(generate.load_members()) == 2
-
-
 def test_grouped_data_splits_serving_and_alumni(roll, make_activity, dummy_members, weeks_from):
     acts = [
         make_activity("Alice Anon", distance_m=10_000, moving_time_s=3000),                 # NSF
@@ -117,14 +105,6 @@ def test_daily_history_takes_the_headline_where_recorded(roll, dummy_members, we
                                         date(2026, 9, 16))
     assert hist["2026-09-14"]["all"]["athlete_count"] == 3        # before any headline: the roster
     assert hist["2026-09-16"]["all"]["athlete_count"] == 1055
-
-
-def test_load_daily_returns_every_row(tmp_path, monkeypatch):
-    p = tmp_path / "statistics.csv"
-    p.write_text("athlete_id,date,distance_m,moving_time_s,elev_gain_m,activities,source\n"
-                 "1,2026-09-20,5000,1800,10,1,profile\n", encoding="utf-8")
-    monkeypatch.setattr(generate, "STATISTICS_CSV", p)
-    assert generate.load_daily()[0]["date"] == "2026-09-20"
 
 
 def test_daily_history_counts_a_late_seen_member_who_already_ran(roll, dummy_members, weeks_from, make_activity):

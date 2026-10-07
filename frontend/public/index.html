@@ -275,8 +275,13 @@ thead th.sort-desc::after { content: ' ↓'; opacity: 1 !important; color: #FC4C
    hundreds of rows tall. Without a height cap the horizontal scrollbar sits
    ~20000px down the page, out of reach with a mouse. Cap the pane and let
    the header stick to its top while scrolling. */
-#leaderboard-section .table-wrap { max-height: calc(100vh - 140px); overflow: auto; }
+#leaderboard-section .table-wrap { max-height: calc(100vh - 140px); max-height: calc(100dvh - 140px); overflow: auto; }
 #leaderboard-section thead th { position: sticky; top: 0; z-index: 2; }
+/* Runner column: as wide as its names, never wider than the cap. The 1% width shrinks the
+   column to its content (spare table width goes to the number columns); each name sizes to
+   its own text and only the few very long ones wrap to a second line. */
+#leaderboard-section th:nth-child(2), #leaderboard-section td:nth-child(2) { width: 1%; }
+.runner { display: block; width: max-content; max-width: 220px; white-space: normal; line-height: 1.25; }
 
 /* Mobile table — tighter, wrapped headers (scroll is handled by .table-wrap above) */
 @media(max-width:700px) {
@@ -338,10 +343,13 @@ thead th.sort-desc::after { content: ' ↓'; opacity: 1 !important; color: #FC4C
 /* GROUP RANKINGS */
 /* Registration + Unit + Company tables sit side by side, wrapping when they
    don't fit; each card already hugs its own table (see .table-wrap). */
-.group-rankings { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px; margin-bottom: 24px; }
-/* min-width:0 lets a column shrink on a narrow screen so its .table-wrap
-   scrolls instead of pushing the page wide. */
-.group-rankings > div { min-width: 0; }
+/* BOARD: leaderboard, then rankings. Stacked by default (phones, tablets);
+   side by side on wide landscape screens (see LAYOUT below). */
+.board > * { min-width: 0; }   /* let a column shrink so its table scrolls, not the page */
+.rank-toggle { margin-bottom: 10px; }
+.rank-pane { width: 100%; }
+.rank-pane table { width: 100%; }
+.rank-pane[hidden] { display: none; }
 
 /* TREND */
 .trend-toggle { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -429,6 +437,62 @@ thead th.sort-desc::after { content: ' ↓'; opacity: 1 !important; color: #FC4C
   .total-card { padding: 12px 8px; }
   .total-card .val { font-size: 1.25rem; }
 }
+
+/* LAYOUT by screen shape */
+
+/* Wide landscape (laptops, monitors, ultrawides): use the width. The leaderboard
+   takes the main column at full height; rankings sit in a sticky sidebar. */
+@media (orientation: landscape) and (min-width: 1200px) {
+  .wrap { max-width: 1760px; padding: 24px 32px 40px; }
+  #leaderboard-section .table-wrap { width: 100%; }
+  #leaderboard-section table { width: 100%; }
+  /* Long units and companies wrap. */
+  #leaderboard-section td:nth-child(3), #leaderboard-section td:nth-child(4) { white-space: normal; max-width: 140px; }
+  #leaderboard-section thead th, #leaderboard-section tbody td { padding-left: 12px; padding-right: 12px; }
+}
+/* The sidebar only from 1680px: below that the leaderboard (~1180px of columns) needs the full width. */
+@media (orientation: landscape) and (min-width: 1680px) {
+  .board { display: grid; grid-template-columns: minmax(0, 1fr) clamp(340px, 24vw, 440px); gap: 24px; align-items: start; }
+  .group-rankings { position: sticky; top: 76px; }
+  .rank-pane { max-height: calc(100vh - 150px); max-height: calc(100dvh - 150px); overflow: auto; }
+  .rank-pane thead th { position: sticky; top: 0; z-index: 2; }
+  .rank-pane td:nth-child(2) { white-space: normal; }
+}
+
+/* Narrow (phones, portrait tablets): the runner stays in view while the
+   leaderboard's twelve columns scroll sideways. */
+@media (max-width: 1199px), (orientation: portrait) {
+  #leaderboard-section .table-wrap { width: 100%; }
+  #leaderboard-section tbody td:nth-child(-n+2),
+  #leaderboard-section thead th:nth-child(-n+2) { position: sticky; background: #fff; z-index: 1; }
+  #leaderboard-section thead th:nth-child(-n+2) { background: #fafafa; z-index: 3; }
+  #leaderboard-section th:nth-child(1), #leaderboard-section td:nth-child(1) { left: 0; min-width: 40px; width: 40px; }
+  #leaderboard-section th:nth-child(2), #leaderboard-section td:nth-child(2) {
+    left: 40px; box-shadow: inset -1px 0 0 #eee;
+  }
+}
+@media (max-width: 600px) {
+  .runner { max-width: 130px; }
+  #leaderboard-section th:nth-child(2), #leaderboard-section td:nth-child(2) { padding-left: 6px; padding-right: 8px; }
+  .rank-pane td:nth-child(2) { white-space: normal; }
+}
+
+/* Short landscape (phones on their side): every pixel of height counts. */
+@media (orientation: landscape) and (max-height: 500px) {
+  nav { position: static; height: 44px; }
+  .wrap { padding-top: 12px; }
+  .announcement { margin-bottom: 10px; }
+  .header { margin-bottom: 10px; }
+  .header h1 { font-size: 1.15rem; }
+  .weather-widget, .breadcrumb { display: none; }
+  .group-tabs, .controls-row { display: inline-flex; vertical-align: middle; margin: 0 10px 12px 0; }
+  .controls-row, .totals { margin-bottom: 12px; }
+  .totals { grid-template-columns: repeat(5,1fr); }
+  .total-card { padding: 8px 6px; }
+  .total-card .val { font-size: 1.1rem; }
+  .totals > :last-child:nth-child(odd) { grid-column: auto; }
+  #leaderboard-section .table-wrap { max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); }
+}
 </style>
 </head>
 <body>
@@ -442,8 +506,7 @@ thead th.sort-desc::after { content: ' ↓'; opacity: 1 !important; color: #FC4C
 </nav>
 
 <div class="wrap">
-  <div class="announcement" id="announcement"><div class="announcement-title">Welcome Commander!</div><div class="announcement-body">Data refreshed on 14 September 00:00! Have a great run ahead!
-We&#x27;ve crossed 1,000 members! New members who have yet to start running will not appear on the dashboard until their first run is logged, but they are still counted in the total.</div><button class="announcement-close" onclick="document.getElementById('announcement').style.display='none'" title="Close">✕</button></div>
+  <div class="announcement" id="announcement"><div class="announcement-title">Welcome Commander!</div><div class="announcement-body">Milestone 2 is in sight!</div><button class="announcement-close" onclick="document.getElementById('announcement').style.display='none'" title="Close">✕</button></div>
   <div class="header">
     <div class="header-top">
       <div>
@@ -453,7 +516,7 @@ We&#x27;ve crossed 1,000 members! New members who have yet to start running will
           <span id="period-label"></span>
         </div>
       </div>
-      <span class="weather-widget">🌦️ <strong>32°C</strong> · Light showers · 💨 12 km/h</span>
+      <span class="weather-widget">🌧️ <strong>31°C</strong> · Showers · 💨 12 km/h</span>
     </div>
   </div>
 
@@ -506,21 +569,7 @@ We&#x27;ve crossed 1,000 members! New members who have yet to start running will
   </div>
   -->
 
-  <div id="group-rankings-section" class="group-rankings">
-    <div>
-      <div class="section-title">Registration</div>
-      <div class="table-wrap" id="registration-tree"></div>
-    </div>
-    <div>
-      <div class="section-title">Unit Rankings</div>
-      <div class="table-wrap" id="unit-rankings"></div>
-    </div>
-    <div>
-      <div class="section-title">Company Rankings</div>
-      <div class="table-wrap" id="company-rankings"></div>
-    </div>
-  </div>
-
+  <div class="board">
   <div id="leaderboard-section">
     <div class="section-title">Runner Leaderboard <span id="leaderboard-count" style="text-transform:none;letter-spacing:normal;color:#bbb;font-weight:400"></span></div>
     <div class="table-wrap">
@@ -543,6 +592,19 @@ We&#x27;ve crossed 1,000 members! New members who have yet to start running will
       </thead>
       <tbody id="leaderboard"></tbody>
     </table>
+  </div>
+  </div>
+
+  <!-- One ranking at a time: phones get a short page, desktops a sidebar beside the leaderboard. -->
+  <div id="group-rankings-section" class="group-rankings">
+    <div class="toggle rank-toggle" role="group" aria-label="Rankings">
+      <button class="tab active" onclick="showRanking('unit', this)">Units</button>
+      <button class="tab" onclick="showRanking('company', this)">Companies</button>
+      <button class="tab" onclick="showRanking('registration', this)">Registration</button>
+    </div>
+    <div class="table-wrap rank-pane" data-rank="unit" id="unit-rankings"></div>
+    <div class="table-wrap rank-pane" data-rank="company" id="company-rankings" hidden></div>
+    <div class="table-wrap rank-pane" data-rank="registration" id="registration-tree" hidden></div>
   </div>
   </div>
 
@@ -616,7 +678,7 @@ We&#x27;ve crossed 1,000 members! New members who have yet to start running will
   <div class="line-chart-tooltip" id="line-chart-tooltip"></div>
 
   <div class="footer">
-    Updated hourly &nbsp;·&nbsp; last update 7.10.2026 14:08 &nbsp;·&nbsp;
+    Updated hourly &nbsp;·&nbsp; last update 7.10.2026 15:07 &nbsp;·&nbsp;
     <a href="https://www.strava.com/clubs/2211123" target="_blank" rel="noopener noreferrer">Strava Club</a>
     &nbsp;·&nbsp;
     <a href="https://github.com/DatabenderSK/strava-club-dashboard" target="_blank" rel="noopener noreferrer">Get your own dashboard</a>
@@ -1041,7 +1103,7 @@ function renderLeaderboard(data) {
   document.getElementById('leaderboard').innerHTML = rows.map((r, i) => `
     <tr>
       <td>${isByKm && MEDALS[i] ? MEDALS[i] : '<span style="color:#ccc;font-size:.75rem">'+(i+1)+'</span>'}</td>
-      <td>${esc(r.name)}</td>
+      <td><span class="runner">${esc(r.name)}</span></td>
       <td>${esc(r.unit||'')}</td>
       <td>${esc(shortCompany(r))}</td>
       <td class="km-cell">${r.km}</td>
@@ -1144,6 +1206,11 @@ const MAIN_SECTION_IDS = ['empty-state', 'totals-section', /* 'awards-section', 
 
 function setMainSectionsVisible(visible) {
   MAIN_SECTION_IDS.forEach(id => { document.getElementById(id).style.display = visible ? '' : 'none'; });
+}
+
+function showRanking(name, el) {
+  document.querySelectorAll('.rank-pane').forEach(p => { p.hidden = p.dataset.rank !== name; });
+  document.querySelectorAll('.rank-toggle .tab').forEach(t => t.classList.toggle('active', t === el));
 }
 
 function showLeaderboard() {

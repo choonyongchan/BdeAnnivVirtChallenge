@@ -22,7 +22,6 @@ def _slim_leaderboard(bucket: dict) -> None:
 
 def build_announcement_html(path: Path) -> str:
     """Read announcement.md (# Title, then body) into a dismissible banner; '' if missing or untitled."""
-    path = Path(path)
     if not path.exists():
         return ""
     lines = path.read_text(encoding="utf-8").strip().splitlines()

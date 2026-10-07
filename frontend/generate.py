@@ -2,14 +2,15 @@
 config.yaml and the nominal roll.
     python -m frontend.generate     # or via the pipeline: python -m backend.main
 """
-import csv
 import json
 from dataclasses import asdict
-from datetime import date, datetime, timezone
+from datetime import date, datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from backend import config
+from shared import config
+from shared.data import (ACTIVITIES_CSV, FOOT_TYPES, MEMBER_COUNT_CSV, MEMBERS_CSV, STATISTICS_CSV, local_date,
+                         read_csv)
 from . import renderer, stats, weather
 from .names import NominalRoll
 
@@ -17,16 +18,7 @@ from .names import NominalRoll
 SERVING_TYPES = {"NSF", "REGULAR"}
 ALUMNI_TYPES = {"NSMAN", "ALUMNI"}
 
-# Foot sports: what the club leaderboard and statistics.csv count. The ledger also holds rides, swims, workouts...
-FOOT_TYPES = {"Run", "TrailRun", "VirtualRun", "Walk", "Hike"}
-
-# Paths are spelled out here, not imported from the scrapers, so the dashboard never loads playwright.
 REPO_ROOT = Path(__file__).parent.parent
-BACKEND = REPO_ROOT / "backend"
-ACTIVITIES_CSV = BACKEND / "activities" / "activities.csv"
-STATISTICS_CSV = BACKEND / "statistics" / "statistics.csv"
-MEMBERS_CSV = BACKEND / "members" / "members.csv"
-MEMBER_COUNT_CSV = BACKEND / "members" / "member_count.csv"
 PUBLIC = Path(__file__).parent / "public"   # the static site GitHub Pages serves
 OUT_PATH = PUBLIC / "index.html"
 USER_COUNT_PATH = PUBLIC / "user-count.json"
@@ -37,39 +29,15 @@ def day_label(d) -> str:
     return f"{d.day}.{d.month}.{d.year}"
 
 
-def _local_date(iso_utc: str, tzinfo) -> str:
-    """An ISO UTC timestamp as a local ``YYYY-MM-DD`` string, or "" if unusable."""
-    raw = (iso_utc or "").strip()
-    if not raw:
-        return ""
-    try:
-        dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))
-    except ValueError:
-        return ""
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-    return dt.astimezone(tzinfo).date().isoformat()
-
-
-def _read(path: Path) -> list:
-    with open(path, newline="", encoding="utf-8") as f:
-        return list(csv.DictReader(f))
-
-
 def load_activities(challenge_start: str, tzinfo) -> list:
     """Foot-sport rows of activities.csv whose local start date is on/after challenge_start, tagged as _date."""
     kept = []
-    for r in _read(ACTIVITIES_CSV):
-        d = _local_date(r.get("start_date_utc"), tzinfo)
+    for r in read_csv(ACTIVITIES_CSV):
+        d = local_date(r.get("start_date_utc"), tzinfo)
         if d and d >= challenge_start and r.get("type") in FOOT_TYPES:
             r["_date"] = d
             kept.append(r)
     return kept
-
-
-def load_daily() -> list:
-    """Rows of statistics.csv: one per athlete per snapshot date, cumulative since challenge_start."""
-    return _read(STATISTICS_CSV)
 
 
 def latest_by_athlete(snapshots: list, day: str) -> list:
@@ -81,17 +49,10 @@ def latest_by_athlete(snapshots: list, day: str) -> list:
     return list(latest.values())
 
 
-def load_members() -> list:
-    """Rows of members.csv: everyone ever on the roster, with ingest_at and left_at."""
-    return _read(MEMBERS_CSV)
-
-
 def load_member_counts(tzinfo) -> dict:
     """{local date: that day's last headline member count} from member_count.csv; {} if absent."""
-    if not MEMBER_COUNT_CSV.exists():
-        return {}
-    rows = sorted(_read(MEMBER_COUNT_CSV), key=lambda r: r["scraped_at"])
-    return {_local_date(r["scraped_at"], tzinfo): int(r["member_count"]) for r in rows}
+    rows = sorted(read_csv(MEMBER_COUNT_CSV), key=lambda r: r["scraped_at"])
+    return {local_date(r["scraped_at"], tzinfo): int(r["member_count"]) for r in rows}
 
 
 def count_as_of(counts: dict, day: str) -> int | None:
@@ -151,8 +112,8 @@ def load(cfg: config.Config) -> tuple:
     """-> (snapshots, ledger foot acts >= challenge_start, members, headline counts by day, roll fitted over names)."""
     tz = ZoneInfo(cfg.timezone)
     acts = load_activities(cfg.challenge_start, tz)
-    snapshots = load_daily()
-    members = load_members()
+    snapshots = read_csv(STATISTICS_CSV)   # one row per athlete per snapshot date, cumulative since challenge_start
+    members = read_csv(MEMBERS_CSV)        # everyone ever on the roster, with ingest_at and left_at
     counts = load_member_counts(tz)
     roll = NominalRoll()
     # Fit once over every name: build_daily_history() re-resolves each athlete per day,

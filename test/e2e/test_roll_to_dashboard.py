@@ -4,7 +4,7 @@ import csv
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from backend import config
+from shared import config
 from frontend import generate
 from frontend.names import NominalRoll
 from backend.nominal_roll.nominal_roll import convert

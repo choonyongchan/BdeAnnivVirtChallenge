@@ -1,8 +1,8 @@
-"""Unit tests for config.load(): every key required (missing file/key/null -> ValueError),
+"""Unit tests for config.load(): every key required (missing file -> ValueError, missing key -> KeyError),
 challenge_start coerced to str because YAML parses a bare date."""
 import pytest
 
-from backend import config
+from shared import config
 
 FULL_YAML = (
     "club:\n  name: Test Club\n  id: '42'\n"
@@ -39,20 +39,13 @@ def test_missing_file_raises(tmp_path, monkeypatch):
 
 def test_missing_top_level_key_raises(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "CONFIG_PATH", _yaml(tmp_path, "club:\n  name: Test Club\n  id: '42'\n"))
-    with pytest.raises(ValueError):
+    with pytest.raises(KeyError):
         config.load()
 
 
 def test_missing_nested_key_raises(tmp_path, monkeypatch):
     text = FULL_YAML.replace("  id: '42'\n", "")
     monkeypatch.setattr(config, "CONFIG_PATH", _yaml(tmp_path, text))
-    with pytest.raises(ValueError):
-        config.load()
-
-
-def test_explicit_null_raises(tmp_path, monkeypatch):
-    text = FULL_YAML.replace("timezone: Asia/Singapore\n", "timezone:\n")
-    monkeypatch.setattr(config, "CONFIG_PATH", _yaml(tmp_path, text))
-    with pytest.raises(ValueError):
+    with pytest.raises(KeyError):
         config.load()
 

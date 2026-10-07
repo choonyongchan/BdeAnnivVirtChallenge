@@ -1,5 +1,5 @@
 # Dashboard + scraper settings. No secrets here.
-# backend/config.py reads this once; every key below is required.
+# shared/config.py reads this once; every key below is required.
 
 club:
   name: "8SAB 50th Anniversary Virtual Challenge"

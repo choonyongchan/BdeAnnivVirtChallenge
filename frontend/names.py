@@ -214,4 +214,4 @@ class NominalRoll:
 
     def service(self, name: str) -> str:
         """Roll's "Type of service", upper-cased: NSF / REGULAR / NSMAN / ALUMNI."""
-        return self.unit_company_map.get(name, {}).get("service", "")
+        return self.unit_company(name).get("service", "")

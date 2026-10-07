@@ -1,7 +1,7 @@
 # Publishes frontend/public/ (the static site) to GitHub Pages whenever a push to main changes it.
 name: Deploy Pages
 
-# Catches Task Scheduler / main.py commits pushed with the user's own credentials.
+# Catches Task Scheduler (scripts/run_pipeline.ps1) commits pushed with the user's own credentials.
 on:
   push:
     branches: [main]

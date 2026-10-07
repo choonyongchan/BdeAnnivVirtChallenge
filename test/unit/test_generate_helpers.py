@@ -1,11 +1,12 @@
-"""Unit tests for generate.py's date helpers: `_local_date` decides which local day an
+"""Unit tests for the date helpers: shared.data.local_date decides which local day an
 activity counts for (parse UTC, assume UTC if naive, convert, take the date)."""
 from datetime import date
 from zoneinfo import ZoneInfo
 
 import pytest
 
-from frontend.generate import _local_date, day_label
+from frontend.generate import day_label
+from shared.data import local_date
 
 SGT = ZoneInfo("Asia/Singapore")
 
@@ -30,5 +31,5 @@ def test_day_label_is_not_zero_padded(d, text):
     (None, ""),
 ])
 def test_local_date(iso, expected):
-    assert _local_date(iso, SGT) == expected
+    assert local_date(iso, SGT) == expected
 

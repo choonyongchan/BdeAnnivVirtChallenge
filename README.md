@@ -34,7 +34,9 @@ someone qualifies.
 
 **Leaderboard.** Every member, including those who haven't run yet. Click (or Tab to
 and press Enter on) a column heading to sort; use the Unit and Company menus to filter.
-Unit and company rankings and the registration tree sit alongside.
+Below it (beside it on a wide screen) the *Units*, *Companies* and *Registration*
+buttons switch between the unit rankings, company rankings and registration tree. On a
+phone, the runner's name stays in view while you swipe across the leaderboard's columns.
 
 **Last Week, History and Trend.** *Last Week* shows standings as of last Sunday.
 *History* opens a calendar of past standings, one per day. *Trend* shows a weekly table
@@ -57,6 +59,10 @@ by group, unit or company.
   or "Followers" with the organiser following you), and dated in the challenge. Runs
   uploaded more than a week late are only picked up by a full rebuild. Ask the
   organiser.
+- **Runners who share a Strava name appear as one.** If two or more members use the
+  same Strava display name, the leaderboard shows a single row with their distance,
+  runs and time combined. Club totals are unaffected. To appear separately, change your
+  Strava display name so it is unique.
 - **Your unit or name is wrong?** Your Strava display name doesn't match the
   `STRAVA username` you registered with. Ask the organiser to update the roll.
 
@@ -87,7 +93,7 @@ $Principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType S4U -Ru
 Register-ScheduledTask -TaskName "BdeAnnivVirtChallenge-HourlyPipeline" -Action $Action -Trigger $Trigger -Settings $Settings -Principal $Principal
 ```
 
-Each run scrapes Strava, regenerates the page, commits the data and pushes; GitHub
+Each run scrapes Strava, regenerates the page, commits it and pushes; GitHub
 Pages redeploys. Logs go to `logs/`. Check the task with
 `Get-ScheduledTaskInfo -TaskName "BdeAnnivVirtChallenge-HourlyPipeline"`.
 
@@ -100,7 +106,7 @@ Pages redeploys. Logs go to `logs/`. Check the task with
 | Show a banner | Put a title on the first line of `frontend/announcement.md` and the text below it. Empty the file to hide it. |
 
 Settings (club, challenge start, schedule, weather location) are in
-`backend/config.yaml`.
+`shared/config.yaml`.
 
 ### When something goes wrong
 

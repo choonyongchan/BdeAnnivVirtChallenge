@@ -10,7 +10,7 @@ from datetime import date, timedelta
 
 import pytest
 
-from backend import config
+from shared import config
 from backend.members.members import MEMBERS_URL, fetch_count_and_roster
 from backend.statistics.statistics import fetch_leaderboard
 from backend.strava_session import club_page
