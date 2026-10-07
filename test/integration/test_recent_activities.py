@@ -5,8 +5,8 @@ from contextlib import contextmanager
 
 import pytest
 
-from src.activities import recent_activities as M
-from src.members.members import MEMBERS_URL
+from backend.activities import recent_activities as M
+from backend.members.members import MEMBERS_URL
 
 
 class _FakePage:

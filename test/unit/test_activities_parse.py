@@ -4,7 +4,7 @@ from datetime import date
 
 import pytest
 
-from src.activities.member_activities import (
+from backend.activities.member_activities import (
     FIELDS,
     _row,
     _text,
@@ -18,7 +18,7 @@ from src.activities.member_activities import (
     week_id,
     weeks_to_sync,
 )
-from src.activities.member_statistics import cumulate, snapshot_date
+from backend.activities.member_statistics import cumulate, snapshot_date
 
 
 @pytest.mark.parametrize("raw,text", [

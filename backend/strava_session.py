@@ -52,7 +52,7 @@ def append_new_rows(path: Path, fields: list, rows: list) -> None:
 def require_auth() -> None:
     """Raise ScrapeError unless a saved session exists."""
     if not AUTH_PATH.exists():
-        raise ScrapeError("No saved session. Run: python -m src.login")
+        raise ScrapeError("No saved session. Run: python -m backend.login")
 
 
 def _new_context(pw, headless):

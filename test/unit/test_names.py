@@ -4,7 +4,7 @@ import csv
 
 import pytest
 
-from src.dashboard.names import NominalRoll
+from frontend.names import NominalRoll
 
 
 def _write_roll(path, rows):
@@ -73,7 +73,7 @@ def _fitted(tmp_path, monkeypatch, rows, names):
     p = tmp_path / "nominal_roll.csv"
     _write_roll(p, rows)
     monkeypatch.setattr(NominalRoll, "CSV_PATH", p)
-    monkeypatch.setattr("src.dashboard.names.REPORT_PATH", tmp_path / "report.log")
+    monkeypatch.setattr("frontend.names.REPORT_PATH", tmp_path / "report.log")
     roll = NominalRoll()
     roll.fit(names)
     return roll
@@ -144,7 +144,7 @@ def test_fit_writes_a_report(tmp_path, monkeypatch):
     p = tmp_path / "nominal_roll.csv"
     _write_roll(p, [["NOOR SHAHFYZAD", "40SAR", "Cougar", "NSF", "Noir Shahfyzad"]])
     monkeypatch.setattr(NominalRoll, "CSV_PATH", p)
-    monkeypatch.setattr("src.dashboard.names.REPORT_PATH", report)
+    monkeypatch.setattr("frontend.names.REPORT_PATH", report)
     NominalRoll().fit(["Noor Shahfyzad", "Someone Else"])
     text = report.read_text(encoding="utf-8")
     assert "NOOR SHAHFYZAD" in text and "Someone Else" in text
@@ -240,7 +240,7 @@ def test_report_lists_refused_real_name_candidates(tmp_path, monkeypatch):
     _write_roll(p, [["HOO JUN HAO", "40SAR", "Cougar", "NSF", ""],
                     ["CHIN JUN HAO", "41SAR", "Hawk", "NSF", ""]])
     monkeypatch.setattr(NominalRoll, "CSV_PATH", p)
-    monkeypatch.setattr("src.dashboard.names.REPORT_PATH", report)
+    monkeypatch.setattr("frontend.names.REPORT_PATH", report)
     NominalRoll().fit(["Jun Hao"])
     text = report.read_text(encoding="utf-8")
     assert "ambiguous real-name candidates" in text

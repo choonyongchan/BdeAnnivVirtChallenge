@@ -3,7 +3,7 @@ escaped), and render() filling every placeholder with valid JSON."""
 import json
 from types import SimpleNamespace
 
-from src.dashboard.renderer import build_announcement_html, render, _slim_leaderboard
+from frontend.renderer import build_announcement_html, render, _slim_leaderboard
 
 
 def _cfg(name="Club", club_id="1"):

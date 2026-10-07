@@ -2,7 +2,7 @@
 fill gaps in the ledger (activities.csv) and feed MemberStatistics (daily.csv), along with the club leaderboard
 (top 100, this and last week), which also counts runs this account can't see (followers-only, private profiles).
 Also holds the ledger parsing RecentActivities shares.
-    python -m src.activities.member_activities [--setup]    # --setup: every week since challenge_start
+    python -m backend.activities.member_activities [--setup]    # --setup: every week since challenge_start
 """
 import argparse
 import re
@@ -242,7 +242,7 @@ def fetch_leaderboard() -> dict:
         page.wait_for_timeout(1500)
         last_week = page.evaluate(ROWS_JS)
     if not this_week and not last_week:
-        raise ScrapeError("Leaderboard empty - session expired or markup changed; re-run: python -m src.login")
+        raise ScrapeError("Leaderboard empty - session expired or markup changed; re-run: python -m backend.login")
     return {this.isoformat(): parse_leaderboard(this_week),
             (this - timedelta(weeks=1)).isoformat(): parse_leaderboard(last_week)}
 
@@ -280,7 +280,7 @@ def run(leaderboard: dict, setup: bool = False, workers: int = 4, only: list | N
                     limited = True
                     continue
                 if res.get("expired"):
-                    raise ScrapeError(f"Session expired or blocked (HTTP {res['status']}) - re-run: python -m src.login")
+                    raise ScrapeError(f"Session expired or blocked (HTTP {res['status']}) - re-run: python -m backend.login")
                 if "error" in res:
                     errors += 1
                     continue

@@ -8,9 +8,9 @@ from urllib.parse import unquote
 
 import pytest
 
-from src.activities import member_activities as A
-from src.activities import recent_activities as R
-from src.members import members as M
+from backend.activities import member_activities as A
+from backend.activities import recent_activities as R
+from backend.members import members as M
 
 
 def _read(path):

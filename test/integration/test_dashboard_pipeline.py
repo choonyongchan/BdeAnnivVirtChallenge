@@ -5,7 +5,7 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from src.dashboard import generate
+from frontend import generate
 
 SGT = ZoneInfo("Asia/Singapore")
 

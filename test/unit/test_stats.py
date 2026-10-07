@@ -5,8 +5,8 @@ from dataclasses import asdict
 
 import pytest
 
-from src.dashboard.names import NominalRoll
-from src.dashboard.stats import (
+from frontend.names import NominalRoll
+from frontend.stats import (
     AthleteStats,
     ReportStats,
     _build_device_stats,

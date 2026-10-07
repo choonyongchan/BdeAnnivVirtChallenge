@@ -5,7 +5,7 @@ New members it adds: every profile week since challenge_start, straight away.
 MemberActivities + MemberStatistics (default 23:xx, or --full): the leaderboard, roll usernames found by athlete search
 (NominalRollMembers) and every member's profile week ->
 missed activities + today's cumulative rows in daily.csv, the authoritative snapshot the feed is added on top of.
-    python -m src.main [--full]
+    python -m backend.main [--full]
 """
 import json
 import subprocess
@@ -15,7 +15,7 @@ from zoneinfo import ZoneInfo
 
 from .activities import member_activities, recent_activities
 from .config import settings
-from .dashboard import generate
+from frontend import generate
 from .members import members
 from .strava_session import AUTH_PATH, ScrapeError
 
@@ -24,10 +24,10 @@ REPO_ROOT = generate.REPO_ROOT
 REAUTH_MSG = (
     "\n==================== STRAVA RE-AUTH REQUIRED ====================\n"
     "The saved Strava session is missing or expired.\n\n"
-    "  1. python -m src.login          # opens a browser, log in\n"
+    "  1. python -m backend.login          # opens a browser, log in\n"
     "  2. Re-encode the session:\n"
-    "     PowerShell: [Convert]::ToBase64String([IO.File]::ReadAllBytes('src/auth_state.json'))\n"
-    "     bash:       base64 -w0 src/auth_state.json\n"
+    "     PowerShell: [Convert]::ToBase64String([IO.File]::ReadAllBytes('backend/auth_state.json'))\n"
+    "     bash:       base64 -w0 backend/auth_state.json\n"
     "  3. Paste the result into the GitHub Actions secret  AUTH_STATE\n"
     "===============================================================\n"
 )

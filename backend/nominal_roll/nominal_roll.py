@@ -1,5 +1,5 @@
 """Merge a FormSG registration export into nominal_roll.csv.
-    python -m src.nominal_roll.nominal_roll "<export.csv>"
+    python -m backend.nominal_roll.nominal_roll "<export.csv>"
 """
 import argparse
 import csv

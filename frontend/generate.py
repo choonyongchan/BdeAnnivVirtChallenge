@@ -1,5 +1,5 @@
 """Generate the static repo-root index.html from the scraped CSVs (daily cumulative snapshots, ledger, members), config.yaml and the nominal roll.
-    python -m src.dashboard.generate     # or via the pipeline: python -m src.main
+    python -m frontend.generate     # or via the pipeline: python -m backend.main
 """
 import csv
 import json
@@ -8,7 +8,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from .. import config
+from backend import config
 from . import renderer, stats, weather
 from .names import NominalRoll
 
@@ -17,13 +17,15 @@ SERVING_TYPES = {"NSF", "REGULAR"}
 ALUMNI_TYPES = {"NSMAN", "ALUMNI"}
 
 # Paths are spelled out here, not imported from the scrapers, so the dashboard never loads playwright.
-REPO_ROOT = Path(__file__).parent.parent.parent
-ACTIVITIES_CSV = Path(__file__).parent.parent / "activities" / "activities.csv"
-DAILY_CSV = Path(__file__).parent.parent / "activities" / "daily.csv"
-MEMBERS_CSV = Path(__file__).parent.parent / "members" / "members.csv"
-MEMBER_COUNT_JSON = Path(__file__).parent.parent / "members" / "member_count.json"
-OUT_PATH = REPO_ROOT / "index.html"
-USER_COUNT_PATH = REPO_ROOT / "src" / "user-count.json"
+REPO_ROOT = Path(__file__).parent.parent
+BACKEND = REPO_ROOT / "backend"
+ACTIVITIES_CSV = BACKEND / "activities" / "activities.csv"
+DAILY_CSV = BACKEND / "activities" / "daily.csv"
+MEMBERS_CSV = BACKEND / "members" / "members.csv"
+MEMBER_COUNT_JSON = BACKEND / "members" / "member_count.json"
+PUBLIC = Path(__file__).parent / "public"   # the static site GitHub Pages serves
+OUT_PATH = PUBLIC / "index.html"
+USER_COUNT_PATH = PUBLIC / "user-count.json"
 
 
 def day_label(d) -> str:

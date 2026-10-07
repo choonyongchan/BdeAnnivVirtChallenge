@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from src.strava_session import append_new_rows, csv_column_set
+from backend.strava_session import append_new_rows, csv_column_set
 
 FIXTURE = Path(__file__).parent.parent / "fixtures" / "activities_sample.csv"
 

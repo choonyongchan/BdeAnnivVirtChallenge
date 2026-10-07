@@ -35,7 +35,7 @@ def fetch_member_count(page) -> int:
     """The members page's headline count, fetched inside a logged-in club page."""
     result = page.evaluate(FETCH_JS, MEMBERS_URL)
     if not result["ok"]:
-        raise ScrapeError("Session expired or blocked - re-run: python -m src.login\n"
+        raise ScrapeError("Session expired or blocked - re-run: python -m backend.login\n"
                           f"Members page returned HTTP {result['status']}.")
     count = parse_member_count(result["text"])
     if count is None:

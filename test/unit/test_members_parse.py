@@ -2,7 +2,7 @@
 absent), the club name, athlete search results and their club hit, and the feed/leaderboard member sources."""
 import json
 
-from src.members.members import (LeaderboardMembers, RecentActivityMembers, club_hit, parse_club_name,
+from backend.members.members import (LeaderboardMembers, RecentActivityMembers, club_hit, parse_club_name,
                                  parse_member_count, parse_search)
 
 

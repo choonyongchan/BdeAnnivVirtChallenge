@@ -2,7 +2,7 @@
 challenge_start coerced to str because YAML parses a bare date."""
 import pytest
 
-from src import config
+from backend import config
 
 FULL_YAML = (
     "club:\n  name: Test Club\n  id: '42'\n"
@@ -10,7 +10,7 @@ FULL_YAML = (
     "timezone: Asia/Singapore\n"
     "schedule:\n  recent_activities: '*'\n  member_scan: [23]\n"
     "weather:\n  latitude: 5.5\n  longitude: 6.6\n"
-    "announcement_path: src/announcement.md\n"
+    "announcement_path: frontend/announcement.md\n"
     "browser:\n  channel: ''\n  headless: false\n"
 )
 

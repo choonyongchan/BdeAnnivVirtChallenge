@@ -1,4 +1,4 @@
-"""Shared dashboard + scraper settings from src/config.yaml (no secrets).
+"""Shared dashboard + scraper settings from backend/config.yaml (no secrets).
 Every key is required, so a missing file or key fails loudly instead of falling back."""
 from dataclasses import dataclass
 from pathlib import Path

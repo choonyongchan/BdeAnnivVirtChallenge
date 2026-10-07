@@ -7,8 +7,8 @@ from datetime import datetime
 
 import pytest
 
-from src.activities import member_activities as A
-from src.activities import member_statistics as S
+from backend.activities import member_activities as A
+from backend.activities import member_statistics as S
 
 
 def _read(path):

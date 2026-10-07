@@ -4,7 +4,7 @@ import io
 import json
 import urllib.request
 
-from src.dashboard import weather
+from frontend import weather
 
 
 def _urlopen_returning(body):

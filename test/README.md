@@ -5,7 +5,7 @@ not the current output byte-for-byte. A formatting change should break few or
 no tests; changing an actual rule (a filter direction, a qualifying threshold,
 a dedupe tie-break) should break a targeted one.
 
-All fixture data is synthetic. The real `src/nominal_roll/nominal_roll.csv` and
+All fixture data is synthetic. The real `backend/nominal_roll/nominal_roll.csv` and
 the real FormSG export are never read.
 
 ## Running
@@ -53,4 +53,4 @@ The 6 tests from the former `src/dashboard/test_stats.py` are migrated into
 ## Live tests
 
 Tests marked `live` hit the real Strava session and are skipped unless you pass
-`--live`, so `src/auth_state.json` being present never triggers them by accident.
+`--live`, so `backend/auth_state.json` being present never triggers them by accident.

@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 
-import src.main as M
+import backend.main as M
 
 
 class _FrozenClock:

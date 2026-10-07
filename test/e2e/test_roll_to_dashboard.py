@@ -4,10 +4,10 @@ import csv
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from src import config
-from src.dashboard import generate
-from src.dashboard.names import NominalRoll
-from src.nominal_roll.nominal_roll import convert
+from backend import config
+from frontend import generate
+from frontend.names import NominalRoll
+from backend.nominal_roll.nominal_roll import convert
 
 SGT = ZoneInfo("Asia/Singapore")
 
@@ -91,7 +91,7 @@ def test_converted_roll_drives_dashboard_grouping(tmp_path, monkeypatch):
         member_scan_hours=[23],
         weather_lat=1.3835,
         weather_lon=103.7478,
-        announcement_path="src/announcement.md",
+        announcement_path="frontend/announcement.md",
         browser_channel="",
         browser_headless=True,
     )

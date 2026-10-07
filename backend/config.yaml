@@ -1,5 +1,5 @@
 # Dashboard + scraper settings. No secrets here.
-# src/config.py reads this once; every key below is required.
+# backend/config.py reads this once; every key below is required.
 
 club:
   name: "8SAB 50th Anniversary Virtual Challenge"
@@ -17,7 +17,7 @@ weather:
   latitude: 1.3835
   longitude: 103.7478
 
-announcement_path: "src/announcement.md"   # relative to repo root; missing file hides the banner
+announcement_path: "frontend/announcement.md"   # relative to repo root; missing file hides the banner
 
 browser:
   channel: ""                   # "" -> Playwright's bundled Chromium; "chrome"/"msedge" drive a system browser

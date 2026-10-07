@@ -1,5 +1,5 @@
 """Live end-to-end: the published dashboard's figures equal Strava's. Run right after a full pipeline run
-(python -m src.main --full), since runs uploaded in between make honest mismatches:
+(python -m backend.main --full), since runs uploaded in between make honest mismatches:
     python -m pytest test/e2e/test_strava_parity.py --live
 For every athlete on the club leaderboard (this week and last week, top 100 - all Strava shows), the
 dashboard's cumulative snapshots must differ by exactly Strava's weekly distance, activities, elevation
@@ -10,10 +10,10 @@ from datetime import date, timedelta
 
 import pytest
 
-from src import config
-from src.activities.member_activities import fetch_leaderboard
-from src.dashboard import generate
-from src.activities.recent_activities import fetch_count_and_feed
+from backend import config
+from backend.activities.member_activities import fetch_leaderboard
+from frontend import generate
+from backend.activities.recent_activities import fetch_count_and_feed
 
 pytestmark = pytest.mark.live
 

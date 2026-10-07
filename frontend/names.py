@@ -24,7 +24,7 @@ RANK_TOKENS = {"rec", "recruit", "pte", "pfc", "lcp", "cpl", "cfc",
                "3sg", "2sg", "1sg", "ssg", "msg", "me1", "me2", "ct"}
 
 #: Audit trail written by fit(): what matched non-exactly, and what did not.
-REPORT_PATH = Path(__file__).parent.parent.parent / "logs" / "name_matches.log"
+REPORT_PATH = Path(__file__).parent.parent / "logs" / "name_matches.log"
 
 
 def _norm(s: str) -> str:
@@ -54,8 +54,8 @@ def _covers(a, b) -> bool:
 class NominalRoll:
     """Maps Strava display names to full formal names, and full names to unit/company."""
 
-    #: The cleaned roster CSV, output of src/nominal_roll/nominal_roll.py.
-    CSV_PATH = Path(__file__).parent.parent / "nominal_roll" / "nominal_roll.csv"
+    #: The cleaned roster CSV, output of backend/nominal_roll/nominal_roll.py.
+    CSV_PATH = Path(__file__).parent.parent / "backend" / "nominal_roll" / "nominal_roll.csv"
 
     def __init__(self):
         self._load(self.CSV_PATH)

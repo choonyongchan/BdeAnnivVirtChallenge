@@ -21,7 +21,7 @@ def feed_rows(page) -> list:
         try:
             data = json.loads(result["text"])
         except ValueError:
-            raise ScrapeError("Session expired or blocked - re-run: python -m src.login\n"
+            raise ScrapeError("Session expired or blocked - re-run: python -m backend.login\n"
                               f"Feed response was not JSON: {result['text'][:120]!r}")
         entries = data.get("entries") or []
         out += [r for e in entries for r in normalise(e) if r["activity_id"] and r["athlete_id"]]

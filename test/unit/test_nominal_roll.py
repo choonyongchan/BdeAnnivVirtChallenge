@@ -4,7 +4,7 @@ from datetime import datetime
 
 import pytest
 
-from src.nominal_roll.nominal_roll import (
+from backend.nominal_roll.nominal_roll import (
     canon_company,
     clean_service,
     dedupe,

@@ -11,7 +11,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.dashboard.names import NominalRoll  # noqa: E402  (after sys.path insert)
+from frontend.names import NominalRoll  # noqa: E402  (after sys.path insert)
 
 ROSTER_HEADER = ["Name", "Unit", "Company", "Type of service", "STRAVA username"]
 
@@ -27,7 +27,7 @@ DUMMY_ROSTER = [
 
 
 def pytest_addoption(parser):
-    parser.addoption("--live", action="store_true", help="run live tests against Strava (needs src/auth_state.json)")
+    parser.addoption("--live", action="store_true", help="run live tests against Strava (needs backend/auth_state.json)")
 
 
 def pytest_configure(config):
