@@ -168,3 +168,28 @@ def test_headline_member_count_overrides_all_total(env, tmp_path):
     generate.run()
     badge = json.loads((tmp_path / "user-count.json").read_text(encoding="utf-8"))
     assert badge["message"] == "1055"
+
+
+@pytest.mark.parametrize("width", [390, 1440])
+def test_built_page_runs_in_a_browser_without_errors(env, width):
+    """The generated page in headless Chromium, offline: its script runs without errors, the totals render with
+    the member count, and nothing overflows sideways at phone or desktop width."""
+    sync_playwright = pytest.importorskip("playwright.sync_api").sync_playwright
+    generate.run()
+    with sync_playwright() as pw:
+        try:
+            browser = pw.chromium.launch()
+        except Exception as e:   # no bundled Chromium (python -m playwright install chromium)
+            pytest.skip(f"Chromium unavailable: {e}")
+        page = browser.new_page(viewport={"width": width, "height": 900})
+        page.route("http*://**", lambda route: route.abort())   # hermetic: no fonts, no network
+        errors = []
+        page.on("pageerror", lambda e: errors.append(str(e)))
+        page.goto(env.as_uri())
+        totals = page.inner_text("#totals")
+        overflow = page.evaluate("document.documentElement.scrollWidth - innerWidth")
+        page.click("#btn-trend")   # another view renders too
+        browser.close()
+    assert errors == []
+    assert f"{len(MEMBERS)}\nmembers" in totals
+    assert overflow <= 0
