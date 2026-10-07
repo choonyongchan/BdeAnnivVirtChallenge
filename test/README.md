@@ -1,54 +1,48 @@
-# `test/` — logic tests for `src/`
+# `test/`: logic tests for `backend/` and `frontend/`
 
-These tests pin down the **reasoning** in `src/` — the rules and thresholds —
-not the current output byte-for-byte. A formatting change should break few or
-no tests; changing an actual rule (a filter direction, a qualifying threshold,
-a dedupe tie-break) should break a targeted one.
+These tests pin down the **reasoning** in the code (the rules and thresholds), not
+the current output byte-for-byte. A formatting change should break few or no tests;
+changing an actual rule (a filter direction, a qualifying threshold, a dedupe
+tie-break) should break a targeted one.
 
 All fixture data is synthetic. The real `backend/nominal_roll/nominal_roll.csv` and
 the real FormSG export are never read.
 
 ## Running
 
-From the repo root, with a Python that has the `src` deps (`pyyaml`,
-`playwright`, `pytest`):
+From the repo root, with the project venv (`pip install -r requirements.txt`):
 
 ```
 python -m pytest test/ -q
-python -m pytest test/unit -q
-python -m pytest test/integration -q
+python -m pytest test/ --cov=backend --cov=frontend
 ```
 
-The project's uv `.venv` works once `pyyaml` is added (it is in
-`requirements.txt` but was not installed): `uv pip install pyyaml`.
-
-`test/conftest.py` puts the repo root on `sys.path` so `import src.…`
-resolves; there is no `pytest.ini` / `pyproject.toml`.
+`test/conftest.py` puts the repo root on `sys.path` so `import backend.…` and
+`import frontend.…` resolve; there is no `pytest.ini` / `pyproject.toml`.
 
 ## Layout
 
 | Path | Covers |
 |---|---|
 | `unit/test_nominal_roll.py` | `parse_field`, `resolve`, `canon_company`, `dedupe`, `is_nil`, `smart_title`, `clean_service`, `entry_order` |
-| `unit/test_stats.py` | `_num`, `AthleteStats` qualifiers, `compute_stats` (totals from weekly rows, awards from the ledger), every award threshold, `_device_sort` |
+| `unit/test_stats.py` | `compute_stats` (totals, awards and thresholds), `_device_sort` |
 | `unit/test_names.py` | `_all_truncations`, `resolve`, `unit_company`, `service`, junk-company scrub, missing file |
 | `unit/test_generate_helpers.py` | `day_label`, `_local_date` (timezone edges) |
-| `unit/test_config.py` | `config.load()` per-key fallback |
+| `unit/test_config.py` | `config.load()`: every key required |
 | `unit/test_renderer.py` | `_slim_leaderboard`, `build_announcement_html`, `render` placeholder substitution |
-| `unit/test_weather.py` | `weather_html` — network-optional degradation (`urllib.request.urlopen` mocked) |
-| `unit/test_activities_parse.py` | `_text`, `parse_stats`, `to_meters/seconds/int`, `_row`, `normalise` (both feed schemas), `week_id`, `weeks_to_sync` (last + this week, setup range), `parse_leaderboard`, `foot_rows`, `snapshot_date`, `cumulate` (on top of last week's row, Monday chain, leaderboard wins, earlier days kept) |
-| `unit/test_members_parse.py` | `parse_member_count` |
-| `integration/test_nominal_roll_convert.py` | `convert()` — synthetic FormSG CSV → roster file bytes + rules + missing-column abort |
-| `integration/test_member_activities.py` | `member_activities.run` with a fake page: cumulative daily rows, ledger, leaderboard override, earlier days kept, expiry / mass-failure errors |
-| `integration/test_recent_activities.py` | `fetch_count_and_feed`: headline count, feed cursor paging, error paths |
-| `integration/test_dashboard_pipeline.py` | `load_activities` + `load_daily` + `load_members` + `latest_by_athlete` + `feed_updates` + `build_grouped_data` + `build_daily_history` wired together |
-| `integration/test_scraper_write.py` | `append_activities`, `write_members`, `recent_activities.run` (append-only, dedupe by id; leaderboard athletes added) — no browser |
-| `e2e/test_generate_end_to_end.py` | real `generate.run()` → `index.html`: placeholders filled, announcement wired, group/roster/history invariants |
-| `e2e/test_roll_to_dashboard.py` | raw FormSG export → `convert()` → `nominal_roll.csv` → dashboard grouping matches the converted roll |
-| `e2e/test_strava_parity.py` | **live, `--live` only**: `index.html` vs Strava — each leaderboard athlete's this/last-week figures and the member total |
-
-The 6 tests from the former `src/dashboard/test_stats.py` are migrated into
-`unit/test_stats.py` and `integration/test_dashboard_pipeline.py`.
+| `unit/test_weather.py` | `weather_html` with the network mocked |
+| `unit/test_activities_parse.py` | feed/profile entry parsing (`normalise`, both schemas), number coercion, `week_id`, `weeks_to_sync`, `own_rows`, `parse_leaderboard`, `snapshot_date`, `cumulate` |
+| `unit/test_members_parse.py` | `parse_member_count`, `parse_roster` (admins + members lists only) |
+| `unit/test_statistics.py` | `fetch_leaderboard` (both tabs, empty = error), ledger fallback filters, `local_date`, `last_profile_sync` |
+| `unit/test_main.py` | `check_auth`, `publish_dashboard`, which jobs run at which hour, a short scan saving then failing |
+| `integration/test_nominal_roll_convert.py` | `convert()`: synthetic FormSG CSV to roster file |
+| `integration/test_feed_and_roster_fetch.py` | feed cursor paging and errors; roster paging until nobody new; members-page errors |
+| `integration/test_member_activities.py` | profile scan with a fake page into the ledger and statistics: leaderboard wins, private profiles, leavers skipped, newcomers' full history, ledger fallback, 429 / error handling |
+| `integration/test_dashboard_pipeline.py` | `load_*`, `member_on`, headline counts by day, `build_grouped_data`, `build_daily_history` |
+| `integration/test_scraper_write.py` | ledger append/dedupe, feed ledgers every sport, members upsert (`ingest_at`, `left_at`, rejoin, untallied roster), headline history |
+| `e2e/test_generate_end_to_end.py` | real `generate.run()` to `index.html`: placeholders, invariants, headline count, and the page in headless Chromium at phone and desktop width |
+| `e2e/test_roll_to_dashboard.py` | raw FormSG export to `convert()` to dashboard grouping |
+| `e2e/test_strava_parity.py` | **live, `--live` only**: the page vs Strava's leaderboard and member headline |
 
 ## Live tests
 
