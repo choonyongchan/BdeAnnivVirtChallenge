@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="320" viewBox="0 0 1280 320">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1c1c1e"/>
+      <stop offset="1" stop-color="#2a1208"/>
+    </linearGradient>
+    <linearGradient id="route" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#FC4C02" stop-opacity="0"/>
+      <stop offset="0.35" stop-color="#FC4C02"/>
+      <stop offset="1" stop-color="#ffb38a"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="320" fill="url(#bg)"/>
+  <!-- elevation profile -->
+  <path d="M0 300 L120 292 L210 298 L320 280 L410 288 L520 268 L600 278 L700 256 L790 266 L880 244 L960 254 L1060 232 L1150 242 L1280 222 L1280 320 L0 320 Z" fill="#FC4C02" fill-opacity="0.10"/>
+  <path d="M0 300 L120 292 L210 298 L320 280 L410 288 L520 268 L600 278 L700 256 L790 266 L880 244 L960 254 L1060 232 L1150 242 L1280 222" fill="none" stroke="url(#route)" stroke-width="4" stroke-linejoin="round"/>
+  <circle cx="1060" cy="232" r="8" fill="#FC4C02"/>
+  <circle cx="1060" cy="232" r="16" fill="none" stroke="#FC4C02" stroke-opacity="0.5" stroke-width="2"/>
+  <!-- text -->
+  <rect x="80" y="82" width="56" height="6" rx="3" fill="#FC4C02"/>
+  <text x="80" y="150" fill="#ffffff" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="54" font-weight="800" letter-spacing="-1">Brigade Anniversary Virtual Challenge</text>
+  <text x="80" y="196" fill="#ffb38a" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="26" font-weight="500">Cultivating and celebrating a brigade of fitness warriors</text>
+</svg>

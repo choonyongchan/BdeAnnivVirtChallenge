@@ -1,3 +1,5 @@
+![Brigade Anniversary Virtual Challenge: cultivating and celebrating a brigade of fitness warriors](docs/images/banner.svg)
+
 # 8SAB 50th Anniversary Virtual Challenge — Strava Dashboard
 
 [![Tests](https://github.com/choonyongchan/BdeAnnivVirtChallenge/actions/workflows/test.yml/badge.svg)](https://github.com/choonyongchan/BdeAnnivVirtChallenge/actions/workflows/test.yml)
