@@ -11,10 +11,6 @@ backend/nominal_roll/*.bak.csv
 # raw FormSG export — NRIC/mobile/email
 backend/nominal_roll/*Registration Form*.csv
 backend/nominal_roll/8sab*.csv
-# scraped ledger (athlete names, activities) — local only
-backend/activities/activities.csv
-backend/members/members.csv
-backend/statistics/statistics.csv
 # base64 dumps of the above (for pasting into GitHub secrets)
 *_b64.txt
 

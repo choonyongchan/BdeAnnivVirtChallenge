@@ -93,7 +93,7 @@ $Principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType S4U -Ru
 Register-ScheduledTask -TaskName "BdeAnnivVirtChallenge-HourlyPipeline" -Action $Action -Trigger $Trigger -Settings $Settings -Principal $Principal
 ```
 
-Each run scrapes Strava, regenerates the page, commits it and pushes; GitHub
+Each run scrapes Strava, regenerates the page, commits the data and pushes; GitHub
 Pages redeploys. Logs go to `logs/`. Check the task with
 `Get-ScheduledTaskInfo -TaskName "BdeAnnivVirtChallenge-HourlyPipeline"`.
 

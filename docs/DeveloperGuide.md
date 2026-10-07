@@ -56,10 +56,8 @@ A rate-limited or error-heavy profile scan still saves what it found, then fails
 
 ## Data files
 
-`members.csv`, `activities.csv` and `statistics.csv` hold athlete names and activities, so
-they stay on the pipeline machine: gitignored, never committed. Back them up yourself, since
-they are the history. Only `member_count.csv` is committed. `auth_state.json`, `*_b64.txt`
-and the nominal roll are gitignored too and must never be committed.
+All CSVs are committed: they are the history. `auth_state.json`, `*_b64.txt` and the
+nominal roll are gitignored and must never be committed.
 
 **`members.csv`** `athlete_id, name, ingest_at, left_at`. `ingest_at` is when the roster
 first listed the athlete; `left_at` is when they disappeared, cleared if they rejoin. The
@@ -152,8 +150,8 @@ CI (`.github/workflows/test.yml`) runs the offline suite on every push to `main`
 
 ## Deploying
 
-`scripts/run_pipeline.ps1` runs `backend.main`, then commits `member_count.csv` and
-`frontend/public/` and pushes.
+`scripts/run_pipeline.ps1` runs `backend.main`, then commits `statistics.csv`,
+`activities.csv`, `members.csv`, `member_count.csv` and `frontend/public/` and pushes.
 `.github/workflows/deploy.yml` publishes `frontend/public/` to GitHub Pages whenever it
 changes (Settings, then Pages, then Source = GitHub Actions). Only tracked files are
 published, so keep anything sensitive out of `frontend/public/`.

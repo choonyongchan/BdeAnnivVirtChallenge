@@ -1,4 +1,4 @@
-# Hourly Windows Task Scheduler entry point: runs the pipeline, then commits and pushes the ledgers and the site
+﻿# Hourly Windows Task Scheduler entry point: runs the pipeline, then commits and pushes the ledgers and the site
 # (backend/auth_state.json and backend/nominal_roll/nominal_roll.csv must already exist locally;
 # backend.main exits with re-auth instructions when the session is missing).
 $ErrorActionPreference = "Stop"
@@ -19,7 +19,7 @@ try {
         throw "backend.main exited with code $LASTEXITCODE"
     }
 
-    git add backend/members/member_count.csv frontend/public
+    git add backend/statistics/statistics.csv backend/activities/activities.csv backend/members/members.csv backend/members/member_count.csv frontend/public
     git diff --cached --quiet
     if ($LASTEXITCODE -eq 0) {
         Write-Host "No ledger changes."
