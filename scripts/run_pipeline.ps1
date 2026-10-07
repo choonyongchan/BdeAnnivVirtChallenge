@@ -23,7 +23,7 @@ try {
         throw "backend.main exited with code $LASTEXITCODE"
     }
 
-    git add backend/activities/daily.csv backend/activities/activities.csv backend/members/members.csv backend/members/member_count.json frontend/public/index.html frontend/public/user-count.json
+    git add backend/statistics/statistics.csv backend/activities/activities.csv backend/members/members.csv backend/members/member_count.csv frontend/public
     git diff --cached --quiet
     if ($LASTEXITCODE -eq 0) {
         Write-Host "No ledger changes."

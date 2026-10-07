@@ -11,9 +11,10 @@ from datetime import date, timedelta
 import pytest
 
 from backend import config
-from backend.activities.member_activities import fetch_leaderboard
+from backend.members.members import MEMBERS_URL, fetch_count_and_roster
+from backend.statistics.statistics import fetch_leaderboard
+from backend.strava_session import club_page
 from frontend import generate
-from backend.activities.recent_activities import fetch_count_and_feed
 
 pytestmark = pytest.mark.live
 
@@ -31,7 +32,10 @@ def dashboard():
     html = generate.OUT_PATH.read_text(encoding="utf-8")
     _, _, members, _, roll = generate.load(config.load())   # the same name resolution generate.run() used
     name_of = {m["athlete_id"]: roll.resolve(m["name"]) for m in members}
-    return _embedded(html, "DATA"), _embedded(html, "DAILY"), name_of
+    shared = {n for n in name_of.values() if list(name_of.values()).count(n) > 1}
+    # The dashboard's leaderboard rows are keyed by name, so namesakes merge there: compare unique names only.
+    namesakes = {aid for aid, n in name_of.items() if n in shared}
+    return _embedded(html, "DATA"), _embedded(html, "DAILY"), name_of, namesakes
 
 
 def _figures(bucket: dict) -> dict:
@@ -46,7 +50,7 @@ def _week_delta(after: dict, before: dict, name: str) -> dict:
 
 
 def test_dashboard_weeks_match_the_strava_leaderboard(dashboard):
-    data, daily, name_of = dashboard
+    data, daily, name_of, namesakes = dashboard
     board = fetch_leaderboard()
     this_monday = max(date.fromisoformat(w) for w in board)
     last_monday = this_monday - timedelta(weeks=1)
@@ -61,6 +65,8 @@ def test_dashboard_weeks_match_the_strava_leaderboard(dashboard):
     mismatches = []
     for monday, (after, before) in weeks.items():
         for aid, fig in board[monday.isoformat()].items():
+            if aid in namesakes:
+                continue   # a namesake, merged on the dashboard
             strava = {"km": fig["distance_m"] / 1000, "elev": fig["elev_gain_m"],
                       "time_s": fig["moving_time_s"], "acts": fig["activities"]}
             mine = _week_delta(after, before, name_of.get(aid, fig["name"]))
@@ -70,5 +76,7 @@ def test_dashboard_weeks_match_the_strava_leaderboard(dashboard):
 
 
 def test_dashboard_member_total_is_stravas_headline_count(dashboard):
-    data, _, _ = dashboard
-    assert data["today"]["all"]["athlete_count"] == fetch_count_and_feed()[0]
+    data = dashboard[0]
+    with club_page(MEMBERS_URL) as page:
+        headline, _ = fetch_count_and_roster(page)
+    assert data["today"]["all"]["athlete_count"] == headline

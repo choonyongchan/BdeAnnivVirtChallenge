@@ -78,24 +78,59 @@ def test_publish_dashboard_commits_and_pushes_when_changed(monkeypatch):
     ]
 
 
-@pytest.mark.parametrize("hour,argv,new,calls", [
-    (14, [], [], ["recent"]),                                    # hourly: club feed only
-    (14, [], ["7"], ["recent", "members ['7']"]),                # a new member: their every week, straight away
-    (23, [], [], ["leaderboard", "recent", "roll", "members ['8']", "members None"]),   # member_scan hour
-    (14, ["--full"], ["7"], ["leaderboard", "recent", "roll", "members ['7', '8']", "members None"]),
-])
-def test_main_runs_what_the_schedule_says_is_due(monkeypatch, hour, argv, new, calls):
+@pytest.fixture
+def pipeline(monkeypatch):
+    """Every scraper replaced by a recorder; returns (seen calls, set the hour/argv/scan result)."""
     seen = []
     monkeypatch.setattr(M, "check_auth", lambda: None)
-    monkeypatch.setattr(M, "datetime", _FrozenClock(f"2026-10-02T{hour:02}:47:00"))
-    monkeypatch.setattr(M.sys, "argv", ["main", *argv])
-    monkeypatch.setattr(M.settings, "recent_activities_hours", "*")
+    for key in ("members_hours", "feed_hours", "leaderboard_hours"):
+        monkeypatch.setattr(M.settings, key, "*")
     monkeypatch.setattr(M.settings, "member_scan_hours", [23])
-    monkeypatch.setattr(M.member_activities, "fetch_leaderboard", lambda: seen.append("leaderboard") or {})
-    monkeypatch.setattr(M.recent_activities, "run", lambda board: seen.append("recent") or new)
-    monkeypatch.setattr(M.members, "add_nominal_roll", lambda: seen.append("roll") or ["8"])
-    monkeypatch.setattr(M.member_activities, "run", lambda board, only=None: seen.append(f"members {only}"))
-    monkeypatch.setattr(M.generate, "run", lambda: None)
+    monkeypatch.setattr(M.members, "run", lambda: seen.append("members"))
+    monkeypatch.setattr(M.feed, "run", lambda: seen.append("feed"))
+    monkeypatch.setattr(M.statistics, "last_profile_sync", lambda: "L")
+    monkeypatch.setattr(M.statistics, "fetch_leaderboard", lambda: seen.append("leaderboard") or {"w": {}})
+    monkeypatch.setattr(M.statistics, "run", lambda weeks, board, synced_at, today:
+                        seen.append(f"statistics {sorted(weeks)} {sorted(board)}"))
+    monkeypatch.setattr(M.generate, "run", lambda: seen.append("generate"))
     monkeypatch.setattr(M, "publish_dashboard", lambda: None)
+
+    def at(hour, argv=(), problem=None):
+        monkeypatch.setattr(M, "datetime", _FrozenClock(f"2026-10-02T{hour:02}:45:00"))
+        monkeypatch.setattr(M.sys, "argv", ["main", *argv])
+        monkeypatch.setattr(M.member_activities, "run", lambda last_scan, setup=False: seen.append(
+            f"profiles {last_scan} setup={setup}") or ({("1", "m"): []}, "S", problem))
+    return seen, at
+
+
+@pytest.mark.parametrize("hour,argv,calls", [
+    (14, [], ["members", "feed", "leaderboard", "statistics [] ['w']", "generate"]),           # hourly
+    (23, [], ["members", "feed", "profiles L setup=False", "leaderboard",                       # member_scan hour
+              "statistics [('1', 'm')] ['w']", "generate"]),
+    (14, ["--full"], ["members", "feed", "profiles L setup=False", "leaderboard",
+                      "statistics [('1', 'm')] ['w']", "generate"]),
+    (14, ["--setup"], ["members", "feed", "profiles L setup=True", "leaderboard",
+                       "statistics [('1', 'm')] ['w']", "generate"]),
+])
+def test_main_runs_what_the_schedule_says_is_due(pipeline, hour, argv, calls):
+    seen, at = pipeline
+    at(hour, argv)
     M.main()
     assert seen == calls
+
+
+def test_jobs_off_the_schedule_are_skipped(pipeline, monkeypatch):
+    seen, at = pipeline
+    at(14)
+    monkeypatch.setattr(M.settings, "members_hours", [3])
+    monkeypatch.setattr(M.settings, "leaderboard_hours", [3])
+    M.main()
+    assert seen == ["feed", "statistics [] []", "generate"]
+
+
+def test_a_short_scan_saves_statistics_then_stops_the_pipeline(pipeline):
+    seen, at = pipeline
+    at(23, problem="Strava rate-limited (HTTP 429)")
+    with pytest.raises(SystemExit, match="429"):
+        M.main()
+    assert seen[-1].startswith("statistics") and "generate" not in seen

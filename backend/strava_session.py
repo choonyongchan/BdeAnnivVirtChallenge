@@ -49,6 +49,16 @@ def append_new_rows(path: Path, fields: list, rows: list) -> None:
         w.writerows(rows)
 
 
+def write_csv(path: Path, fields: list, rows: list) -> None:
+    """Replace the CSV at path with rows, via a temp file so a crash never leaves it half-written."""
+    tmp = path.with_suffix(".tmp")
+    with tmp.open("w", encoding="utf-8", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=fields)
+        w.writeheader()
+        w.writerows(rows)
+    tmp.replace(path)
+
+
 def require_auth() -> None:
     """Raise ScrapeError unless a saved session exists."""
     if not AUTH_PATH.exists():

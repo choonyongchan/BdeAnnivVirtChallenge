@@ -14,7 +14,9 @@ class Config:
     club_id: str
     challenge_start: str
     timezone: str
-    recent_activities_hours: object   # "*" or a list of local hours
+    members_hours: object   # "*" or a list of local hours
+    feed_hours: object
+    leaderboard_hours: object
     member_scan_hours: object
     weather_lat: float
     weather_lon: float
@@ -42,7 +44,9 @@ def load() -> Config:
         club_id=g("club", "id"),
         challenge_start=str(g("challenge_start")),
         timezone=g("timezone"),
-        recent_activities_hours=g("schedule", "recent_activities"),
+        members_hours=g("schedule", "members"),
+        feed_hours=g("schedule", "feed"),
+        leaderboard_hours=g("schedule", "leaderboard"),
         member_scan_hours=g("schedule", "member_scan"),
         weather_lat=g("weather", "latitude"),
         weather_lon=g("weather", "longitude"),

@@ -1,21 +1,16 @@
-"""MemberActivities: every member's profile week (Mon-Sun), the heavy but accurate scan. Their foot activities
-fill gaps in the ledger (activities.csv) and feed MemberStatistics (daily.csv), along with the club leaderboard
-(top 100, this and last week), which also counts runs this account can't see (followers-only, private profiles).
-Also holds the ledger parsing RecentActivities shares.
+"""MemberActivities: every member's profile week (Mon-Sun, /athletes/{id}/interval), the heavy nightly scan.
+Their activities (any sport) fill whatever the hourly feed missed in the ledger (activities.csv); the weeks' foot
+activities go to Statistics. Also holds the ledger parsing the Feed shares.
     python -m backend.activities.member_activities [--setup]    # --setup: every week since challenge_start
 """
-import argparse
 import re
-import sys
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from . import member_statistics
 from ..config import settings
 from ..members.members import CSV_PATH as MEMBERS_CSV
-from ..strava_session import (CLUB_URL, ScrapeError, append_new_rows, club_page, csv_column_set,
-                              read_csv, require_auth)
+from ..strava_session import ScrapeError, append_new_rows, club_page, csv_column_set, read_csv, require_auth
 
 CSV_PATH = Path(__file__).parent / "activities.csv"
 WEEK_URL = "/athletes/{athlete_id}/interval?interval={week}&interval_type=week&chart_type=miles&year_offset=0"
@@ -144,16 +139,8 @@ def append_activities(rows: list, stamp: str | None = None) -> list:
     return new
 
 
-# What the club leaderboard counts: foot sports. Profiles also list rides, swims, workouts...
+# What the club leaderboard counts, and so Statistics: foot sports. The ledger keeps every sport.
 FOOT_TYPES = {"Run", "TrailRun", "VirtualRun", "Walk", "Hike"}
-
-# Rank-table rows: the athlete's id comes from the profile link, the rest are cell texts.
-ROWS_JS = """() => [...document.querySelectorAll('.leaderboard tbody tr')].map(tr => {
-    const c = [...tr.children].map(td => td.innerText.trim());
-    const a = tr.querySelector('a.athlete-name');
-    return a && {id: a.getAttribute('href').split('/').pop(), name: a.innerText.trim(),
-                 dist: c[2], acts: c[3], elev: c[4], time: c[5]};
-}).filter(Boolean)"""
 
 # Fetch a batch of profile-week URLs with a pool of `workers` concurrent requests, all
 # inside the logged-in page. Each XHR answers with jQuery calls; the week's activity
@@ -213,61 +200,50 @@ def week_id(monday: date) -> str:
     return f"{y}{w:02d}"
 
 
-def weeks_to_sync(today: date, challenge_start: str, setup: bool) -> list:
-    """Mondays to refresh: every week since challenge_start (setup), else last week and this week,
+def weeks_to_sync(today: date, challenge_start: str, full: bool) -> list:
+    """Mondays to refresh: every week since challenge_start (full), else last week and this week,
     so runs uploaded late into the week just closed still land."""
     this = monday_of(today)
-    if setup:
+    if full:
         first = monday_of(date.fromisoformat(challenge_start))
         return [first + timedelta(weeks=i) for i in range((this - first).days // 7 + 1)]
     return [this - timedelta(weeks=1), this]   # ponytail: older weeks never re-checked; --setup repairs them
 
 
-def parse_leaderboard(rows: list) -> dict:
-    """Scraped rank-table rows -> {athlete_id: figures + name}."""
-    return {r["id"]: {"name": r["name"],
-                      "distance_m": to_meters(r["dist"]) or 0.0,
-                      "moving_time_s": to_seconds(r["time"]) or 0,
-                      "elev_gain_m": to_meters(r["elev"]) or 0.0,
-                      "activities": to_int(r["acts"]) or 0}
-            for r in rows}
-
-
-def fetch_leaderboard() -> dict:
-    """{monday_iso: {athlete_id: figures}} for this week and last week; the Last Week tab swaps the table in place."""
-    this = monday_of(datetime.now(ZoneInfo(settings.timezone)).date())
-    with club_page(f"{CLUB_URL}/leaderboard") as page:
-        this_week = page.evaluate(ROWS_JS)
-        page.locator("span.button.last-week").click()
-        page.wait_for_timeout(1500)
-        last_week = page.evaluate(ROWS_JS)
-    if not this_week and not last_week:
-        raise ScrapeError("Leaderboard empty - session expired or markup changed; re-run: python -m backend.login")
-    return {this.isoformat(): parse_leaderboard(this_week),
-            (this - timedelta(weeks=1)).isoformat(): parse_leaderboard(last_week)}
-
-
-def foot_rows(entries: list, athlete_id: str) -> list:
-    """This athlete's own foot activities in a profile week's entries (group runs also list the others)."""
+def own_rows(entries: list, athlete_id: str) -> list:
+    """This athlete's own activities in a profile week's entries (group activities also list the others)."""
     rows = []
     for r in (r for e in entries for r in normalise(e)):
         r["activity_id"] = str(r["activity_id"] or "")
-        if r["activity_id"] and str(r["athlete_id"]) == athlete_id and r["type"] in FOOT_TYPES:
+        if r["activity_id"] and str(r["athlete_id"]) == athlete_id:
             rows.append(r)
     return rows
 
 
-def run(leaderboard: dict, setup: bool = False, workers: int = 4, only: list | None = None) -> int:
-    """Scan every members.csv athlete's profile week(s) into the ledger and MemberStatistics; returns new ledger rows.
-    `only`: just these athletes, every week since challenge_start (new members). Stops at Strava's first 429,
-    keeping what it fetched."""
+def jobs_for(members: list, last_scan: str, today: date, setup: bool) -> list:
+    """(athlete_id, monday) pairs to fetch: current members' last two weeks, every week since challenge_start for
+    members ingested after the last nightly scan (or everyone with setup)."""
+    recent = weeks_to_sync(today, settings.challenge_start, False)
+    every = weeks_to_sync(today, settings.challenge_start, True)
+    jobs = []
+    for m in members:
+        if m.get("left_at"):
+            continue
+        weeks = every if setup or (m.get("ingest_at") or "") > last_scan else recent
+        jobs += [(m["athlete_id"], w) for w in weeks]
+    return sorted(jobs, key=lambda j: (j[1], j[0]))
+
+
+def run(last_scan: str, setup: bool = False, workers: int = 4) -> tuple:
+    """Scan current members' profile weeks into the ledger; returns (weeks, synced_at, problem) where weeks is
+    {(athlete_id, monday_iso): foot activity rows} for Statistics and problem a message when the scan fell short
+    (rate-limited, or too many errors) - the caller saves what was found, then raises it. Stops at Strava's first
+    429, keeping what it fetched."""
     require_auth()
-    synced_at = now_utc()   # ledger rows found here share it, so the dashboard never adds them twice
+    synced_at = now_utc()   # ledger rows found here share it, so Statistics never adds them twice
     today = datetime.now(ZoneInfo(settings.timezone)).date()
-    mondays = weeks_to_sync(today, settings.challenge_start, setup or only is not None)
-    members = only if only is not None else [r["athlete_id"] for r in read_csv(MEMBERS_CSV)]
-    jobs = [(aid, m) for m in mondays for aid in members]
-    print(f"weeks {', '.join(m.isoformat() for m in mondays)}: {len(jobs)} profile requests", flush=True)
+    jobs = jobs_for(read_csv(MEMBERS_CSV), last_scan, today, setup)
+    print(f"{len(jobs)} profile requests", flush=True)
 
     weeks, ledger, errors, limited = {}, [], 0, False
     batch_size = workers * 6
@@ -284,32 +260,19 @@ def run(leaderboard: dict, setup: bool = False, workers: int = 4, only: list | N
                 if "error" in res:
                     errors += 1
                     continue
-                rows = foot_rows(res["entries"] or [], aid)  # None: private profile, nothing visible
-                weeks[(aid, monday.isoformat())] = rows
+                rows = own_rows(res["entries"] or [], aid)  # None: private profile, nothing visible
+                weeks[(aid, monday.isoformat())] = [r for r in rows if r["type"] in FOOT_TYPES]
                 ledger += rows
             print(f"  [{b + len(batch)}/{len(jobs)}] errors {errors}", flush=True)
             if limited:
                 break
 
-    member_statistics.run(weeks, leaderboard, synced_at, today)
     new = append_activities(ledger, synced_at)
     print(f"{len(new)} new activities -> {CSV_PATH}")
+    problem = None
     if limited:
-        raise ScrapeError(f"Strava rate-limited (HTTP 429) after {len(weeks)} of {len(jobs)} profile requests; "
-                          "kept what was fetched - the next full run resumes.")
-    if errors > 0.02 * len(jobs):
-        # What was found is saved; failing lets the scheduler flag the gaps.
-        raise ScrapeError(f"{errors} of {len(jobs)} profile requests failed - re-run to retry.")
-    return len(new)
-
-
-def main() -> int:
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # athlete names may be non-ASCII
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--setup", action="store_true", help="sync every week since challenge_start")
-    run(fetch_leaderboard(), setup=parser.parse_args().setup)
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+        problem = (f"Strava rate-limited (HTTP 429) after {len(weeks)} of {len(jobs)} profile requests; "
+                   "kept what was fetched - the next full run resumes.")
+    elif errors > 0.02 * len(jobs):
+        problem = f"{errors} of {len(jobs)} profile requests failed - re-run to retry."
+    return weeks, synced_at, problem

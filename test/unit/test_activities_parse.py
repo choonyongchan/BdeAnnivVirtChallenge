@@ -8,9 +8,8 @@ from backend.activities.member_activities import (
     FIELDS,
     _row,
     _text,
-    foot_rows,
     normalise,
-    parse_leaderboard,
+    own_rows,
     parse_stats,
     to_int,
     to_meters,
@@ -18,7 +17,7 @@ from backend.activities.member_activities import (
     week_id,
     weeks_to_sync,
 )
-from backend.activities.member_statistics import cumulate, snapshot_date
+from backend.statistics.statistics import cumulate, parse_leaderboard, snapshot_date
 
 
 @pytest.mark.parametrize("raw,text", [
@@ -175,11 +174,11 @@ def test_parse_leaderboard_row():
         "name": "Joseph Soh", "distance_m": 94600.0, "moving_time_s": 30840, "elev_gain_m": 1254.0, "activities": 10}}
 
 
-def test_foot_rows_keeps_only_own_foot_activities():
+def test_own_rows_keeps_every_sport_but_only_the_athletes_own():
     def entry(aid, athlete, type_):
         return {"entity": "Activity", "activity": {"id": aid, "athlete": {"athleteId": athlete}, "type": type_}}
-    rows = foot_rows([entry(1, 7, "Run"), entry(2, 7, "Walk"), entry(3, 7, "Ride"), entry(4, 8, "Run")], "7")
-    assert [r["activity_id"] for r in rows] == ["1", "2"]
+    rows = own_rows([entry(1, 7, "Run"), entry(2, 7, "Walk"), entry(3, 7, "Ride"), entry(4, 8, "Run")], "7")
+    assert [r["activity_id"] for r in rows] == ["1", "2", "3"]
 
 
 @pytest.mark.parametrize("monday,today,day", [

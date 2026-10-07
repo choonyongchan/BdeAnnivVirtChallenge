@@ -21,7 +21,7 @@ ROSTER = [
     ("DAVE DUMMY",  "8SAB",  "",       "NSman",   "Dave Dummy"),
 ]
 
-# athlete_id, name, first_seen date
+# athlete_id, name, ingest_at date
 MEMBERS = [
     ("1", "Alice Anon", "2026-09-10"),
     ("2", "Bob Bogus", "2026-09-10"),
@@ -59,23 +59,23 @@ def env(tmp_path, monkeypatch):
     members = tmp_path / "members.csv"
     with members.open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
-        w.writerow(["athlete_id", "name", "first_seen"])
+        w.writerow(["athlete_id", "name", "ingest_at", "left_at"])
         for aid, name, seen in MEMBERS:
-            w.writerow([aid, name, f"{seen}T00:00:00+00:00"])
+            w.writerow([aid, name, f"{seen}T00:00:00+00:00", ""])
     monkeypatch.setattr(generate, "MEMBERS_CSV", members)
-    monkeypatch.setattr(generate, "MEMBER_COUNT_JSON", tmp_path / "member_count.json")
+    monkeypatch.setattr(generate, "MEMBER_COUNT_CSV", tmp_path / "member_count.csv")
 
     activities = tmp_path / "activities.csv"
     with activities.open("w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=[
-            "activity_id", "athlete_id", "athlete_name", "start_date_utc",
+            "activity_id", "athlete_id", "athlete_name", "start_date_utc", "type",
             "distance_m", "moving_time_s", "elapsed_time_s", "elev_gain_m", "device_name",
         ])
         w.writeheader()
         for i, (aid, name, d, dist, mov, elev) in enumerate(ACTS, 1):
             w.writerow({
                 "activity_id": f"a{i}", "athlete_id": aid, "athlete_name": name,
-                "start_date_utc": d, "distance_m": dist, "moving_time_s": mov,
+                "start_date_utc": d, "type": "Run", "distance_m": dist, "moving_time_s": mov,
                 "elapsed_time_s": mov, "elev_gain_m": elev, "device_name": "Garmin",
             })
     monkeypatch.setattr(generate, "ACTIVITIES_CSV", activities)
@@ -88,13 +88,13 @@ def env(tmp_path, monkeypatch):
                 t = totals.setdefault((aid, day), [0, 0, 0, 0])
                 for i, v in enumerate((dist, mov, elev, 1)):
                     t[i] += v
-    daily = tmp_path / "daily.csv"
+    daily = tmp_path / "statistics.csv"
     with daily.open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(["athlete_id", "date", "distance_m", "moving_time_s", "elev_gain_m", "activities", "source"])
         for (aid, day), t in totals.items():
             w.writerow([aid, day, *t, "profile"])
-    monkeypatch.setattr(generate, "DAILY_CSV", daily)
+    monkeypatch.setattr(generate, "STATISTICS_CSV", daily)
 
     announce = tmp_path / "announce.md"
     announce.write_text("# Test Banner\nGo run.", encoding="utf-8")
@@ -103,7 +103,7 @@ def env(tmp_path, monkeypatch):
         "club:\n  name: Test Club\n  id: '1'\n"
         f"challenge_start: {CHALLENGE_START}\n"
         "timezone: Asia/Singapore\n"
-        "schedule:\n  recent_activities: '*'\n  member_scan: [23]\n"
+        "schedule:\n  members: '*'\n  feed: '*'\n  leaderboard: '*'\n  member_scan: [23]\n"
         "weather:\n  latitude: 1.3835\n  longitude: 103.7478\n"
         f'announcement_path: "{str(announce).replace(chr(92), "/")}"\n'
         "browser:\n  channel: ''\n  headless: true\n",
@@ -157,12 +157,13 @@ def test_rationale_invariants_hold(env):
 
 
 def test_headline_member_count_overrides_all_total(env, tmp_path):
-    (tmp_path / "member_count.json").write_text(json.dumps({"member_count": 1055}), encoding="utf-8")
+    (tmp_path / "member_count.csv").write_text("scraped_at,member_count\n2026-09-23T04:00:00+00:00,1050\n"
+                                               "2026-09-24T02:00:00+00:00,1055\n", encoding="utf-8")
     data, daily = generate.build(*generate.load(config.load()), NOW)
 
     assert data["today"]["all"]["athlete_count"] == 1055
     assert daily[max(daily)]["all"]["athlete_count"] == 1055
-    assert daily[min(daily)]["all"]["athlete_count"] <= len(MEMBERS)   # past days stay ledger-based
+    assert daily[min(daily)]["all"]["athlete_count"] <= len(MEMBERS)   # before the first headline: roster-based
 
     generate.run()
     badge = json.loads((tmp_path / "user-count.json").read_text(encoding="utf-8"))

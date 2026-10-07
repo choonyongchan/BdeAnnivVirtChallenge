@@ -1,138 +1,105 @@
-"""members.csv, the append-only union of club members from three sources, and the club's headline member count
-(member_count.json), which the dashboard shows as the total.
-    NominalRollMembers     roll STRAVA usernames that Strava's athlete search shows in this club (nightly)
-    RecentActivityMembers  athletes in the club's recent-activity feed
-    LeaderboardMembers     athletes on the club leaderboard (this and last week; nightly)
-Since 16 Sep 2026 the members page lists only admins, so only its "1055 members" headline is read.
+"""Members: the club's members page is the only source. Hourly it records the "1,097 members" headline in
+member_count.csv and walks the paged roster (/members?page=1..N, 30 athletes a page, Admins then Members) into
+members.csv: newcomers get ingest_at, athletes gone from the roster get left_at (cleared if they rejoin).
+The headline is authoritative: when the roster does not tally with it (someone joined mid-walk, or a page
+failed), newcomers are still added but nobody is marked as left.
 """
-import csv
-import json
+import html
 import random
 import re
 from datetime import datetime, timezone
 from pathlib import Path
-from urllib.parse import quote
 
-from ..strava_session import (CLUB_URL, FETCH_JS, ScrapeError, append_new_rows, club_page, csv_column_set,
-                              read_csv, require_auth)
+from ..strava_session import (CLUB_URL, FETCH_JS, ScrapeError, append_new_rows, club_page, read_csv, require_auth,
+                              write_csv)
 
 CSV_PATH = Path(__file__).parent / "members.csv"
-COUNT_PATH = Path(__file__).parent / "member_count.json"
-ROLL_PATH = Path(__file__).parent.parent / "nominal_roll" / "nominal_roll.csv"
+COUNT_PATH = Path(__file__).parent / "member_count.csv"
 MEMBERS_URL = f"{CLUB_URL}/members"
-SEARCH_URL = "/athletes/search?text={}"
 
-FIELDS = ["athlete_id", "name", "first_seen"]
+FIELDS = ["athlete_id", "name", "ingest_at", "left_at"]
+COUNT_FIELDS = ["scraped_at", "member_count"]
+MAX_PAGES = 200   # circuit breaker: 6,000 members at 30 a page
+
+ROSTER_ROW = re.compile(r"""class=['"]text-headline['"]>\s*<a href=['"]/athletes/(\d+)['"]>([^<]*)</a>""")
 
 
-def parse_member_count(html: str) -> int | None:
+def parse_member_count(page_html: str) -> int | None:
     """The headline count from <span class='membership-count'>1055 members</span>, or None."""
-    m = re.search(r"class=['\"]membership-count['\"][^>]*>\s*([\d,]+)\s+members?\b", html)
+    m = re.search(r"class=['\"]membership-count['\"][^>]*>\s*([\d,]+)\s+members?\b", page_html)
     return int(m.group(1).replace(",", "")) if m else None
 
 
-def fetch_member_count(page) -> int:
-    """The members page's headline count, fetched inside a logged-in club page."""
-    result = page.evaluate(FETCH_JS, MEMBERS_URL)
+def parse_roster(page_html: str) -> dict:
+    """{athlete_id: name} of every athlete in the page's ul.list-athletes lists (Admins and Members)."""
+    out = {}
+    for block in re.split(r"""class=['"]list-athletes['"]""", page_html)[1:]:
+        for aid, name in ROSTER_ROW.findall(block.split("</ul>")[0]):
+            out[aid] = html.unescape(name).strip()
+    return out
+
+
+def fetch_page(page, n: int) -> str:
+    """The members page n's HTML, fetched inside a logged-in club page."""
+    result = page.evaluate(FETCH_JS, f"{MEMBERS_URL}?page={n}")
     if not result["ok"]:
         raise ScrapeError("Session expired or blocked - re-run: python -m backend.login\n"
                           f"Members page returned HTTP {result['status']}.")
-    count = parse_member_count(result["text"])
+    return result["text"]
+
+
+def fetch_count_and_roster(page) -> tuple:
+    """-> (headline count, {athlete_id: name}): pages 1.. until one lists nobody."""
+    first = fetch_page(page, 1)
+    count = parse_member_count(first)
     if count is None:
         raise ScrapeError("Member count not found on the members page - Strava markup may have changed.")
-    return count
+    roster = parse_roster(first)
+    for n in range(2, MAX_PAGES + 1):
+        page.wait_for_timeout(random.randint(400, 900))
+        athletes = parse_roster(fetch_page(page, n))
+        if not athletes or athletes.keys() <= roster.keys():   # past the end: no one new on this page
+            break
+        roster.update(athletes)
+    return count, roster
 
 
-def parse_club_name(title: str) -> str | None:
-    """The club's Strava name from a club page title: 'Singapore Club | BDE ... CHALLENGE on Strava'."""
-    m = re.search(r"\|\s*(.+?)\s+on Strava\s*$", title)
-    return m.group(1) if m else None
+def now_utc() -> str:
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
-def parse_search(html: str) -> list | None:
-    """The athlete search page's results (its __NEXT_DATA__ JSON), or None if the page has none."""
-    m = re.search(r'<script id="__NEXT_DATA__"[^>]*>(.*?)</script>', html, re.S)
-    return json.loads(m.group(1))["props"]["pageProps"].get("searchResults") if m else None
-
-
-def club_hit(results: list, club: str) -> dict | None:
-    """The first result Strava says shares this club with us ('You and Loo are both in <club>'), or None."""
-    return next((r for r in results if r.get("analyticReasonCategory") == "common_club"
-                 and club.lower() in (r.get("subtitle") or "").lower()), None)
-
-
-def same_name(name: str) -> str:
-    """A name compared ignoring case and repeated spaces: 'Loo  Jia Jun' == 'loo jia jun'."""
-    return " ".join(name.split()).lower()
-
-
-class RecentActivityMembers:
-    """Athletes behind the club feed's activity rows."""
-
-    def __init__(self, feed_rows: list):
-        self.athletes = {str(r["athlete_id"]): r["athlete_name"] or "" for r in feed_rows}
-
-
-class LeaderboardMembers:
-    """Athletes on the club leaderboard, {week: {athlete_id: {name, ...}}} (empty on hourly runs)."""
-
-    def __init__(self, leaderboard: dict):
-        self.athletes = {aid: fig["name"] for board in leaderboard.values() for aid, fig in board.items()}
-
-
-class NominalRollMembers:
-    """Roll STRAVA usernames confirmed by Strava's athlete search: the first result in this club, whatever its name.
-    Only usernames not already a members.csv name are searched; a failed search stops the rest, keeping the hits."""
-
-    def __init__(self, page, club: str):
-        known = {same_name(r["name"]) for r in read_csv(CSV_PATH)}
-        with ROLL_PATH.open(encoding="utf-8-sig", newline="") as f:
-            usernames = {same_name(r["STRAVA username"]) for r in csv.DictReader(f)} - known - {""}
-        self.searched = 0
-        self.athletes = {}
-        for username in sorted(usernames):
-            result = page.evaluate(FETCH_JS, SEARCH_URL.format(quote(username)))
-            results = parse_search(result["text"]) if result["ok"] else None
-            if results is None:
-                print(f"athlete search failed (HTTP {result['status']}) after {self.searched} of {len(usernames)}; "
-                      "the next nightly run retries")
-                break
-            self.searched += 1
-            hit = club_hit(results, club)
-            if hit:
-                self.athletes[hit["idStr"]] = hit["name"]
-            page.wait_for_timeout(random.randint(400, 900))
-
-
-def add_nominal_roll() -> list:
-    """Search the roll's unmatched usernames and append the club members found; returns the new athlete ids."""
-    require_auth()
-    with club_page(MEMBERS_URL) as page:
-        club = parse_club_name(page.title())
-        if not club:
-            raise ScrapeError(f"Club name not found in the members page title {page.title()!r} - "
-                              "session expired or Strava markup changed.")
-        roll = NominalRollMembers(page, club)
-    new = append_members(roll.athletes)
-    print(f"roll: {roll.searched} usernames searched, {len(roll.athletes)} in {club}, {len(new)} new -> {CSV_PATH}")
+def update_members(count: int, roster: dict, stamp: str) -> list:
+    """Upsert members.csv from the roster; returns the newcomers' athlete ids.
+    Tallied (roster size == headline): absent members get left_at, returning ones have it cleared."""
+    rows = {r["athlete_id"]: r for r in read_csv(CSV_PATH)}
+    tallied = len(roster) == count
+    new = []
+    for aid, name in roster.items():
+        if aid not in rows:
+            rows[aid] = {"athlete_id": aid, "name": name, "ingest_at": stamp, "left_at": ""}
+            new.append(aid)
+        elif tallied:
+            rows[aid]["left_at"] = ""
+    if tallied:
+        for aid, r in rows.items():
+            if aid not in roster and not r.get("left_at"):
+                r["left_at"] = stamp
+    else:
+        print(f"WARNING: roster lists {len(roster)} athletes but the headline says {count}; "
+              "newcomers added, nobody marked as left this run")
+    write_csv(CSV_PATH, FIELDS, list(rows.values()))
     return new
 
 
-def append_members(athletes: dict) -> list:
-    """Append each athlete not in members.csv yet; returns their athlete ids.
-    Append-only: an existing row (name snapshot, leavers) is never touched."""
-    seen = csv_column_set(CSV_PATH, "athlete_id")
-    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    new = [{"athlete_id": aid, "name": name, "first_seen": now}
-           for aid, name in athletes.items() if aid not in seen]
-    append_new_rows(CSV_PATH, FIELDS, new)
-    return [r["athlete_id"] for r in new]
-
-
-def write_members(count: int, sources: list) -> list:
-    """Save the headline count and append the union of the sources' athletes; returns the new athlete ids."""
-    COUNT_PATH.write_text(json.dumps({"member_count": count}) + "\n", encoding="utf-8")
-    athletes = {aid: name for source in sources for aid, name in source.athletes.items()}
-    new = append_members(athletes)
-    print(f"headline count {count}; {len(athletes)} feed/leaderboard athletes, {len(new)} new -> {CSV_PATH}")
+def run() -> list:
+    """Headline -> member_count.csv, roster -> members.csv; returns the newcomers' athlete ids."""
+    require_auth()
+    with club_page(MEMBERS_URL) as page:
+        count, roster = fetch_count_and_roster(page)
+        if len(roster) != count:   # one retry: a join or leave mid-walk shifts the pages
+            count, roster = fetch_count_and_roster(page)
+    stamp = now_utc()
+    append_new_rows(COUNT_PATH, COUNT_FIELDS, [{"scraped_at": stamp, "member_count": count}])
+    new = update_members(count, roster, stamp)
+    print(f"headline {count} members; roster {len(roster)}; {len(new)} new -> {CSV_PATH}")
     return new

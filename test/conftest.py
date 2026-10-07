@@ -100,13 +100,13 @@ def make_activity():
 
 @pytest.fixture
 def weeks_from():
-    """daily.csv-shaped rows for activity dicts: one week-to-date snapshot per athlete per week, dated by the
+    """statistics.csv-shaped rows for activity dicts: one week-to-date snapshot per athlete per week, dated by the
     week's last activity, so a test can state its data once as activities."""
     return _weeks_from
 
 
 def _weeks_from(acts):
-    """daily.csv rows for acts: per athlete, cumulative totals as of each day they ran."""
+    """statistics.csv rows for acts: per athlete, cumulative totals as of each day they ran."""
     rows, totals = {}, {}
     for a in sorted(acts, key=lambda a: a.get("start_date_utc", "2026-09-14")):
         day = a.get("start_date_utc", "2026-09-14")[:10]
@@ -122,12 +122,12 @@ def _weeks_from(acts):
 @pytest.fixture
 def dummy_members():
     """members.csv-shaped rows matching the dummy roster's STRAVA usernames.
-    Cara's first_seen is later, so history tests can check she is absent from earlier days."""
+    Cara's ingest_at is later, so history tests can check she is absent from earlier days."""
     return [
-        {"athlete_id": "1", "name": "Alice Anon", "first_seen": "2026-09-10T00:00:00+00:00"},
-        {"athlete_id": "2", "name": "Bob Bogus", "first_seen": "2026-09-10T00:00:00+00:00"},
-        {"athlete_id": "3", "name": "Cara Cipher", "first_seen": "2026-09-16T00:00:00+00:00"},
-        {"athlete_id": "4", "name": "Dave Dummy", "first_seen": "2026-09-10T00:00:00+00:00"},
+        {"athlete_id": "1", "name": "Alice Anon", "ingest_at": "2026-09-10T00:00:00+00:00"},
+        {"athlete_id": "2", "name": "Bob Bogus", "ingest_at": "2026-09-10T00:00:00+00:00"},
+        {"athlete_id": "3", "name": "Cara Cipher", "ingest_at": "2026-09-16T00:00:00+00:00"},
+        {"athlete_id": "4", "name": "Dave Dummy", "ingest_at": "2026-09-10T00:00:00+00:00"},
     ]
 
 

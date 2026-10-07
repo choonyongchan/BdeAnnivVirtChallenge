@@ -39,23 +39,23 @@ def _write_export(path):
 def _write_members(path):
     with path.open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
-        w.writerow(["athlete_id", "name", "first_seen"])
+        w.writerow(["athlete_id", "name", "ingest_at", "left_at"])
         for aid, name in RUNNERS:
-            w.writerow([aid, name, "2026-09-10T00:00:00+00:00"])
+            w.writerow([aid, name, "2026-09-10T00:00:00+00:00", ""])
     return path
 
 
 def _write_activities(path):
     with path.open("w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=[
-            "activity_id", "athlete_id", "athlete_name", "start_date_utc",
+            "activity_id", "athlete_id", "athlete_name", "start_date_utc", "type",
             "distance_m", "moving_time_s", "elapsed_time_s", "elev_gain_m", "device_name",
         ])
         w.writeheader()
         for i, (aid, name) in enumerate(RUNNERS, 1):
             w.writerow({
                 "activity_id": f"a{i}", "athlete_id": aid, "athlete_name": name,
-                "start_date_utc": "2026-09-15T02:00:00Z", "distance_m": 6000,
+                "start_date_utc": "2026-09-15T02:00:00Z", "type": "Run", "distance_m": 6000,
                 "moving_time_s": 1800, "elapsed_time_s": 1800, "elev_gain_m": 10,
                 "device_name": "Garmin",
             })
@@ -63,7 +63,7 @@ def _write_activities(path):
 
 
 def _write_daily(path):
-    """daily.csv: each runner's one 6 km week, snapshotted on its Sunday."""
+    """statistics.csv: each runner's one 6 km week, snapshotted on its Sunday."""
     with path.open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(["athlete_id", "date", "distance_m", "moving_time_s", "elev_gain_m", "activities", "source"])
@@ -78,16 +78,18 @@ def test_converted_roll_drives_dashboard_grouping(tmp_path, monkeypatch):
     assert count == 3
     monkeypatch.setattr(NominalRoll, "CSV_PATH", roll_csv)
     monkeypatch.setattr(generate, "MEMBERS_CSV", _write_members(tmp_path / "members.csv"))
-    monkeypatch.setattr(generate, "MEMBER_COUNT_JSON", tmp_path / "member_count.json")
+    monkeypatch.setattr(generate, "MEMBER_COUNT_CSV", tmp_path / "member_count.csv")
     monkeypatch.setattr(generate, "ACTIVITIES_CSV", _write_activities(tmp_path / "activities.csv"))
-    monkeypatch.setattr(generate, "DAILY_CSV", _write_daily(tmp_path / "daily.csv"))
+    monkeypatch.setattr(generate, "STATISTICS_CSV", _write_daily(tmp_path / "statistics.csv"))
 
     cfg = config.Config(
         club_name="Test Club",
         club_id="1",
         challenge_start="2026-09-14",
         timezone="Asia/Singapore",
-        recent_activities_hours="*",
+        members_hours="*",
+        feed_hours="*",
+        leaderboard_hours="*",
         member_scan_hours=[23],
         weather_lat=1.3835,
         weather_lon=103.7478,

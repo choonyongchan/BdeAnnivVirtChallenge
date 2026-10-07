@@ -1,15 +1,13 @@
-"""Integration test for the CSV writers (no browser): the ledger and members.csv are append-only and
-deduped by id; existing member rows are never rewritten. Roll usernames join only when athlete search shows them
-in the club."""
+"""Integration test for the CSV writers (no browser): the ledger is append-only and deduped by id; members.csv
+follows the roster (ingest_at, left_at, rejoins) only when it tallies with the headline; member_count.csv is a
+history of headlines; the feed ledgers every sport."""
 import csv
-import json
-from types import SimpleNamespace
-from urllib.parse import unquote
+from contextlib import contextmanager
 
 import pytest
 
+from backend.activities import feed as F
 from backend.activities import member_activities as A
-from backend.activities import recent_activities as R
 from backend.members import members as M
 
 
@@ -41,101 +39,59 @@ def test_activities_write_is_append_only_and_deduped(tmp_path, monkeypatch):
     assert path.read_text(encoding="utf-8").count("activity_id,athlete_id") == 1  # header once
 
 
+def test_feed_ledgers_every_sport(tmp_path, monkeypatch):
+    monkeypatch.setattr(A, "CSV_PATH", tmp_path / "activities.csv")
+    monkeypatch.setattr(F, "require_auth", lambda: None)
+    rows = A.normalise(_activity(1, 1)) + A.normalise(_activity(2, 1))
+    rows[0]["type"], rows[1]["type"] = "Run", "Ride"
+    monkeypatch.setattr(F, "fetch_feed", lambda: rows)
+
+    assert F.run() == 2
+    assert [r["type"] for r in _read(tmp_path / "activities.csv")] == ["Run", "Ride"]
+
+
 @pytest.fixture
 def member_paths(tmp_path, monkeypatch):
-    paths = {"csv": tmp_path / "members.csv", "count": tmp_path / "member_count.json"}
+    paths = {"csv": tmp_path / "members.csv", "count": tmp_path / "member_count.csv"}
     monkeypatch.setattr(M, "CSV_PATH", paths["csv"])
     monkeypatch.setattr(M, "COUNT_PATH", paths["count"])
     return paths
 
 
-def _source(athletes):
-    return SimpleNamespace(athletes=athletes)
+def _members(path):
+    return {r["athlete_id"]: (r["name"], r["ingest_at"], r["left_at"]) for r in _read(path)}
 
 
-def test_members_write_is_append_only(member_paths):
-    assert M.write_members(1000, [_source({"1": "Alice Anon"})]) == ["1"]
-    assert M.write_members(1001, [_source({"1": "Alice A."}), _source({"3": "Cara Cipher"})]) == ["3"]   # Alice renamed
-    assert M.write_members(1001, [_source({"3": "Cara Cipher"})]) == []                               # nothing new
-
-    rows = _read(member_paths["csv"])
-    assert [(r["athlete_id"], r["name"]) for r in rows] == [("1", "Alice Anon"), ("3", "Cara Cipher")]
-    assert all(r["first_seen"] for r in rows)
-    assert member_paths["csv"].read_text(encoding="utf-8").count("athlete_id,name,first_seen") == 1
-    assert json.loads(member_paths["count"].read_text(encoding="utf-8")) == {"member_count": 1001}
+def test_tallied_roster_adds_marks_leavers_and_rejoins(member_paths):
+    assert M.update_members(2, {"1": "Alice", "2": "Bob"}, "T1") == ["1", "2"]
+    assert M.update_members(2, {"1": "Alice A.", "3": "Cara"}, "T2") == ["3"]          # Bob left, Cara joined
+    assert _members(member_paths["csv"]) == {"1": ("Alice", "T1", ""),                  # name kept from ingest
+                                             "2": ("Bob", "T1", "T2"),
+                                             "3": ("Cara", "T2", "")}
+    assert M.update_members(3, {"1": "Alice", "2": "Bob", "3": "Cara"}, "T3") == []    # Bob back
+    assert _members(member_paths["csv"])["2"] == ("Bob", "T1", "")
 
 
-def test_recent_activities_adds_feed_and_leaderboard_athletes_and_ledgers_feed_runs(member_paths, monkeypatch,
-                                                                               tmp_path):
-    monkeypatch.setattr(A, "CSV_PATH", tmp_path / "activities.csv")
-    monkeypatch.setattr(R, "require_auth", lambda: None)
-    feed = A.normalise(_activity(1, 1)) + A.normalise(_activity(2, 1))
-    feed[0].update(type="Run", athlete_name="Alice Anon")
-    feed[1].update(type="Ride", athlete_name="Alice Anon")   # not a foot activity: kept out of the ledger
-    monkeypatch.setattr(R, "fetch_count_and_feed", lambda: (1055, feed))
-    board = {"2026-09-28": {"2": {"name": "Bob Bogus"}}, "2026-09-21": {"1": {"name": "Alice Anon"}}}
-
-    assert R.run(board) == ["1", "2"]          # the new members' ids
-    assert {r["athlete_id"] for r in _read(member_paths["csv"])} == {"1", "2"}
-    assert [r["activity_id"] for r in _read(tmp_path / "activities.csv")] == ["1"]
+def test_untallied_roster_adds_newcomers_but_marks_nobody_left(member_paths, capsys):
+    M.update_members(2, {"1": "Alice", "2": "Bob"}, "T1")
+    assert M.update_members(5, {"1": "Alice", "3": "Cara"}, "T2") == ["3"]   # headline 5, roster 2: partial walk
+    assert _members(member_paths["csv"])["2"] == ("Bob", "T1", "")
+    assert "WARNING" in capsys.readouterr().out
 
 
-class _SearchPage:
-    """Answers athlete searches from {username: results}; None makes that search fail with HTTP 429."""
+def test_run_records_the_headline_and_retries_a_mismatch_once(member_paths, monkeypatch):
+    monkeypatch.setattr(M, "require_auth", lambda: None)
+    answers = [(3, {"1": "A", "2": "B"}), (2, {"1": "A", "2": "B"})]   # someone left mid-walk, the retry tallies
+    monkeypatch.setattr(M, "fetch_count_and_roster", lambda page: answers.pop(0))
 
-    def __init__(self, answers):
-        self.answers = answers
-        self.searched = []
+    @contextmanager
+    def _club_page(url):
+        yield None
+    monkeypatch.setattr(M, "club_page", _club_page)
 
-    def evaluate(self, script, url):
-        username = unquote(url.split("text=")[1])
-        self.searched.append(username)
-        results = self.answers.get(username, [])
-        if results is None:
-            return {"ok": False, "status": 429, "text": ""}
-        data = {"props": {"pageProps": {"searchResults": results}}}
-        return {"ok": True, "status": 200,
-                "text": f'<script id="__NEXT_DATA__" type="application/json">{json.dumps(data)}</script>'}
-
-    def wait_for_timeout(self, ms):
-        pass
-
-
-CLUB = "BDE ANNIVERSARY VIRTUAL CHALLENGE"
-
-
-def _in_club(aid, name):
-    return {"idStr": aid, "name": name, "analyticReasonCategory": "common_club",
-            "subtitle": f"You and {name} are both in {CLUB}"}
-
-
-@pytest.fixture
-def roll(tmp_path, monkeypatch):
-    path = tmp_path / "nominal_roll.csv"
-    path.write_text("﻿Name,Unit,Company,Type of service,STRAVA username\n"
-                    "ALICE ANON,40SAR,Cougar,NSF,alice  ANON\n"         # already a member, by name
-                    "BOB BOGUS,41SAR,Falcon,NSF,Bob Bogus\n"
-                    "CARA CIPHER,SBW,,NSF,Cara\n"
-                    "DAVE DUMMY,8SAB,,NSF,\n", encoding="utf-8")          # no username: never searched
-    monkeypatch.setattr(M, "ROLL_PATH", path)
-    return path
-
-
-def test_roll_members_are_searched_and_kept_only_when_in_the_club(member_paths, roll):
-    M.append_members({"1": "Alice Anon"})
-    page = _SearchPage({"bob bogus": [{"idStr": "9", "name": "Bob Bogus"}, _in_club("2", "Bob  B")],
-                        "cara": [{"idStr": "8", "name": "Cara Elsewhere"}]})   # not in the club
-
-    found = M.NominalRollMembers(page, CLUB)
-
-    assert sorted(page.searched) == ["bob bogus", "cara"]
-    assert found.athletes == {"2": "Bob  B"}   # in the club, whatever the name
-    assert M.append_members(found.athletes) == ["2"]
-
-
-def test_roll_search_failure_keeps_earlier_hits(member_paths, roll):
-    page = _SearchPage({"alice anon": [_in_club("1", "Alice Anon")], "bob bogus": None})
-    found = M.NominalRollMembers(page, CLUB)
-    assert found.athletes == {"1": "Alice Anon"}
-    assert found.searched == 1
-    assert page.searched == ["alice anon", "bob bogus"]   # stopped before cara
+    assert M.run() == ["1", "2"]
+    assert answers == []
+    assert [r["member_count"] for r in _read(member_paths["count"])] == ["2"]
+    monkeypatch.setattr(M, "fetch_count_and_roster", lambda page: (2, {"1": "A", "2": "B"}))
+    M.run()
+    assert [r["member_count"] for r in _read(member_paths["count"])] == ["2", "2"]   # a history, one row a run
