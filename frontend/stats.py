@@ -1,6 +1,6 @@
-"""Leaderboard, award and fun statistics over weekly.csv / activities.csv / members.csv rows.
-Totals come from Strava's weekly figures; the best-effort ledger only feeds the per-activity awards.
-Athletes join by athlete_id (weekly/activities <-> members) before falling back to name resolution."""
+"""Leaderboard, award and fun statistics over statistics.csv / activities.csv / members.csv rows.
+Totals come from the cumulative statistics.csv snapshots; the best-effort ledger only feeds the per-activity awards.
+Athletes join by athlete_id (statistics/activities <-> members) before falling back to name resolution."""
 from collections import Counter
 from dataclasses import dataclass, field
 
@@ -37,7 +37,7 @@ class AthleteStats:
     break_time: float = 0.0    # elapsed minus moving, i.e. time spent stopped
 
     def add_week(self, week: dict) -> None:
-        """Accumulate one daily.csv row (or feed extra) into the totals."""
+        """Accumulate one athlete's cumulative statistics.csv snapshot row into the totals."""
         self.km += _num(week.get("distance_m")) / 1000
         self.elev += _num(week.get("elev_gain_m"))
         self.time_s += _num(week.get("moving_time_s"))
@@ -155,7 +155,7 @@ def _roster_name(act: dict, roll: NominalRoll, member_by_id: dict) -> str:
 
 
 def _accumulate_athletes(weeks: list, activities: list, roll: NominalRoll, member_by_id: dict) -> dict:
-    """Fold every weekly row and ledger activity into per-athlete accumulators keyed by resolved name."""
+    """Fold every statistics snapshot row (`weeks`) and ledger activity into per-athlete accumulators keyed by resolved name."""
     athletes: dict = {}
 
     def athlete(row):
@@ -241,7 +241,7 @@ def _compute_fun_stats(athletes: dict) -> dict:
 
 
 def compute_stats(weeks: list, activities: list, members: list, roll: NominalRoll) -> ReportStats:
-    """All leaderboard, award and fun statistics for one period: totals from weekly rows,
+    """All leaderboard, award and fun statistics for one period: totals from statistics snapshot rows (`weeks`),
     per-activity awards from the ledger. members adds zero rows for non-runners and the athlete_id -> name join."""
     if not weeks and not activities and not members:
         return ReportStats()

@@ -54,9 +54,10 @@ by group, unit or company.
 - **Foot sports only:** Run, Trail Run, Virtual Run, Walk and Hike, from the challenge
   start date (14 Sep 2026). Rides, swims and workouts don't count.
 - **Updated hourly.** The time of the last update is in the page footer.
-- **Your totals are Strava's figures.** If you are in the club leaderboard's top 100,
-  your week matches it exactly. Otherwise your week is the sum of your activities. Each
-  night these are re-checked against your Strava profile.
+- **Your totals are Strava's figures.** If you are on the club leaderboard (it lists
+  about 100 athletes a week), your week matches it exactly. Otherwise your week is the sum
+  of your activities. Each night the last two weeks are re-checked against your Strava
+  profile; older weeks are not re-checked.
 - **An activity is missing?** It needs to be visible to the club (privacy "Everyone",
   or "Followers" with the organiser following you), and dated in the challenge. Runs
   uploaded more than a week late are only picked up by a full rebuild. Ask the

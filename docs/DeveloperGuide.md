@@ -46,8 +46,10 @@ A rate-limited or error-heavy profile scan still saves what it found, then fails
   upload time, so late or backdated uploads still appear. Hourly runs leave ~25 h of slack.
 - **Members page:** the full roster for an admin session. Admins are listed first on
   every page, then 30 members a page. Rows carry id, name and location, but no join date.
-- **Leaderboard:** top 100 only, this week and last week, club sport only (Run/Walk/Hike).
-  Time is moving time.
+- **Leaderboard:** about 100 athletes a scrape, this week and last week, club sport only
+  (Run/Walk/Hike). Time is moving time. Rows are keyed by (athlete, date) and merged
+  across the day's hourly runs, so one snapshot date can hold more than 100 leaderboard
+  rows (121 seen on 2026-10-13) as athletes move in and out of the cut.
 - **Profile week (`/interval`):** the week's activity list (`#interval-rides`, React props
   with `preFetchedEntries`). It also carries `#totals`, but those sum **every** sport
   (Crossfit time included) to 0.1 km and 1 min, with no activity count, so they are not used.
@@ -82,6 +84,16 @@ since `challenge_start`, as of `date`. Every run upserts rows, in this priority:
 3. **feed** (fallback, everyone else): the athlete's latest row, plus ledger foot
    activities dated after that row, or scraped after it was synced (late uploads). The
    result is dated today.
+
+Where the leaderboard and the profile sum both cover an athlete-week, the leaderboard
+wins: it is Strava's own figure, and the profile list only shows what the logged-in
+account can see. The two can disagree (deleted, flagged or merged activities, privacy), so
+the ledger's foot total and an athlete's latest statistics row can differ either way.
+
+Cumulative totals can go down. Each week is re-added on top of the last row before it, so
+an activity deleted or edited in the current or previous week lowers the next snapshot
+(22 such steps on 2026-10-13). Older weeks are never re-fetched (`weeks_to_sync`); a
+`--setup` run rebuilds them.
 
 Weeks with nothing seen write no row, so feed-only athletes keep counting. Rewriting last
 week's Sunday row does not cascade to this week's rows; the nightly profile scan rebuilds

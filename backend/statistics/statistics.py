@@ -1,6 +1,6 @@
 """Statistics: each member's cumulative foot-sport totals since challenge_start, one statistics.csv row per athlete
 per day, stamped synced_at. Every run overwrites the last seen figures, from the best source available:
-    leaderboard  the club leaderboard (top 100, this and last week), hourly and nightly
+    leaderboard  the club leaderboard (about 100 athletes a scrape, this and last week), hourly and nightly
     profile      the week's foot activities on the athlete's profile (MemberActivities), nightly
     feed         fallback for everyone else: their last row plus the ledger's foot activities it doesn't cover yet
 A week's figures go on top of the athlete's last row before that week, so past weeks are never re-fetched.
