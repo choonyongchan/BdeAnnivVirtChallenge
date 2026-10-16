@@ -209,21 +209,41 @@ def read_roll(path: Path) -> list:
 
 
 def merge(existing: list, new_rows: list) -> tuple:
-    """Fold an export into the roll: re-registrations replace in place, new people append.
-    Returns (rows, updated, added); the roll has no NRIC, so unlike dedupe() this keys on the name."""
-    rows = list(existing)
-    at = {row[0].strip().upper(): i for i, row in enumerate(rows)}
+    """Fold an export into the roll. The roll has no NRIC, so a row matches on STRAVA username,
+    else on name; a match is a re-registration and the old row is discarded wholesale.
+    Returns (rows, updated, added), rows in export order (roll rows absent from the export last)."""
+    entries = [[len(new_rows), row] for row in existing]   # [export position, row]
+    by_strava, by_name = {}, {}
+
+    def index(i):
+        row = entries[i][1]
+        if row[4].strip():
+            by_strava[row[4].strip().lower()] = i
+        by_name[row[0].strip().upper()] = i
+
+    def unindex(row):
+        by_strava.pop(row[4].strip().lower(), None)
+        by_name.pop(row[0].strip().upper(), None)
+
+    for i in range(len(entries)):
+        index(i)
+
     updated = added = 0
-    for row in new_rows:
-        key = row[0].strip().upper()
-        if key in at:
-            rows[at[key]] = row
-            updated += 1
-        else:
-            at[key] = len(rows)
-            rows.append(row)
+    for pos, row in enumerate(new_rows):
+        i = by_strava.get(row[4].strip().lower()) if row[4].strip() else None
+        if i is None:
+            i = by_name.get(row[0].strip().upper())
+        if i is None:
+            entries.append([pos, row])
+            i = len(entries) - 1
             added += 1
-    return rows, updated, added
+        else:
+            unindex(entries[i][1])
+            entries[i] = [pos, row]
+            updated += 1
+        index(i)
+    entries.sort(key=lambda e: e[0])   # stable: untouched roll rows keep their order, at the end
+    return [row for _, row in entries], updated, added
 
 
 def read_export(in_path: Path) -> list:
