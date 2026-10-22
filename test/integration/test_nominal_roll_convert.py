@@ -154,11 +154,11 @@ def test_merges_into_an_existing_roll(converted):
 
     assert count == 5                                  # the 4 already there + 1 new
     rows = _read(out_path)
-    assert [r[0] for r in rows[1:]] == ["Alpha Tester", "Bravo Tester", "Charlie Tester",
-                                        "Delta Tester", "Echo Tester"]
-    assert rows[1][1:3] == ["8SAB", ""]                # Alpha updated where it already sat
-    assert rows[2:5] == before[2:5]                    # everyone else untouched
-    assert rows[5][1:3] == ["41SAR", "Shrike"]
+    assert [r[0] for r in rows[1:]] == ["Echo Tester", "Alpha Tester", "Bravo Tester",
+                                        "Charlie Tester", "Delta Tester"]   # export order, then the rest
+    assert rows[1][1:3] == ["41SAR", "Shrike"]
+    assert rows[2][1:3] == ["8SAB", ""]                # Alpha replaced by its re-registration
+    assert rows[3:6] == before[2:5]                    # everyone else untouched
     assert out_path.read_bytes().startswith(b"\xef\xbb\xbf")   # byte shape unchanged
     assert any(level == "INFO" and "merged into the existing roll" in msg
                for level, _, msg in notes)

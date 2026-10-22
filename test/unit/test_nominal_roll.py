@@ -217,14 +217,14 @@ def test_row_fields_first_non_empty_answer_wins():
 # (description, existing, new rows) -> (merged rows, updated, added)
 MERGE_CASES = [
     ("a name not in the roll is appended",
-     [["ANN", "41SAR"]], [["BOB", "40SAR"]],
-     ([["ANN", "41SAR"], ["BOB", "40SAR"]], 0, 1)),
+     [["ANN", "41SAR", "", "", ""]], [["BOB", "40SAR", "", "", ""]],
+     ([["BOB", "40SAR", "", "", ""], ["ANN", "41SAR", "", "", ""]], 0, 1)),
     ("a re-registration replaces the row where it already sits",
-     [["ANN", "41SAR"], ["BOB", "40SAR"]], [["ann", "8SAB"]],
-     ([["ann", "8SAB"], ["BOB", "40SAR"]], 1, 0)),
+     [["ANN", "41SAR", "", "", ""], ["BOB", "40SAR", "", "", ""]], [["ann", "8SAB", "", "", ""]],
+     ([["ann", "8SAB", "", "", ""], ["BOB", "40SAR", "", "", ""]], 1, 0)),
     ("with no roll yet, the export is the roll",
-     [], [["ANN", "41SAR"]],
-     ([["ANN", "41SAR"]], 0, 1)),
+     [], [["ANN", "41SAR", "", "", ""]],
+     ([["ANN", "41SAR", "", "", ""]], 0, 1)),
 ]
 
 
