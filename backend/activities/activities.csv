@@ -7159,3 +7159,667 @@ Cat B: 3 x 800m, &lt; 4min",0,0,GroupActivity,2026-10-23T03:04:23+00:00
 20696030370,659459897,Javier Lim,Javier,2026-10-22T11:44:56Z,,Evening Hike,Hike,4470.0,5100,7772,,56.0,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-23T03:04:23+00:00
 20695246427,46143071,Darren  Huang,Darren ,2026-10-22T10:25:47Z,,Evening Run,Run,8670.0,4920,5571,9:33 /km,,,Garmin Forerunner 265,,False,False,everyone,Northeast,,0,0,Activity,2026-10-23T03:04:23+00:00
 20696029947,659459897,Javier Lim,Javier,2026-10-21T23:57:51Z,,Morning Hike,Hike,3360.0,3186,5551,,42.0,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-23T03:04:23+00:00
+20732523128,1266885889,daisong gong,daisong,2026-10-26T00:03:54Z,,Morning Run,Run,3870.0,1561,4925,6:43 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732502349,103408157,Yu Xuan Woo,Yu Xuan,2026-10-26T01:06:21Z,,Morning Walk,Walk,960.0,903,945,,12.0,,Strava App,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732378054,189069646,Coriander Suckz,Coriander,2026-10-26T00:03:55Z,2026-10-26T08:03:55Z,Morning Run,Run,5480.0,2435,3135,,116.0,,Strava App,,False,False,everyone,Southwest,,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20732422640,191683420,Kwoh Kai Jie,Kwoh,2026-10-26T00:03:15Z,2026-10-26T08:03:15Z,Morning Run,Run,5710.0,1998,3281,,119.0,,Polar Pacer,,False,False,everyone,Southwest,,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20732428652,155939935,Dominic Lee,Dominic,2026-10-25T23:47:03Z,2026-10-26T07:47:03Z,Morning Run,Run,5980.0,2322,4209,6:28 /km,,,Garmin tactix 7,,False,False,everyone,Southwest,,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20732365938,57443105,Colin Goh,Colin,2026-10-26T00:00:08Z,,Morning Run,Run,3430.0,1356,3187,6:35 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732551607,196225817,Kirk Lee,Kirk,2026-10-25T23:27:08Z,2026-10-26T07:27:08Z,Morning Run,Run,4260.0,2489,3874,9:43 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20732431232,181000486,Ninja Breadwinner,Ninja,2026-10-25T23:25:11Z,2026-10-26T07:25:11Z,Morning Run,Run,5860.0,2467,4807,7:01 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20732607640,196395868,Ron Lim,Ron,2026-10-25T23:45:29Z,,Morning Run,Run,5500.0,3024,3581,9:09 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732324571,150739400,Ambrose Yeo,Ambrose,2026-10-26T00:00:16Z,2026-10-26T08:00:16Z,Morning Walk,Walk,1850.0,1397,2559,,,2720,Garmin fēnix 8 Solar Sapphire,,False,False,everyone,Southwest,,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20732357969,127939240,LOH KIA FAI BEN,LOH KIA FAI,2026-10-25T23:59:51Z,2026-10-26T07:59:51Z,Morning Walk,Walk,1720.0,1251,1251,,,2280,Amazfit T-Rex 2,,False,False,everyone,Southwest,,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20732646603,660621407,Nirman Shah,Nirman,2026-10-26T00:00:29Z,,Morning Run,Run,3630.0,1975,2272,9:04 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732655557,80962601,Nathan Ramesh,Nathan,2026-10-26T00:00:39Z,,Morning Run,Run,4450.0,2056,2218,7:41 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732278154,46309973,Choon Yong Chan,Choon Yong,2026-10-25T23:47:17Z,2026-10-26T07:47:17Z,Morning Run,Run,4920.0,1511,2847,,97.0,,Polar Pacer,,False,False,everyone,Southwest,,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20732551770,164845584,Gene Goh,Gene,2026-10-26T00:03:12Z,2026-10-26T08:03:12Z,Morning Run,Run,3210.0,929,1727,,72.0,,Polar Pacer,,False,False,everyone,Southwest,,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20732566899,1268235870,Neston Tan,Neston,2026-10-26T00:03:10Z,2026-10-26T08:03:10Z,Morning Run,Run,3230.0,871,1925,,72.0,,Polar Pacer,,False,False,everyone,Southwest,,1,0,GroupActivity,2026-10-26T02:41:17+00:00
+20732583614,798417968,Danial Ahmad,Danial,2026-10-26T00:00:39Z,2026-10-26T08:00:39Z,Morning Run,Run,4410.0,1955,1965,7:23 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20732564697,1281648417,Lennon Tan,Lennon,2026-10-25T23:45:28Z,2026-10-26T07:45:28Z,ER,Run,5490.0,2378,2968,7:13 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20732598585,79881725,2214 REC  Jefmirza,2214 REC ,2026-10-26T00:00:43Z,,Morning Run,Run,5220.0,1957,1970,6:15 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732557535,1264472785,Galvin Ng,Galvin,2026-10-26T00:03:49Z,,Morning Run,Run,5460.0,1757,1775,5:22 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732437206,162779719,Lewis T,Lewis,2026-10-26T00:01:07Z,2026-10-26T08:01:07Z,Recovery ER,Run,3500.0,1798,1831,8:34 /km,,,Polar Pacer,,False,False,everyone,Southwest,wanted to do a tempo run but it was so fucking humidddddddddd hard to breatheeeeeeee,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20732549155,1490218349,Zach Gonzales,Zach,2026-10-26T00:00:32Z,2026-10-26T08:00:32Z,Morning Run,Run,3500.0,1839,1857,8:45 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20732572703,1045810176,Fu Chou,Fu,2026-10-26T00:00:38Z,,Morning Run,Run,4370.0,1806,1849,6:53 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732339981,112728077,Terence Zh,Terence,2026-10-26T00:00:51Z,,Morning Run,Run,4550.0,1766,1825,6:28 /km,,,Garmin fēnix 7 Pro (47mm),,False,False,everyone,,,1,0,Activity,2026-10-26T02:41:17+00:00
+20732259034,104017126,Ong Yi Ren,Ong,2026-10-26T00:08:13Z,,Morning Run,Run,3250.0,1364,1373,6:59 /km,,,Garmin fēnix 7 Pro (47mm),,False,False,everyone,Northeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732255172,90503677,Jeremy Fan,Jeremy,2026-10-25T23:45:43Z,,30 mins endurance run,Run,7090.0,2212,2720,5:12 /km,,,Strava App,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732445684,76834372,Rui Kang,Rui,2026-10-26T00:02:19Z,,Z2 run,Run,3590.0,1450,1559,6:44 /km,,,Strava App,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732531993,50087178,Jm C,Jm,2026-10-26T00:02:27Z,,Morning Run,Run,4120.0,1504,1508,,91.0,,Polar Pacer,,False,False,everyone,Southwest,,1,1,Activity,2026-10-26T02:41:17+00:00
+20732227873,150713780,Eio Chong Han,Eio,2026-10-26T00:01:00Z,,Morning Run,Run,4000.0,1189,1231,4:57 /km,,,Strava App,,False,False,everyone,Southwest,,1,0,Activity,2026-10-26T02:41:17+00:00
+20732638661,158225435,Jun Hao lol,Jun Hao,2026-10-25T23:49:18Z,2026-10-26T07:49:18Z,Morning Run,Run,4340.0,1796,1907,6:53 /km,,,Strava App,,False,False,everyone,Southwest,,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20732490965,162695054,Kegan Chia,Kegan,2026-10-25T23:47:58Z,2026-10-26T07:47:58Z,Morning Run,Run,4030.0,1697,1838,7:01 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20732191070,146502370, Jun Ze, Jun,2026-10-25T23:47:54Z,2026-10-26T07:47:54Z,Morning Run,Run,6110.0,1830,1839,4:59 /km,,,Strava App,,False,False,everyone,Southwest,,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20732530502,1157168369,DANIEL ARI,DANIEL,2026-10-25T23:47:47Z,2026-10-26T07:47:47Z,Morning Run,Run,3650.0,1887,1969,8:36 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20732208633,170365151,lukas kwek,lukas,2026-10-25T23:47:43Z,2026-10-26T07:47:43Z,Morning Run,Run,4160.0,1918,2010,7:40 /km,,,Garmin Forerunner 165,,False,False,everyone,Southwest,,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20732313581,82197781,Jamson Tan,Jamson,2026-10-25T23:47:28Z,2026-10-26T07:47:28Z,Morning Run,Run,3950.0,1597,1855,6:44 /km,,,Garmin Forerunner 265,,False,False,everyone,Southwest,,1,0,GroupActivity,2026-10-26T02:41:17+00:00
+20732500654,171954993,hrs inabus,hrs,2026-10-25T23:37:06Z,2026-10-26T07:37:06Z,Morning Run,Run,3850.0,1785,2609,7:43 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20732493343,201644445,J J,J,2026-10-25T23:26:50Z,2026-10-26T07:26:50Z,Morning Run,Run,4460.0,1813,3142,6:46 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20732378363,83920919,Milton Ng,Milton,2026-10-26T00:00:21Z,,Morning Walk,Walk,500.0,354,1221,,2.0,,Apple Watch SE,,False,False,everyone,Southeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732481018,1744500732,Alfovero Povero,Alfovero,2026-10-25T23:48:36Z,,Morning Run,Run,5660.0,1914,1914,5:38 /km,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732389115,457061847,marcus Wee,marcus,2026-10-25T23:37:18Z,,Morning Run,Run,5050.0,2138,2583,7:03 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732447570,124271794,Keith Chua,Keith,2026-10-25T23:38:39Z,,Morning Run,Run,5040.0,2343,2492,7:44 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732203351,1975053728,Chan Jingzhan,Chan,2026-10-25T23:55:24Z,,Morning Run,Run,4230.0,1438,1438,5:39 /km,,,Garmin Venu 3,,False,False,everyone,Northwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732207123,91343174,mark chan yu zhi,mark,2026-10-25T23:37:02Z,,Morning Run,Run,5810.0,2151,2524,6:10 /km,,,Strava App,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732417039,70370600,Justin Ng,Justin,2026-10-25T23:47:41Z,,Morning Run,Run,4020.0,1627,1878,6:45 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732496622,138151922,Dillon Churn,Dillon,2026-10-25T23:48:19Z,,Morning Run,Run,4710.0,1794,1803,6:20 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732738883,80095220,Ong Kah Sheng,Ong,2026-10-25T23:33:18Z,,Morning Run,Run,3330.0,1901,2642,9:31 /km,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732271675,91348499,Zickry Ryan Haq,Zickry Ryan,2026-10-25T23:45:28Z,,Morning Run,Run,2230.0,1172,1778,8:46 /km,,,Garmin Forerunner 570,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732458017,98501936,Kyran Ho,Kyran,2026-10-26T00:00:30Z,,Morning Run,Run,1050.0,364,592,5:46 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732151703,78755580,Ivan Koh,Ivan,2026-10-25T23:48:47Z,2026-10-26T07:48:47Z,Morning Run,Run,2700.0,1219,1233,7:31 /km,,,Garmin Forerunner 265,,False,False,everyone,Southwest,,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20732149972,1658679384,Edmund Thaim,Edmund,2026-10-25T23:48:45Z,2026-10-26T07:48:45Z,Morning Run,Run,2730.0,1235,1235,7:31 /km,,,Garmin Forerunner 265,,False,False,everyone,Southwest,,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20732142151,171043001,Dex Tang,Dex,2026-10-26T00:01:00Z,,Morning Run,Run,920.0,304,304,5:28 /km,,,Garmin tactix 7,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732110473,174491148,Kevien KJ,Kevien,2026-10-25T23:44:42Z,,Morning Run,Run,2950.0,1093,1105,6:10 /km,,,Strava App (Apple Watch Series 7),,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732522994,1266885889,daisong gong,daisong,2026-10-25T23:46:51Z,,Morning Run,Run,970.0,522,949,8:55 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732572385,1045810176,Fu Chou,Fu,2026-10-25T23:45:53Z,2026-10-26T07:45:53Z,Morning Run,Run,1040.0,480,616,7:39 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20732057881,171043001,Dex Tang,Dex,2026-10-25T23:45:52Z,2026-10-26T07:45:52Z,Morning Run,Run,900.0,319,365,5:54 /km,,,Garmin tactix 7,,False,False,everyone,Southwest,,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20732583609,798417968,Danial Ahmad,Danial,2026-10-25T23:45:33Z,2026-10-26T07:45:33Z,Morning Run,Run,1170.0,520,890,7:22 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20732097222,150739400,Ambrose Yeo,Ambrose,2026-10-25T23:34:50Z,2026-10-26T07:34:50Z,Morning Run,Run,4000.0,1438,1492,5:59 /km,,,Garmin fēnix 8 Solar Sapphire,,False,False,everyone,Southwest,,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20732131654,127939240,LOH KIA FAI BEN,LOH KIA FAI,2026-10-25T23:34:46Z,2026-10-26T07:34:46Z,Morning Run,Run,2840.0,925,1488,5:26 /km,,,Amazfit T-Rex 2,,False,False,everyone,Southwest,,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20732033676,158225435,Jun Hao lol,Jun Hao,2026-10-23T13:54:30Z,,Night Run,Run,2090.0,796,208474,6:21 /km,,,Strava App,,False,False,everyone,Southeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732348655,161108639,lee jordan,lee,2026-10-25T23:30:55Z,,Morning Run,Run,1900.0,751,1024,,37.0,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732161427,198245997,Loh Tian Hua,Loh,2026-10-25T23:08:13Z,,Morning Run,Run,4140.0,2292,2294,9:13 /km,,,Garmin Forerunner 965,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732108711,15091569,Andy Quek,Andy,2026-10-25T22:47:25Z,,Morning Run,Run,9010.0,3312,3437,6:07 /km,,,Garmin Forerunner 965,,False,False,everyone,,,2,0,Activity,2026-10-26T02:41:17+00:00
+20732324171,127011335,Carven Fan,Carven,2026-10-25T23:21:04Z,,Morning Run,Run,2840.0,1344,1347,,55.0,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732041008,85641158,Wen Jing Oh,Wen Jing,2026-10-25T23:09:44Z,,Morning Run,Run,6140.0,1852,1922,5:01 /km,,,Garmin Instinct 3,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732210992,39804426,Sean Yeo,Sean,2026-10-25T23:14:36Z,,Morning Run,Run,3000.0,1308,1326,7:16 /km,,,Apple Watch Ultra 2,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732480788,1744500732,Alfovero Povero,Alfovero,2026-10-25T23:27:55Z,,Morning Run,Run,1430.0,520,520,6:02 /km,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732324116,127011335,Carven Fan,Carven,2026-10-25T23:07:57Z,,Morning Run,Run,670.0,327,574,,14.0,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20731787249,100332682,Joshua Sim,Joshua,2026-10-25T22:29:45Z,,Morning Run,Run,5510.0,2154,2164,6:31 /km,,,Apple Watch Ultra,,False,False,everyone,Northeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20731354358,152934564,Royston Wang,Royston,2026-10-25T14:53:25Z,,Night Run,Run,32300.0,25200,25220,13:01 /km,,,Garmin fēnix 5,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20727994120,772349693,Xavier Lee,Xavier,2026-10-25T15:30:52Z,,Night Run,Run,5040.0,1700,1700,5:37 /km,,,Strava App,,False,False,everyone,Northeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20727246084,103408157,Yu Xuan Woo,Yu Xuan,2026-10-25T13:16:13Z,,Night Run,Run,25350.0,6360,6441,4:13 /km,,,Strava App,,False,False,everyone,Northwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20727166291,65548123,Sim Rui Ming,Sim,2026-10-25T12:38:48Z,,23 LAPS of hell,Run,20000.0,7440,8149,6:13 /km,,,Garmin epix Pro (Gen 2) 51mm,,False,False,everyone,Southeast,,15,0,Activity,2026-10-26T02:41:17+00:00
+20727527573,170365151,lukas kwek,lukas,2026-10-25T14:36:31Z,,Night Run,Run,2400.0,886,984,6:08 /km,,,Garmin Forerunner 165,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20726810508,101941162,Manfred Hoh,Manfred,2026-10-25T13:09:09Z,,Night Run,Run,7710.0,3660,4973,7:58 /km,,,Strava App,,False,False,everyone,Northeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20727151763,1526822034,Jun Jie Lau,Jun Jie,2026-10-25T13:28:48Z,,Night Walk,Walk,1420.0,980,1454,,,2656,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20726430113,73295637,tung tung,tung,2026-10-25T13:18:10Z,,Night Walk,Walk,500.0,1039,1039,,,,Fitbit Air,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20726046982,152934564,Royston Wang,Royston,2026-10-25T10:21:24Z,,Evening Run,Run,20000.0,8220,11362,6:52 /km,,,Garmin fēnix 5,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20725508808,1062319036,Brandon Chanky,Brandon,2026-10-25T12:31:32Z,,Evening Run,Run,3180.0,1266,1281,6:38 /km,,,Garmin Instinct 2X Solar,,False,False,everyone,Northeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20725114381,1062319036,Brandon Chanky,Brandon,2026-10-25T12:10:56Z,,Evening Run,Run,2400.0,707,714,4:54 /km,,,Garmin Instinct 2X Solar,,False,False,everyone,Northeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20725830019,128205328,Daniel Yam,Daniel,2026-10-25T11:46:10Z,,Evening Run,Run,4550.0,1583,1763,5:48 /km,,,Garmin fēnix 7x Pro,,False,False,everyone,Northeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20724218062,192235897,Alice koh Koh,Alice koh,2026-10-24T03:09:40Z,,Lunch Walk,Walk,8410.0,5040,116345,,89.0,,Strava App,,False,False,everyone,Central,,0,0,Activity,2026-10-26T02:41:17+00:00
+20724204461,192170719,Donny Poh,Donny,2026-10-25T10:35:55Z,,Evening Run,Run,2000.0,1201,3080,9:59 /km,,,Polar Pacer,,False,False,everyone,Northwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20731710154,120013522,Goh Zhung Kiat,Goh,2026-10-25T10:12:02Z,,Evening Walk,Walk,1120.0,664,1551,,,2062,Apple Watch SE 3,,False,False,everyone,Central,,0,0,Activity,2026-10-26T02:41:17+00:00
+20723246222,82226994,Dhruv Ambaldhage,Dhruv,2026-10-25T10:13:40Z,,Evening Run,Run,3040.0,1248,1292,6:50 /km,,,Strava App,,False,False,everyone,Northwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20722947338,64179592,syafiq danial,syafiq,2026-10-25T09:59:00Z,,Afternoon Run,Run,1960.0,688,1127,5:50 /km,,,Strava App,,False,False,everyone,Northwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20722729452,80356918,junyi Andric,junyi,2026-10-24T09:51:41Z,,Afternoon Walk,Walk,81660.0,35820,87232,,682.0,,Strava App,,False,False,everyone,Southwest,forgot to press stop record aft walking to labrador park😂,4,0,Activity,2026-10-26T02:41:17+00:00
+20722611338,187312771,Seth Tan,Seth,2026-10-25T09:31:20Z,,Afternoon Run,Run,5030.0,1648,1653,5:27 /km,,,Strava App,,False,False,everyone,Southeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20722571268,10265375,Dennis Leong,Dennis,2026-10-25T07:33:13Z,,Afternoon Trail Run,TrailRun,15430.0,8100,8302,,720.0,,Garmin fēnix 8,,False,False,everyone,Northwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20722215207,120401037,Bernie Quah,Bernie,2026-10-25T09:00:26Z,,"If I woke up tomorrow with my head sewn to the carpet, I wouldn't be more surprised.",Run,4980.0,1802,1876,6:01 /km,,,Polar Pacer,,False,False,everyone,Southeast,Activity name auto generated by Bandok.com,0,0,Activity,2026-10-26T02:41:17+00:00
+20722098233,75965267,Aaron You,Aaron,2026-10-25T08:20:02Z,,Afternoon Run,Run,8160.0,2871,2907,5:52 /km,,,COROS PACE 4,,False,False,everyone,,"Activity temperature via POD 2: 30°C ~ 32°C
+68 Training Load
+-- from COROS",0,0,Activity,2026-10-26T02:41:17+00:00
+20721634452,198739620,Kenneth Pang,Kenneth,2026-10-25T08:04:35Z,,Afternoon Walk,Walk,2550.0,2188,2256,,,2688,Apple Watch Ultra 3,,False,False,everyone,Northeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20721524531,192170719,Donny Poh,Donny,2026-10-25T08:13:32Z,,Afternoon Run,Run,1000.0,680,1050,11:19 /km,,,Polar Pacer,,False,False,everyone,Northwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20721035471,39804426,Sean Yeo,Sean,2026-10-25T06:15:23Z,,Afternoon Walk,Walk,1140.0,3900,3947,,,1726,Apple Watch Ultra 2,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20720944697,159549407,Jarett Tang,Jarett,2026-10-25T06:37:38Z,,5 kkkkkk,Run,5000.0,1626,1634,5:25 /km,,,Strava App,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20720886013,179989600,Muhammad Firdaus,Muhammad,2026-10-25T06:22:35Z,,Afternoon Run,Run,5040.0,1871,1877,6:11 /km,,,Strava App,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20720821836,198739620,Kenneth Pang,Kenneth,2026-10-25T05:53:46Z,,Afternoon Walk,Walk,2970.0,2377,2611,,,3810,Apple Watch Ultra 3,,False,False,everyone,Northeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20720712328,88234067,Radra Thepop,Radra,2026-10-25T05:46:22Z,,Afternoon Run,Run,3280.0,1051,1121,5:20 /km,,,Polar Pacer,,False,False,everyone,Southeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20720697778,142257201,Danials Danial,Danials,2026-10-25T05:50:45Z,,25/10/26,Run,2430.0,653,659,4:29 /km,,,Strava App,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20720665829,91348082,Sze Chew Sim,Sze Chew,2026-10-25T05:29:24Z,,Afternoon Walk,Walk,2540.0,1778,1795,,58.0,,Garmin Venu Sq Music,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20731745255,95485721,Hobin Lin,Hobin,2026-10-25T04:10:57Z,,Lunch Walk,Walk,1950.0,1690,4639,,,8196,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20720470438,127011335,Carven Fan,Carven,2026-10-24T18:03:55Z,,Night Walk,Walk,3870.0,2410,39355,,,69526,Polar Pacer,,False,False,everyone,Northwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20720411002,32097458,Lim Bor Lian,Lim,2026-10-25T02:53:03Z,,Morning Walk,Walk,6740.0,5400,6530,,,9014,Garmin Forerunner 570,,False,False,everyone,,,5,0,Activity,2026-10-26T02:41:17+00:00
+20720571008,127939240,LOH KIA FAI BEN,LOH KIA FAI,2026-10-25T00:05:00Z,,Morning Walk,Walk,14580.0,10620,16359,,376.0,,Amazfit T-Rex 2,,False,False,everyone,Northwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20720352559,79840635,Choo Yue Sheng,Choo,2026-10-25T04:09:25Z,,Lunch Run,Run,2400.0,957,961,6:38 /km,,,Strava App,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20721629486,73295637,tung tung,tung,2026-10-25T02:08:33Z,,Morning Run,Run,6600.0,2118,2118,5:21 /km,,,Fitbit Air,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20719859739,76834372,Rui Kang,Rui,2026-10-25T01:54:02Z,,Z3 morning run,Run,5390.0,1802,1805,5:34 /km,,,Strava App,,False,False,everyone,Northeast,,1,0,Activity,2026-10-26T02:41:17+00:00
+20719849384,172978948,Ion Run,Ion,2026-10-25T02:08:20Z,,Tired,Run,2460.0,821,821,,74.0,,Strava App,,False,False,everyone,Southwest,Rishi stop so i need stop also,0,0,Activity,2026-10-26T02:41:17+00:00
+20719802195,1847934457,Reegan Pang,Reegan,2026-10-25T01:58:32Z,,Morning Walk,Walk,800.0,660,868,,,1074,Strava App,,False,False,everyone,Northwest,,1,0,Activity,2026-10-26T02:41:17+00:00
+20719750830,133017837,Jerald C,Jerald,2026-10-25T01:22:42Z,,Morning Run,Run,5320.0,1819,2419,5:42 /km,,,Strava App,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20719541574,162966107,Trương Minh Quân,Trương Minh,2026-10-25T01:12:14Z,,Morning Walk,Walk,750.0,545,908,,,1010,Garmin Forerunner 165,,False,False,everyone,Northeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20719555568,39804426,Sean Yeo,Sean,2026-10-25T00:36:57Z,,Morning Run,Run,6010.0,2702,2747,7:29 /km,,,Apple Watch Ultra 2,,False,False,everyone,Southeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20719465815,108739043,Tyler Soh,Tyler,2026-10-25T01:02:30Z,,Morning Run,Run,2020.0,817,817,6:44 /km,,,Strava App (Apple Watch Ultra 2),,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20719460147,1400184214,Darren Ho,Darren,2026-10-24T22:56:57Z,,Warm up,Run,14540.0,8220,8284,9:28 /km,,,Strava App,,False,False,everyone,Northwest,,1,0,Activity,2026-10-26T02:41:17+00:00
+20719349387,108739043,Tyler Soh,Tyler,2026-10-25T00:51:28Z,,Morning Run,Run,1040.0,416,438,6:37 /km,,,Strava App (Apple Watch Ultra 2),,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20719294370,196395868,Ron Lim,Ron,2026-10-25T00:16:32Z,,Morning Run,Run,5040.0,1659,2021,5:29 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20719251304,104017126,Ong Yi Ren,Ong,2026-10-24T23:46:46Z,2026-10-25T07:46:46Z,Morning Run,Run,8010.0,3320,3403,6:54 /km,,,Garmin fēnix 7 Pro (47mm),,False,False,everyone,Central,,2,0,GroupActivity,2026-10-26T02:41:17+00:00
+20719287901,110613308,Kai Yi Chee,Kai Yi,2026-10-24T23:46:44Z,2026-10-25T07:46:44Z,Morning Run,Run,8490.0,3600,3696,7:05 /km,,,Garmin Forerunner 965,,False,False,everyone,Central,,2,0,GroupActivity,2026-10-26T02:41:17+00:00
+20719377647,120013522,Goh Zhung Kiat,Goh,2026-10-24T23:46:42Z,2026-10-25T07:46:42Z,Morning Run,Run,8000.0,3337,3401,6:57 /km,,,Apple Watch SE 3,,False,False,everyone,Central,,2,0,GroupActivity,2026-10-26T02:41:17+00:00
+20719145406,171043001,Dex Tang,Dex,2026-10-25T00:12:39Z,,Morning Walk,Walk,970.0,776,929,,,1066,Garmin CIRQA Smart Band,,False,False,everyone,Northeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20723168098,1189128401,andreww sohh,andreww,2026-10-24T22:41:19Z,,Morning Run,Run,15300.0,5340,5547,5:49 /km,,,Polar Pacer,,False,False,everyone,Southeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20719145448,171043001,Dex Tang,Dex,2026-10-24T22:54:39Z,,Morning Walk,Walk,2650.0,1684,1684,,,2644,Garmin CIRQA Smart Band,,False,False,everyone,Central,,0,0,Activity,2026-10-26T02:41:17+00:00
+20718469988,196113629,daanish ryzan,daanish,2026-10-24T22:09:10Z,,Fun jog,Run,2160.0,1297,2352,9:59 /km,,,Strava App,,False,False,everyone,Northwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20718096433,171043001,Dex Tang,Dex,2026-10-24T21:08:07Z,,GARMIN RUN 2026,Run,9940.0,3024,3027,5:04 /km,,,Garmin tactix 7,,False,False,everyone,Central,supposed 1/2 marathon which got shortened to a 10k but ohwells,5,1,Activity,2026-10-26T02:41:17+00:00
+20718011130,126913964,Ong Jeffrey,Ong,2026-10-24T21:00:22Z,,Garmin Run,Run,9890.0,2987,3008,5:02 /km,,,Polar Pacer,,False,False,everyone,Central,,7,0,Activity,2026-10-26T02:41:17+00:00
+20717543637,72368028,Dean Yik,Dean,2026-10-24T20:09:38Z,,Morning Run,Run,5450.0,1772,1886,5:25 /km,,,Garmin Venu X1,,False,False,everyone,"Livingstone Shire, Australia",,0,0,Activity,2026-10-26T02:41:17+00:00
+20715393814,85932943,Kenny Ng,Kenny,2026-10-24T14:34:59Z,,Project Adidas Half Marathon - Week 16/22 D5 - 15Km Easy Run,Run,15640.0,5700,6677,6:07 /km,,,COROS PACE 4,,False,False,everyone,,"9.5km -&gt; short break -&gt; 5km +0.5km walking cool down. Treadmill Run.
+
+Running warm up + cool down 
+
+78 Training Load
+-- from COROS",1,0,Activity,2026-10-26T02:41:17+00:00
+20715117459,39952568,X Chua,X,2026-10-24T15:10:00Z,,Morning Run,Run,5590.0,2835,3245,,211.0,,Garmin fēnix 7s,,False,False,everyone,"Palo Alto, USA",,2,0,Activity,2026-10-26T02:41:17+00:00
+20252665062,85641158,Wen Jing Oh,Wen Jing,2026-09-20T05:06:24Z,,Afternoon Walk,Walk,16820.0,12000,20156,,,8136,Garmin Instinct 3,,False,False,everyone,Northwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20198852700,85641158,Wen Jing Oh,Wen Jing,2026-09-14T07:56:12Z,,Afternoon Walk,Walk,3000.0,4320,5938,,353.0,,Garmin Instinct 3,,False,False,everyone,"Changping District, PRC",,0,0,Activity,2026-10-26T02:41:17+00:00
+20358364497,85641158,Wen Jing Oh,Wen Jing,2026-09-27T23:15:30Z,,Morning Run,Run,6130.0,2049,2099,5:34 /km,,,Garmin Instinct 3,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20345709063,85641158,Wen Jing Oh,Wen Jing,2026-09-26T23:54:38Z,,Morning Walk,Walk,13790.0,9240,15830,,,7436,Garmin Instinct 3,,False,False,everyone,"Iskandar Puteri, Malaysia",,0,0,Activity,2026-10-26T02:41:17+00:00
+20317773392,85641158,Wen Jing Oh,Wen Jing,2026-09-24T23:07:18Z,,Morning Run,Run,7340.0,2230,2428,5:04 /km,,,Garmin Instinct 3,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20304007685,85641158,Wen Jing Oh,Wen Jing,2026-09-23T23:12:35Z,,Morning Run,Run,4640.0,1480,1480,5:19 /km,,,Garmin Instinct 3,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20289712373,85641158,Wen Jing Oh,Wen Jing,2026-09-22T23:06:05Z,,Morning Run,Run,7380.0,2255,2395,5:05 /km,,,Garmin Instinct 3,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20274655214,85641158,Wen Jing Oh,Wen Jing,2026-09-21T23:03:50Z,,Morning Run,Run,5000.0,1430,1430,4:46 /km,,,Garmin Instinct 3,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20454422835,85641158,Wen Jing Oh,Wen Jing,2026-10-04T23:11:41Z,,Morning Run,Run,7420.0,2372,2378,5:19 /km,,,Garmin Instinct 3,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20413626233,85641158,Wen Jing Oh,Wen Jing,2026-10-01T23:31:38Z,,Morning Run,Run,1000.0,332,332,5:29 /km,,,Garmin Instinct 3,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20413626345,85641158,Wen Jing Oh,Wen Jing,2026-10-01T23:21:33Z,,Morning Run,Run,2010.0,558,561,4:37 /km,,,Garmin Instinct 3,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20400292038,85641158,Wen Jing Oh,Wen Jing,2026-09-30T23:15:10Z,,Morning Run,Run,7030.0,2134,2175,5:04 /km,,,Garmin Instinct 3,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20371289164,85641158,Wen Jing Oh,Wen Jing,2026-09-28T23:10:39Z,,Morning Run,Run,6010.0,1912,1970,5:18 /km,,,Garmin Instinct 3,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20509316103,85641158,Wen Jing Oh,Wen Jing,2026-10-08T23:10:47Z,,Morning Run,Run,7150.0,2308,2372,5:23 /km,,,Garmin Instinct 3,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20496122293,85641158,Wen Jing Oh,Wen Jing,2026-10-07T23:09:11Z,,Morning Run,Run,6040.0,1929,1961,5:19 /km,,,Garmin Instinct 3,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20482471875,85641158,Wen Jing Oh,Wen Jing,2026-10-06T23:07:45Z,,Morning Run,Run,6500.0,2054,2087,5:16 /km,,,Garmin Instinct 3,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20467310109,85641158,Wen Jing Oh,Wen Jing,2026-10-05T23:03:02Z,,Morning Run,Run,6010.0,1774,1882,4:55 /km,,,Garmin Instinct 3,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20641652748,85641158,Wen Jing Oh,Wen Jing,2026-10-18T23:04:49Z,,Morning Run,Run,8000.0,2420,2490,5:02 /km,,,Garmin Instinct 3,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20589041754,85641158,Wen Jing Oh,Wen Jing,2026-10-14T23:09:53Z,,Morning Run,Run,3590.0,1201,1201,5:34 /km,,,Garmin Instinct 3,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20696409964,100035100,James Chen,James,2026-10-23T03:42:45Z,,Lunch Run,Run,10020.0,3311,3311,5:30 /km,,,COROS PACE 4,,False,False,everyone,,"102 Training Load
+-- from COROS",6,0,Activity,2026-10-26T02:41:17+00:00
+20707212849,100260722,Nicholas Fong,Nicholas,2026-10-24T00:58:53Z,,Morning Run,Run,80.0,47,82,8:57 /km,,,Garmin Forerunner 965,,False,False,everyone,,,1,0,Activity,2026-10-26T02:41:17+00:00
+20686695835,100260722,Nicholas Fong,Nicholas,2026-10-20T12:53:24Z,,Evening Run,Run,5170.0,1547,1566,4:59 /km,,,Garmin Forerunner 965,,False,False,everyone,,,2,0,Activity,2026-10-26T02:41:17+00:00
+20695795492,100754249,Ernest Wan,Ernest,2026-10-23T00:10:50Z,,Night Workout,Workout,,3336,3336,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20696489749,100754249,Ernest Wan,Ernest,2026-10-21T23:51:44Z,,Night Workout,Workout,,1732,1732,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20696686560,1021407993,Joash Jiang,Joash,2026-10-22T11:39:01Z,,xks buildup outfield tact march,Walk,3920.0,3369,6631,,,13042,Polar Pacer,,False,False,everyone,Southwest,,1,0,Activity,2026-10-26T02:41:17+00:00
+20700874299,10265375,Dennis Leong,Dennis,2026-10-23T12:59:18Z,,Evening Run,Run,5460.0,2120,2120,6:28 /km,,,Garmin fēnix 8,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20713122391,1032853960,Jack Liau,Jack,2026-10-24T08:12:52Z,,Afternoon Walk,Walk,6920.0,6300,19662,,465.0,,Strava App,,False,False,everyone,Central,,0,0,Activity,2026-10-26T02:41:17+00:00
+20707444654,1032853960,Jack Liau,Jack,2026-10-24T02:44:38Z,,Morning Walk,Walk,1000.0,824,2139,,35.0,,Strava App,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20698951521,1032853960,Jack Liau,Jack,2026-10-23T10:22:05Z,,Evening Walk,Walk,1320.0,1060,2223,,45.0,,Strava App,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20711337840,103408157,Yu Xuan Woo,Yu Xuan,2026-10-24T11:12:17Z,,Evening Walk,Walk,820.0,463,510,,0.0,,Strava App,,False,False,everyone,Southwest,,1,0,Activity,2026-10-26T02:41:17+00:00
+20709337088,103408157,Yu Xuan Woo,Yu Xuan,2026-10-24T08:36:34Z,,Afternoon Walk,Walk,330.0,522,1086,,4.0,,Strava App,,False,False,everyone,,,1,0,Activity,2026-10-26T02:41:17+00:00
+20707765726,103408157,Yu Xuan Woo,Yu Xuan,2026-10-24T04:09:44Z,,Lunch Walk,Walk,3000.0,2387,2656,,64.0,,Strava App,,False,False,everyone,,,1,0,Activity,2026-10-26T02:41:17+00:00
+20682575890,104519856,Ahmad Mukhtar,Ahmad,2026-10-20T09:15:00Z,,Morning Crossfit,Crossfit,,1113,1113,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20700975198,1045617027,Darv Fong,Darv,2026-10-23T13:41:14Z,,Chill,Run,5000.0,1612,1612,5:22 /km,,,Strava App,,False,False,everyone,Northeast,,2,0,Activity,2026-10-26T02:41:17+00:00
+20707936650,1045810176,Fu Chou,Fu,2026-10-24T04:19:39Z,,Lunch Walk,Walk,5520.0,4140,4894,,,9462,Polar Pacer,,False,False,everyone,Northwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20707936719,1045810176,Fu Chou,Fu,2026-10-23T05:22:49Z,,Afternoon Workout,Workout,,1839,1839,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20688636505,1045810176,Fu Chou,Fu,2026-10-21T23:30:22Z,,Morning Workout,Workout,,2692,2692,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20707337647,10480079,Selvaraju Silvam,Selvaraju,2026-10-24T00:52:20Z,,Morning Run,Run,4020.0,1896,7255,7:51 /km,,,Garmin fēnix 7,,False,False,everyone,,,2,0,Activity,2026-10-26T02:41:17+00:00
+20706638444,10480079,Selvaraju Silvam,Selvaraju,2026-10-24T00:08:26Z,,Morning Workout,Workout,,2417,2417,,,,Garmin fēnix 7,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20698150282,10480079,Selvaraju Silvam,Selvaraju,2026-10-23T09:12:16Z,,Afternoon Run,Run,4040.0,1415,1415,5:50 /km,,,Garmin fēnix 7,,False,False,everyone,,,2,0,Activity,2026-10-26T02:41:17+00:00
+20697969730,10480079,Selvaraju Silvam,Selvaraju,2026-10-23T08:26:38Z,,Afternoon Weight Training,WeightTraining,,2712,2712,,,,Garmin fēnix 7,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20700475668,1052869810,PTE Branden Lee,PTE,2026-10-23T12:19:11Z,,Evening Run,Run,6480.0,1957,2012,5:02 /km,,,Polar Pacer,,False,False,everyone,Northeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20711543047,106645250,Aloysius Tan,Aloysius,2026-10-24T10:06:44Z,,Evening Ride,Ride,24830.0,4620,4762,,72.0,,Garmin Instinct 2,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20699821255,106645250,Aloysius Tan,Aloysius,2026-10-23T10:51:26Z,,Evening Ride,Ride,15750.0,3960,4960,,61.0,,Garmin Instinct 2,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20723953319,108546052,Yi Long Tan,Yi Long,2026-10-25T10:22:30Z,,Evening Weight Training,WeightTraining,,3066,3066,,,,Strava App,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20699193588,108546052,Yi Long Tan,Yi Long,2026-10-23T09:15:28Z,,Afternoon Weight Training,WeightTraining,,7440,7459,,,,Strava App,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20695506858,1100643471,Toh Li Guang,Toh,2026-10-20T08:57:35Z,,Afternoon Run,Run,3230.0,1525,1827,7:52 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20695506857,1100643471,Toh Li Guang,Toh,2026-10-19T08:58:17Z,,Afternoon Run,Run,4860.0,2372,3041,8:08 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20698325187,110727058,Hierro Ng,Hierro,2026-10-23T08:39:35Z,,Morning Run,Run,1310.0,989,989,12:32 /km,,,Polar Pacer,,False,False,everyone,,,1,0,Activity,2026-10-26T02:41:17+00:00
+20698325336,110727058,Hierro Ng,Hierro,2026-10-23T06:31:03Z,,Afternoon Run,Run,3060.0,2344,3839,12:46 /km,,,Polar Pacer,,False,False,everyone,,,3,0,Activity,2026-10-26T02:41:17+00:00
+20697351527,110727058,Hierro Ng,Hierro,2026-10-23T07:11:22Z,,Morning Workout,Workout,,1316,1316,,,,Polar Pacer,,False,False,everyone,,,1,0,Activity,2026-10-26T02:41:17+00:00
+20697354776,110727058,Hierro Ng,Hierro,2026-10-23T07:12:27Z,,Morning Workout,Workout,,960,960,,,,Polar Pacer,,False,False,everyone,,,1,0,Activity,2026-10-26T02:41:17+00:00
+20697349850,110727058,Hierro Ng,Hierro,2026-10-23T06:33:12Z,,Morning Workout,Workout,,820,820,,,,Polar Pacer,,False,False,everyone,,,1,0,Activity,2026-10-26T02:41:17+00:00
+20696204727,110727058,Hierro Ng,Hierro,2026-10-23T03:14:37Z,,Lunch Run,Run,2150.0,1170,1891,9:03 /km,,,Polar Pacer,,False,False,everyone,,,1,0,Activity,2026-10-26T02:41:17+00:00
+20684828300,110727058,Hierro Ng,Hierro,2026-10-22T08:11:20Z,,Morning Workout,Workout,,1440,1440,,,,Polar Pacer,,False,False,everyone,,,1,0,Activity,2026-10-26T02:41:17+00:00
+20686363990,110727058,Hierro Ng,Hierro,2026-10-22T06:24:01Z,,Morning Weight Training,WeightTraining,,3304,3304,,,,Polar Pacer,,False,False,everyone,,,1,0,Activity,2026-10-26T02:41:17+00:00
+20682490598,110727058,Hierro Ng,Hierro,2026-10-22T00:15:26Z,,Night Workout,Workout,,3900,3904,,,,Polar Pacer,,False,False,everyone,,,1,0,Activity,2026-10-26T02:41:17+00:00
+20696702391,1112085991,A2202 Samuel Lee,A2202,2026-10-23T00:02:04Z,,Morning Run,Run,2770.0,1023,2648,,57.0,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20695309979,1116840817,Kuan Ee Kee,Kuan Ee,2026-10-23T00:04:18Z,,Morning Workout,Workout,,3062,3062,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20698037746,1116840817,Kuan Ee Kee,Kuan Ee,2026-10-23T00:02:02Z,,Morning Run,Run,2460.0,652,1161,4:25 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20694542582,1116840817,Kuan Ee Kee,Kuan Ee,2026-10-21T00:50:33Z,,Morning Workout,Workout,,224,224,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20698037741,1116840817,Kuan Ee Kee,Kuan Ee,2026-10-21T00:05:24Z,,Morning Workout,Workout,,1761,1761,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20709814801,112728077,Terence Zh,Terence,2026-10-24T09:10:36Z,,Afternoon Run,Run,3220.0,1230,1230,6:22 /km,,,Garmin fēnix 7 Pro (47mm),,False,False,everyone,,,1,0,Activity,2026-10-26T02:41:17+00:00
+20712710334,114308377,Javed_is_person Kes,Javed_is_person,2026-10-24T12:35:41Z,,Evening Walk,Walk,2120.0,1698,1998,,0.0,,Strava App,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20711707300,114308377,Javed_is_person Kes,Javed_is_person,2026-10-24T10:56:08Z,,Evening Walk,Walk,3450.0,2660,3184,,15.0,,Strava App,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20702255056,114308377,Javed_is_person Kes,Javed_is_person,2026-10-23T15:40:45Z,,Night Walk,Walk,2030.0,1522,1718,,37.0,,Strava App,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20696159888,114308377,Javed_is_person Kes,Javed_is_person,2026-10-23T00:37:39Z,,Morning Walk,Walk,9100.0,6960,10618,,55.0,,Strava App,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20696316688,1157168369,DANIEL ARI,DANIEL,2026-10-23T00:23:25Z,,Morning Run,Run,3350.0,1336,1665,6:38 /km,,,Polar Pacer,,False,False,everyone,Central,,0,0,Activity,2026-10-26T02:41:17+00:00
+20696316826,1157168369,DANIEL ARI,DANIEL,2026-10-21T05:29:44Z,,Afternoon Workout,Workout,1320.0,7500,7506,,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20696317017,1157168369,DANIEL ARI,DANIEL,2026-10-20T09:05:57Z,,Afternoon Run,Run,2430.0,1251,1320,8:35 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20694553459,1163768374,Lam Yu hong,Lam,2026-10-21T00:04:18Z,,Morning Workout,Workout,,1690,1690,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20702177844,116475544,jia  jia,jia ,2026-10-23T14:19:40Z,,night run,Run,11070.0,6000,6164,9:05 /km,,,Strava App,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20724892943,117709906,qx c,qx,2026-10-21T00:35:22Z,,Morning Workout,Workout,,10,10,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20685487419,117732295,Sean Toh,Sean,2026-10-22T09:51:17Z,,Afternoon Workout,Workout,,344,344,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20685491029,1187293869,Isaac Hoo,Isaac,2026-10-22T09:51:10Z,,Afternoon Workout,Workout,,346,346,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20712375607,118781050,Jeremy Kwok,Jeremy,2026-10-24T10:43:31Z,,Evening Walk,Walk,7700.0,6180,6994,,238.0,,Garmin Instinct 2,,False,False,everyone,Northwest,,2,1,Activity,2026-10-26T02:41:17+00:00
+20712362046,118781050,Jeremy Kwok,Jeremy,2026-10-24T09:58:29Z,,Afternoon Run,Run,6330.0,2462,2649,6:29 /km,,,Garmin Instinct 2,,False,False,everyone,Northwest,,1,0,Activity,2026-10-26T02:41:17+00:00
+20706363489,1189128401,andreww sohh,andreww,2026-10-23T22:47:42Z,,Morning Run,Run,15220.0,5280,5310,5:49 /km,,,Strava App,,False,False,everyone,Southeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20720361799,119260629,Aidan Yee,Aidan,2026-10-24T22:01:27Z,2026-10-25T06:01:27Z,Cycling,Ride,56430.0,8640,23029,,132.0,,Wahoo ELEMNT BOLT 3,,False,False,everyone,Central,,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20726739575,119629570,Benjamin Yeo,Benjamin,2026-10-22T14:51:11Z,,Night Walk,Walk,690.0,689,689,,,1206,Garmin Instinct 2,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20726739526,119629570,Benjamin Yeo,Benjamin,2026-10-22T12:07:31Z,,Evening Walk,Walk,3470.0,3099,4292,,,5674,Garmin Instinct 2,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20682119476,1214400201,Lewis Lim,Lewis,2026-10-22T00:00:29Z,,Morning Weight Training,WeightTraining,,1880,1880,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20698758481,122172917,Joe Foo,Joe,2026-10-23T09:48:07Z,,Afternoon Run,Run,4590.0,2218,2240,8:03 /km,,,Garmin Forerunner 165,,False,False,everyone,Southeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20685489298,123426273,Muhd Adyl,Muhd,2026-10-22T09:51:09Z,,Afternoon Workout,Workout,,348,348,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20696517928,123739150,Isaac Lee,Isaac,2026-10-23T00:22:25Z,,Morning Run,Run,3330.0,1084,1569,5:25 /km,,,Polar Pacer,,False,False,everyone,Central,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732447687,124271794,Keith Chua,Keith,2026-10-23T00:11:58Z,,Morning Workout,Workout,,1020,1020,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20695322483,124271794,Keith Chua,Keith,2026-10-23T00:09:52Z,,Morning Workout,Workout,,864,864,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20682025587,124271794,Keith Chua,Keith,2026-10-21T23:51:43Z,,Morning Workout,Workout,,1700,1700,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732448037,124271794,Keith Chua,Keith,2026-10-21T23:53:10Z,,Morning Run,Run,2470.0,632,1300,,52.0,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732448393,124271794,Keith Chua,Keith,2026-10-20T09:15:35Z,,Afternoon Workout,Workout,,1908,1908,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20685489513,124868467,Mohamad Riyan Bin Mohamad Iz Fazly,Mohamad Riyan,2026-10-22T09:51:10Z,,Afternoon Workout,Workout,,346,346,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20688916311,124868467,Mohamad Riyan Bin Mohamad Iz Fazly,Mohamad Riyan,2026-10-22T09:32:13Z,,Afternoon Workout,Workout,,1140,1140,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20724891216,1268235870,Neston Tan,Neston,2026-10-21T00:35:22Z,,Morning Workout,Workout,,10,10,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20706831626,126913964,Ong Jeffrey,Ong,2026-10-24T00:18:51Z,,Hyrox (Complete) shag out,Workout,,3349,3349,,,,Polar Pacer,,False,False,everyone,,"18mins per set AMRAP
+Set A
+1000m bike
+Sled push 6 laps
+24kg kettlebell swing 30 reps
+
+Set B
+Ski 400m
+Row 400m
+20kg weighted lunges 40m
+
+Set C
+1km run
+60 wall ball 6kg
+1km run",4,0,Activity,2026-10-26T02:41:17+00:00
+20687529779,126913964,Ong Jeffrey,Ong,2026-10-22T11:44:59Z,,Hyrox Engine,Workout,,2698,2698,,,,Polar Pacer,,False,False,everyone,,"Complete within 2.30 &amp; rest 30 Sec for every exercise.
+- Run 400m
+- Row 500m
+- Farmers carry 24kg 40 sec work &amp; 20 sec rest x3
+- skierg 500m
+AMRAP
+5 burpees
+10 Air squats once done repeat aboe exercise.
+
+Total 3 sets non stop till 45mins up.",3,0,Activity,2026-10-26T02:41:17+00:00
+20703620463,127011335,Carven Fan,Carven,2026-10-23T16:40:14Z,,Night Walk,Walk,7770.0,5700,6182,,,11952,Polar Pacer,,False,False,everyone,Northwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20712208034,127939240,LOH KIA FAI BEN,LOH KIA FAI,2026-10-24T08:44:23Z,,Afternoon Walk,Walk,90.0,133,12382,,96.0,,Amazfit T-Rex 2,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20707679651,127939240,LOH KIA FAI BEN,LOH KIA FAI,2026-10-24T02:37:34Z,,Morning Walk,Walk,3070.0,5760,5797,,,3610,Amazfit T-Rex 2,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20706677117,127939240,LOH KIA FAI BEN,LOH KIA FAI,2026-10-23T23:53:41Z,,Morning Run,Run,6050.0,2177,2201,6:00 /km,,,Amazfit T-Rex 2,,False,False,everyone,Southeast,,1,0,Activity,2026-10-26T02:41:17+00:00
+20698273202,1281648417,Lennon Tan,Lennon,2026-10-23T05:19:47Z,,SST / MUT,Workout,,723,723,,,,Polar Pacer,,False,False,everyone,,"3 counts of 20 pushup, 20 crunches, 20 squats",0,0,Activity,2026-10-26T02:41:17+00:00
+20698273406,1281648417,Lennon Tan,Lennon,2026-10-22T23:43:52Z,2026-10-23T07:43:52Z,Distance Interval 1,Run,3300.0,1160,2451,,69.0,,Polar Pacer,,False,False,everyone,Southwest,"Back at Keat Hong 🫩
+3 sets of 800m",0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20690717489,1309832686,Jordan Oh,Jordan,2026-10-22T15:08:06Z,,Night Ride,Ride,0.0,11,4259,,0.0,,Strava App,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20711719640,132124444,Remy Firman,Remy,2026-10-22T14:10:18Z,,Night Run,Run,1000.0,596,1733,9:51 /km,,,Garmin Forerunner 165,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20711718829,132124444,Remy Firman,Remy,2026-10-21T23:56:42Z,,Morning Run,Run,1740.0,784,2231,7:30 /km,,,Garmin Forerunner 165,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20697977987,132628474,Yi kai Tan,Yi kai,2026-10-23T07:51:18Z,,Afternoon Hike,Hike,1520.0,712,4913,,39.0,,Polar Pacer,,False,False,everyone,Central,,0,0,Activity,2026-10-26T02:41:17+00:00
+20714339911,133017837,Jerald C,Jerald,2026-10-24T14:28:59Z,,Night Run,Run,4050.0,1311,2309,5:23 /km,,,Strava App,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20694543058,136348773,Clarence A1110,Clarence,2026-10-21T00:50:33Z,,Morning Workout,Workout,,224,224,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20683592119,136696478,Malcolm Han,Malcolm,2026-10-20T23:22:00Z,,Morning Run,Run,2810.0,1714,1849,10:09 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20683592249,136696478,Malcolm Han,Malcolm,2026-10-18T23:26:18Z,,Morning Run,Run,2980.0,1666,2116,9:19 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20695310416,1367246648,Rec Aqil,Rec,2026-10-23T00:04:18Z,,Morning Workout,Workout,,3062,3062,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20707824988,138151922,Dillon Churn,Dillon,2026-10-24T03:19:55Z,,Weekend gym,WeightTraining,,4740,4777,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20707333169,138151922,Dillon Churn,Dillon,2026-10-23T05:11:34Z,,Strength and power 10,WeightTraining,,1747,1747,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20707333124,138151922,Dillon Churn,Dillon,2026-10-23T00:11:05Z,,Combat circuit 4 (urban),Workout,,3096,3096,,,,Polar Pacer,,False,False,everyone,,No more for the yr RAHHH,0,0,Activity,2026-10-26T02:41:17+00:00
+20707333168,138151922,Dillon Churn,Dillon,2026-10-21T08:53:47Z,,Strength and power 9,WeightTraining,,2219,2219,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20685491151,139521986,akiq .,akiq,2026-10-22T09:51:17Z,,Afternoon Workout,Workout,,344,344,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20687137428,1400184214,Darren Ho,Darren,2026-10-19T12:17:48Z,,Run,Run,2750.0,1273,1987,7:42 /km,,,Strava App,,False,False,everyone,Singapore,,1,0,Activity,2026-10-26T02:41:17+00:00
+20697206201,1405528165,Noor Adam Dor Rahman,Noor Adam,2026-10-23T00:01:59Z,,Morning Run,Run,2450.0,1123,1298,,50.0,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20699531035,141358214,Eugene . Wei ,Eugene,2026-10-23T10:34:09Z,,Evening Swim,Swim,2150.0,3204,3211,2:29 /100m,,,Garmin Instinct 3,,False,False,everyone,,,2,0,Activity,2026-10-26T02:41:17+00:00
+20708476202,141567060,Mantra Shah,Mantra,2026-10-24T03:07:42Z,2026-10-24T11:07:42Z,Lunch Run,Run,13050.0,3513,6117,4:29 /km,,,Polar Pacer,,False,False,everyone,Northwest,,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20707730745,141567060,Mantra Shah,Mantra,2026-10-24T03:03:25Z,2026-10-24T11:03:25Z,Lunch Ride,Run,9400.0,2365,4095,4:11 /km,,,Strava App,,False,False,everyone,Northwest,,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20708476389,141567060,Mantra Shah,Mantra,2026-10-20T13:39:34Z,,Night Run,Run,1030.0,1732,1887,,39.0,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20720353419,1433924818,Roy Chan,Roy,2026-10-24T10:38:12Z,,Evening Walk,Walk,2620.0,6180,6230,,,4748,Garmin vívosmart 5,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20707336920,1433924818,Roy Chan,Roy,2026-10-23T23:53:35Z,,Morning Run,Run,8750.0,2224,2224,4:14 /km,,,Garmin vívosmart 5,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20695774773,143906121,yuheng tan,yuheng,2026-10-21T20:32:53Z,,Morning Run,Run,2310.0,1459,1497,,63.0,,Samsung Health,,False,False,everyone,"Livingstone Shire, Australia",,0,0,Activity,2026-10-26T02:41:17+00:00
+20695762657,143906121,yuheng tan,yuheng,2026-10-19T20:17:51Z,,Morning Run,Run,2860.0,1365,1413,,76.0,,Samsung Health,,False,False,everyone,"Livingstone Shire, Australia",,0,0,Activity,2026-10-26T02:41:17+00:00
+20714979698,1447891160,jd jd,jd,2026-10-23T00:02:08Z,,231026 Run,Run,2650.0,712,1157,,57.0,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20714981683,1447891160,jd jd,jd,2026-10-18T23:32:21Z,,191026 Run,Run,4060.0,1721,1778,,83.0,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20706938320,145639218,Ken Ang,Ken,2026-10-23T22:36:41Z,,Morning Run,Run,8620.0,6240,8112,12:08 /km,,,Garmin Instinct 3,,False,False,everyone,Central,,1,0,Activity,2026-10-26T02:41:17+00:00
+20696941507,146502370, Jun Ze, Jun,2026-10-20T23:47:29Z,2026-10-21T07:47:29Z,Morning Run,Run,3240.0,729,1750,,74.0,,Polar Pacer,,False,False,everyone,Southwest,,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20696942074,146502370, Jun Ze, Jun,2026-10-19T12:12:21Z,2026-10-19T20:12:21Z,Evening Run,Run,9570.0,3200,3298,5:34 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20700973473,1466234149,terry chan,terry,2026-10-23T12:26:16Z,,Evening Run,Run,16050.0,5580,6124,5:50 /km,,,Strava App,,False,False,everyone,Northeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20698060152,1467341794,Lee Xzaver,Lee,2026-10-23T09:06:38Z,,Afternoon Walk,Walk,1120.0,883,1038,,15.0,,Samsung Health,,False,False,everyone,Central,,0,0,Activity,2026-10-26T02:41:17+00:00
+20695334537,1484419724,Gooi Yu Zhe,Gooi,2026-10-20T23:32:19Z,,Morning Run,Run,2790.0,1167,1171,,0.0,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20714688716,1502219713,Xian Neng Guok,Xian Neng,2026-10-24T15:18:58Z,,晚间跑步,Run,2420.0,696,696,4:47 /km,,,Strava App,,False,False,everyone,Southeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20696490592,151291925,Qiyuan Ng,Qiyuan,2026-10-22T00:01:45Z,,Morning Workout,Workout,,1130,1130,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20694981414,151291925,Qiyuan Ng,Qiyuan,2026-10-22T00:01:22Z,,Morning Workout,Workout,,1136,1136,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20694522166,151291925,Qiyuan Ng,Qiyuan,2026-10-22T00:03:59Z,,Morning Workout,Workout,,954,954,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20696278626,151865501,ZhiJin Tan,ZhiJin,2026-10-22T05:40:47Z,,who is joyce and why am i walking to her training shed,Hike,5500.0,4920,28425,,86.0,,Garmin Instinct 2,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20715022422,1526822034,Jun Jie Lau,Jun Jie,2026-10-24T13:57:13Z,,Night Walk,Walk,7070.0,5580,7253,,54.0,,Strava App,,False,False,everyone,Southwest,,1,0,Activity,2026-10-26T02:41:17+00:00
+20708237082,1526822034,Jun Jie Lau,Jun Jie,2026-10-24T05:54:23Z,,Afternoon Walk,Walk,910.0,764,3200,,42.0,,Strava App,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20703949658,1526822034,Jun Jie Lau,Jun Jie,2026-10-23T15:31:41Z,,Night Walk,Walk,690.0,822,822,,,1314,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20701601720,1526822034,Jun Jie Lau,Jun Jie,2026-10-23T11:49:33Z,,Evening Walk,Walk,8120.0,7440,11758,,,21952,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20698307083,1526822034,Jun Jie Lau,Jun Jie,2026-10-23T09:24:10Z,,Afternoon Walk,Walk,1500.0,1652,1652,,,3036,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20697743358,1526822034,Jun Jie Lau,Jun Jie,2026-10-23T07:48:52Z,,Afternoon Walk,Walk,2700.0,2122,2823,,,5456,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20697743298,1526822034,Jun Jie Lau,Jun Jie,2026-10-23T05:16:21Z,,Afternoon Walk,Walk,820.0,485,500,,,1056,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20697743130,1526822034,Jun Jie Lau,Jun Jie,2026-10-23T04:04:02Z,,Lunch Walk,Walk,770.0,611,871,,,1656,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20697743270,1526822034,Jun Jie Lau,Jun Jie,2026-10-23T01:10:59Z,,Morning Walk,Walk,980.0,883,2863,,,5242,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20726370246,152788103,Yongthye Chew,Yongthye,2026-10-25T12:55:11Z,,Evening Weight Training,WeightTraining,,3720,3726,,,,Garmin Instinct 2,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20697946253,152788103,Yongthye Chew,Yongthye,2026-10-23T08:06:34Z,,Afternoon Weight Training,WeightTraining,,3660,3691,,,,Garmin Instinct 2,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20707348211,152934564,Royston Wang,Royston,2026-10-23T23:17:04Z,,Morning Run,Run,17260.0,8160,13042,7:56 /km,,,Garmin fēnix 5,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20700810036,152934564,Royston Wang,Royston,2026-10-23T11:29:45Z,,Evening Run,Run,10990.0,5160,7540,7:50 /km,,,Garmin fēnix 5,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20698083137,152934564,Royston Wang,Royston,2026-10-23T08:21:41Z,,Afternoon Run,Run,12030.0,3255,3909,4:31 /km,,,Garmin fēnix 5,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20696740039,152934564,Royston Wang,Royston,2026-10-23T01:44:48Z,,Morning Run,Run,24050.0,11880,14409,8:16 /km,,,Garmin fēnix 5,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20685492485,154154947,rayyan aniq,rayyan,2026-10-22T09:51:17Z,,Afternoon Workout,Workout,,344,344,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20713458842,154618341,Yyyu Fish,Yyyu,2026-10-24T13:53:26Z,,Night Run,Run,2410.0,635,638,4:23 /km,,,Strava App,,False,False,everyone,Northwest,,3,2,Activity,2026-10-26T02:41:17+00:00
+20700810810,154618341,Yyyu Fish,Yyyu,2026-10-23T13:25:22Z,,Night Run,Run,5000.0,1607,1611,5:21 /km,,,Strava App,,False,False,everyone,Northwest,,3,0,Activity,2026-10-26T02:41:17+00:00
+20719552032,155939935,Dominic Lee,Dominic,2026-10-25T00:54:30Z,,Speediance - Back/Biceps,Workout,,2070,2070,,,,,,False,False,everyone,,"Seated Barbell Lat Pulldown, Seated Barbell Row, Incline Dual-Handle Shrug, Dual-Handle Romanian Deadlift, Standing Dual-Handle Biceps Curl, Standing Tricep Rope Hammer Curl",1,0,Activity,2026-10-26T02:41:17+00:00
+20698461199,155939935,Dominic Lee,Dominic,2026-10-23T09:22:42Z,,Gym - Chest Shoulders,Workout,,2881,2881,,,,,,False,False,everyone,,"Barbell Bench Press, Supine Dual-Handle Chest Fly, Seated Barbell Shoulder Press, Standing Dual-Handle Lateral Raise, Standing Tricep Rope Pushdown",0,0,Activity,2026-10-26T02:41:17+00:00
+20682968165,155939935,Dominic Lee,Dominic,2026-10-22T01:51:50Z,,Gym - Leg Day,Workout,,2902,2902,,,,,,False,False,everyone,,"Bodyweight  Squat, Barbell Squat, Barbell Split Squat, Standing Leg Curl, Standing Cable Hip Adduction, Standing Cable Hip Abduction（Floor）, Standing Single-Leg Calf Raise, Kneeling Tricep Rope Crunch",0,0,Activity,2026-10-26T02:41:17+00:00
+20696604749,1566906229,ZH Ang,ZH,2026-10-22T11:47:37Z,,Evening Walk,Walk,3760.0,3371,5691,,,10054,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20706583367,157900821,Kurapi -,Kurapi,2026-10-24T00:31:45Z,,Morning Walk,Walk,760.0,680,750,,,1218,Strava App,,False,False,everyone,Northeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20706486210,157900821,Kurapi -,Kurapi,2026-10-24T00:01:07Z,,Morning Run,Run,4320.0,1825,1825,7:02 /km,,,Strava App,,False,False,everyone,Northeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20706408699,159220662,Jun Yu Goo,Jun Yu,2026-10-23T16:00:01Z,,Morning Run,Run,2410.0,900,987,,8.0,,Strava App,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20696482846,159220662,Jun Yu Goo,Jun Yu,2026-10-22T16:00:01Z,,Morning Workout,Workout,,3498,3498,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20696489445,159220662,Jun Yu Goo,Jun Yu,2026-10-21T16:00:01Z,,Morning Workout,Workout,,1732,1732,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20687477499,159549407,Jarett Tang,Jarett,2026-10-22T09:35:38Z,,Afternoon Workout,Workout,,1299,1299,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20685487323,159549407,Jarett Tang,Jarett,2026-10-22T09:51:09Z,,Afternoon Workout,Workout,,348,348,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20695053106,159549407,Jarett Tang,Jarett,2026-10-19T12:36:02Z,2026-10-19T20:36:02Z,c,Run,2400.0,779,783,,46.0,,Strava App,,False,False,everyone,Southwest,,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20688109270,1598227059,Lucas Xie,Lucas,2026-10-20T23:24:17Z,,Morning Run,Run,3330.0,1523,1677,7:37 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20685487096,160633256,Jayden Tan,Jayden,2026-10-22T09:51:09Z,,Afternoon Workout,Workout,,348,348,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20710587296,161108639,lee jordan,lee,2026-10-24T10:14:53Z,,test,Run,2400.0,701,720,4:52 /km,,,Strava App,,False,False,everyone,Northeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20696481914,161831314,Kayden Chee,Kayden,2026-10-23T00:00:21Z,,combat circuit of pain and suffering,Workout,,3514,3514,,,,Polar Pacer,,False,False,everyone,,,1,0,Activity,2026-10-26T02:41:17+00:00
+20682023605,161831314,Kayden Chee,Kayden,2026-10-21T23:52:18Z,,Morning Workout,Workout,,1586,1586,,,,Polar Pacer,,False,False,everyone,,,1,0,Activity,2026-10-26T02:41:17+00:00
+20685488128,162695054,Kegan Chia,Kegan,2026-10-22T09:51:09Z,,Afternoon Workout,Workout,,348,348,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20686973873,162695054,Kegan Chia,Kegan,2026-10-22T09:32:21Z,,Afternoon Workout,Workout,,1385,1385,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20712075054,162966107,Trương Minh Quân,Trương Minh,2026-10-24T10:53:22Z,,Evening Ride,Ride,13920.0,4440,5030,,13.0,,Garmin Forerunner 165,,False,False,everyone,Southeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20707005410,162966107,Trương Minh Quân,Trương Minh,2026-10-24T01:06:14Z,,Morning Walk,Walk,1830.0,1334,2377,,,2494,Garmin Forerunner 165,,False,False,everyone,Northeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20724894530,164845584,Gene Goh,Gene,2026-10-21T00:35:22Z,,Morning Workout,Workout,,10,10,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20710604002,1658679384,Edmund Thaim,Edmund,2026-10-24T09:50:38Z,,Afternoon Run,Run,5000.0,2112,2146,7:02 /km,,,Garmin Forerunner 265,,False,False,everyone,Northwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20695214509,1658679384,Edmund Thaim,Edmund,2026-10-22T23:48:18Z,,Morning HIIT,HighIntensityIntervalTraining,,3023,3023,,,,Garmin Forerunner 265,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20700580826,1675112733,Nor Hafiz,Nor,2026-10-23T12:30:38Z,,Evening Walk,Walk,3850.0,2646,2887,,,4346,Strava App,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20690683188,1693285525,Sean Yeo,Sean,2026-10-19T23:59:54Z,,Morning Workout,Workout,1580.0,1497,1497,,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20712523458,170365151,lukas kwek,lukas,2026-10-24T11:39:05Z,,Evening Run,Run,3520.0,1644,2561,7:46 /km,,,Garmin Forerunner 165,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20685489884,171954993,hrs inabus,hrs,2026-10-22T09:51:09Z,,Afternoon Workout,Workout,,348,348,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20685487658,172978948,Ion Run,Ion,2026-10-22T09:51:09Z,,Afternoon Workout,Workout,,348,348,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20710275081,173103307,Neo Kai Jun,Neo,2026-10-24T09:06:58Z,,Afternoon Run,Run,10010.0,3388,3395,5:38 /km,,,Garmin Forerunner 165,,False,False,everyone,Northwest,,1,0,Activity,2026-10-26T02:41:17+00:00
+20698599759,173103307,Neo Kai Jun,Neo,2026-10-22T23:00:00Z,,12k route march,Walk,10240.0,8040,10584,,,13456,Garmin Forerunner 165,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732481244,1744500732,Alfovero Povero,Alfovero,2026-10-23T00:24:21Z,,Morning Run,Run,3760.0,1599,1599,7:04 /km,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20685491742,1744500732,Alfovero Povero,Alfovero,2026-10-22T09:51:17Z,,Afternoon Workout,Workout,,344,344,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732481390,1744500732,Alfovero Povero,Alfovero,2026-10-22T09:33:16Z,,Afternoon Workout,Workout,,1412,1412,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732481802,1744500732,Alfovero Povero,Alfovero,2026-10-20T23:48:16Z,,Morning Run,Run,3440.0,1485,1708,,73.0,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20685490441,174687887,Jun Cai,Jun,2026-10-22T09:51:17Z,,Afternoon Workout,Workout,,344,344,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20710401207,175797510,Raymond Gwey,Raymond,2026-10-24T09:55:17Z,,Afternoon Run,Run,3050.0,1125,1154,6:09 /km,,,Strava App,,False,False,everyone,Central,,0,0,Activity,2026-10-26T02:41:17+00:00
+20697016999,1771912550,Noor Shahfyzad,Noor,2026-10-22T12:22:55Z,,Evening Hike,Hike,2630.0,2348,3890,,37.0,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20700993151,177612856,Mochi Ichom,Mochi,2026-10-23T13:46:25Z,,Recovery,Run,2000.0,1219,1423,10:09 /km,,,Strava App,,False,False,everyone,Northeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20700731107,177612856,Mochi Ichom,Mochi,2026-10-23T12:37:30Z,,Evening Run,Run,12000.0,4020,4023,5:35 /km,,,Strava App,,False,False,everyone,Northeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20695429361,177789904,Kishore Senthil,Kishore,2026-10-23T00:11:03Z,,Morning Workout,Workout,,3596,3596,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20694271624,177789904,Kishore Senthil,Kishore,2026-10-21T23:54:27Z,,Morning Workout,Workout,,1488,1488,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20681151494,177789904,Kishore Senthil,Kishore,2026-10-21T08:51:34Z,,Afternoon Workout,Workout,,2464,2464,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20698582193,178431506,Joshua Ling,Joshua,2026-10-21T23:44:37Z,,Morning Run,Run,2680.0,618,1201,,57.0,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20695310700,1818680735,Nathaniel Paszkowski,Nathaniel,2026-10-23T00:04:18Z,,Morning Workout,Workout,,3062,3062,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20694554694,1818680735,Nathaniel Paszkowski,Nathaniel,2026-10-21T00:04:18Z,,Morning Workout,Workout,,1690,1690,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20696884150,18447136,Weikiang Ang,Weikiang,2026-10-22T23:49:45Z,,Morning Walk,Walk,4050.0,2985,8497,,,2730,Garmin Descent Mk1,,False,False,everyone,Southwest,,1,0,Activity,2026-10-26T02:41:17+00:00
+20701244428,184714218,Hyrax 1208,Hyrax,2026-10-23T01:17:53Z,,Morning Run,Run,12380.0,3660,6767,4:58 /km,,,Polar Pacer,,False,False,everyone,Southeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20701244145,184714218,Hyrax 1208,Hyrax,2026-10-23T00:23:02Z,,Morning Run,Run,2710.0,1019,1593,6:16 /km,,,Polar Pacer,,False,False,everyone,Central,,0,0,Activity,2026-10-26T02:41:17+00:00
+20685159835,184714218,Hyrax 1208,Hyrax,2026-10-20T23:46:23Z,,Morning Workout,Workout,,1532,1532,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20714356230,1847934457,Reegan Pang,Reegan,2026-10-24T13:52:44Z,,Night Walk,Walk,820.0,617,856,,,1114,Strava App,,False,False,everyone,Central,,0,0,Activity,2026-10-26T02:41:17+00:00
+20696860850,1847934457,Reegan Pang,Reegan,2026-10-23T05:26:41Z,,Afternoon Walk,Walk,1830.0,1153,1795,,,2244,Strava App,,False,False,everyone,Central,,0,0,Activity,2026-10-26T02:41:17+00:00
+20698191969,187665466,Danish .,Danish,2026-10-23T09:22:03Z,,Afternoon Run,Run,2110.0,877,1194,6:55 /km,,,Strava App,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20709974336,189013681,Leroy Chua,Leroy,2026-10-24T09:18:40Z,,The,Walk,3800.0,1304,1365,,,3352,Strava App,,False,False,everyone,Southeast,,2,1,Activity,2026-10-26T02:41:17+00:00
+20710896168,189152649,Kieran Koh,Kieran,2026-10-24T09:57:43Z,,To deer?? 🦌,Run,4950.0,1767,2769,5:56 /km,,,Strava App,,False,False,everyone,Northwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20724891920,190439145,eugene k,eugene,2026-10-21T00:35:22Z,,Morning Workout,Workout,,10,10,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20685490987,190658380,Corvin Redgrave ,Corvin,2026-10-22T09:51:17Z,,Afternoon Workout,Workout,,344,344,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20685488676,1911026649,Jovan Ong,Jovan,2026-10-22T09:51:09Z,,Afternoon Workout,Workout,,348,348,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20726316203,191683956,ck teong,ck,2026-10-23T02:04:30Z,,Morning Run,Run,1150.0,4440,4483,1:04:50 /km,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20714056205,192170719,Donny Poh,Donny,2026-10-24T14:14:46Z,,Night Run,Run,2380.0,1669,1911,11:41 /km,,,Polar Pacer,,False,False,everyone,Northwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20710840688,192170719,Donny Poh,Donny,2026-10-24T10:18:16Z,,Evening Run,Run,1860.0,1211,1583,10:49 /km,,,Polar Pacer,,False,False,everyone,Northwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20701334459,192170719,Donny Poh,Donny,2026-10-23T12:07:24Z,,Evening Run,Run,6000.0,6360,9209,17:47 /km,,,Polar Pacer,,False,False,everyone,Northwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20701334291,192170719,Donny Poh,Donny,2026-10-23T11:00:24Z,,Evening Run,Run,5000.0,2562,2815,8:32 /km,,,Polar Pacer,,False,False,everyone,Northwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20701334281,192170719,Donny Poh,Donny,2026-10-23T10:19:43Z,,Evening Run,Run,2000.0,1371,1972,11:24 /km,,,Polar Pacer,,False,False,everyone,Northwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20701334157,192170719,Donny Poh,Donny,2026-10-23T06:44:04Z,,Afternoon Run,Run,2000.0,1219,1939,10:07 /km,,,Polar Pacer,,False,False,everyone,Northwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20712150626,192512132,Keene Leong,Keene,2026-10-24T11:45:21Z,,Evening Run,Run,4850.0,1471,1494,5:03 /km,,,Polar Pacer,,False,False,everyone,Northwest,,1,0,Activity,2026-10-26T02:41:17+00:00
+20712148323,192512132,Keene Leong,Keene,2026-10-22T22:57:49Z,,Morning Run,Run,12440.0,9540,11841,12:50 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20712151196,192512132,Keene Leong,Keene,2026-10-21T23:47:22Z,2026-10-22T07:47:22Z,Morning Run,Run,3480.0,1510,1524,,73.0,,Polar Pacer,,False,False,everyone,Southwest,,0,0,GroupActivity,2026-10-26T02:41:17+00:00
+20712151736,192512132,Keene Leong,Keene,2026-10-21T23:37:37Z,,Morning Run,Run,480.0,241,241,8:23 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20712148881,192512132,Keene Leong,Keene,2026-10-20T23:57:04Z,,Morning Run,Run,1400.0,1104,1161,13:07 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20712150145,192512132,Keene Leong,Keene,2026-10-19T08:49:17Z,,Afternoon Run,Run,1540.0,448,902,4:51 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20712149448,192512132,Keene Leong,Keene,2026-10-19T08:38:32Z,,Afternoon Run,Run,850.0,438,563,8:32 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20697682485,192667624,Dylan Chee,Dylan,2026-10-23T00:00:40Z,,Morning Run,Run,2700.0,1583,3980,,59.0,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20682572021,193278868,Joe Lam,Joe,2026-10-21T23:56:38Z,,Morning Crossfit,Crossfit,,2019,2019,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20700292371,194634355,Darsh Parmar,Darsh,2026-10-23T11:09:28Z,,Evening Ride,Ride,6610.0,2979,6707,,54.0,,Strava App,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20698231368,195412199,Javier Sng Ming Wei,Javier,2026-10-23T08:52:29Z,,Afternoon Weight Training,WeightTraining,,3207,3207,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20685488556,195412199,Javier Sng Ming Wei,Javier,2026-10-22T09:51:10Z,,Afternoon Workout,Workout,,346,346,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20694915270,195412199,Javier Sng Ming Wei,Javier,2026-10-22T09:32:15Z,,Afternoon Workout,Workout,,1148,1148,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20694916219,195412199,Javier Sng Ming Wei,Javier,2026-10-20T23:47:23Z,,Morning Run,Run,3290.0,886,1695,,74.0,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20694915815,195412199,Javier Sng Ming Wei,Javier,2026-10-20T23:23:21Z,,Morning Run,Run,880.0,377,381,,20.0,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20706351728,196395868,Ron Lim,Ron,2026-10-23T23:42:20Z,,Morning Run,Run,4620.0,1683,1913,6:04 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20685486921,196594668,Juay Wei Tian,Juay,2026-10-22T09:51:10Z,,Afternoon Workout,Workout,,346,346,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20707290431,1975053728,Chan Jingzhan,Chan,2026-10-24T02:05:37Z,,Morning Swim,Swim,1300.0,1721,1741,2:12 /100m,,,Garmin Venu 3,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732336620,197511646,Ngan Junfong,Ngan,2026-10-19T11:16:42Z,,Evening Walk,Walk,1880.0,2015,32297,,,88282,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20720217943,197963991,Sze Shian Ng,Sze Shian,2026-10-22T11:45:18Z,,Evening Walk,Walk,4160.0,3900,6587,,,12064,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20720218110,197963991,Sze Shian Ng,Sze Shian,2026-10-20T13:07:53Z,,Night Run,Run,1710.0,762,762,7:25 /km,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20701432891,198739620,Kenneth Pang,Kenneth,2026-10-23T14:42:07Z,,Night Walk,Walk,160.0,140,440,,11.0,,Apple Watch Ultra 3,,False,False,everyone,Northeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20699599695,198739620,Kenneth Pang,Kenneth,2026-10-23T11:43:57Z,,Evening Walk,Walk,1000.0,655,738,,,914,Apple Watch Ultra 3,,False,False,everyone,Northeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20697469855,198739620,Kenneth Pang,Kenneth,2026-10-23T07:33:31Z,,Afternoon Walk,Walk,1020.0,831,1236,,,734,Apple Watch Ultra 3,,False,False,everyone,Central,,0,0,Activity,2026-10-26T02:41:17+00:00
+20711310939,198974162,Piek Chun,Piek,2026-10-24T10:38:37Z,,"Run 23, Evening",Run,4440.0,2265,2379,8:29 /km,,,Strava App,,False,False,everyone,Northeast,@ 6:32,0,0,Activity,2026-10-26T02:41:17+00:00
+20685488658,201644445,J J,J,2026-10-22T09:51:17Z,,Afternoon Workout,Workout,,344,344,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20686928490,201644445,J J,J,2026-10-22T09:39:02Z,,Afternoon Workout,Workout,,889,889,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20681491188,201644445,J J,J,2026-10-21T22:41:47Z,,Morning Workout,Workout,,2480,2480,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20696539806,2036498714,khalaf anaqi,khalaf,2026-10-23T00:22:19Z,,Morning Run,Run,3060.0,1007,1075,5:28 /km,,,Strava App,,False,False,everyone,Central,,0,0,Activity,2026-10-26T02:41:17+00:00
+20712605405,203782547,immanuel lim,immanuel,2026-10-24T12:24:47Z,,Evening Run,Run,5010.0,1827,2164,6:04 /km,,,Strava App,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20709646393,203802378,lebon chen jun ,lebon,2026-10-24T08:20:00Z,,saturday session,Run,6000.0,2850,3472,7:55 /km,,,COROS APEX 4,,False,False,everyone,Northeast,6k easy,0,0,Activity,2026-10-26T02:41:17+00:00
+20696283354,2048047143,Juan Ze Thang,Juan Ze,2026-10-20T09:05:56Z,,Afternoon Run,Run,2040.0,1161,1262,9:27 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20696283520,2048047143,Juan Ze Thang,Juan Ze,2026-10-19T09:16:30Z,,Afternoon Run,Run,3160.0,1825,1857,9:38 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20700769173,2048163077,Shikai Ng,Shikai,2026-10-23T13:22:21Z,,Night Run,Run,4300.0,1451,1457,5:37 /km,,,Polar Pacer,,False,False,everyone,Northeast,,1,0,Activity,2026-10-26T02:41:17+00:00
+20713018941,205755605,Jiaxuan Chan,Jiaxuan,2026-10-24T12:20:53Z,,Evening Swim,Swim,,3720,3727,,,,Strava App (Apple Watch Series 10),,False,False,everyone,,,1,0,Activity,2026-10-26T02:41:17+00:00
+20701013811,205755605,Jiaxuan Chan,Jiaxuan,2026-10-23T13:44:06Z,,Night Run,Run,5000.0,1635,1660,5:27 /km,,,Strava App,,False,False,everyone,Central,,1,0,Activity,2026-10-26T02:41:17+00:00
+20685487691,205806167,Ray Chua,Ray,2026-10-22T09:51:10Z,,Afternoon Workout,Workout,,346,346,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20685149590,205806167,Ray Chua,Ray,2026-10-20T23:46:23Z,,Morning Workout,Workout,,1532,1532,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20682567643,205841765,Brandon Chia,Brandon,2026-10-21T23:56:02Z,,Morning Crossfit,Crossfit,,2158,2158,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20701426872,205925600,Hainz Junior,Hainz,2026-10-23T13:53:05Z,,Night run,Run,3000.0,1130,3543,6:16 /km,,,Strava App,,False,False,everyone,Northwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20726735251,206593849,Xavier Lim,Xavier,2026-10-23T00:02:02Z,,Interval Run (3×800m),Run,2340.0,610,926,,54.0,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20642902835,206593849,Xavier Lim,Xavier,2026-10-18T23:32:21Z,,Morning Run,Run,3340.0,1659,1780,,71.0,,Polar Pacer,,False,False,everyone,Southwest,Skiving,1,0,Activity,2026-10-26T02:41:17+00:00
+20707143787,206810966,Renwen 7,Renwen,2026-10-21T23:59:13Z,,Morning Run,Run,1590.0,511,1294,,33.0,,Polar Pacer,,False,False,everyone,Southwest,,2,0,Activity,2026-10-26T02:41:17+00:00
+20696314661,207082437,Ernest Chan,Ernest,2026-10-22T22:58:24Z,,12km recon FBO march💀☠️,Walk,11990.0,8940,13281,,,18614,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20696314735,207082437,Ernest Chan,Ernest,2026-10-21T23:47:13Z,,Morning Walk,Walk,1830.0,1362,1607,,40.0,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20696315015,207082437,Ernest Chan,Ernest,2026-10-20T23:57:19Z,,Morning Workout,Workout,,2638,2638,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20724890608,207082437,Ernest Chan,Ernest,2026-10-21T00:35:22Z,,Morning Workout,Workout,,10,10,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20696315229,207082437,Ernest Chan,Ernest,2026-10-19T08:38:39Z,,Afternoon Workout,Workout,,2417,2417,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20709975383,22751016,JianCong Tan,JianCong,2026-10-23T00:16:18Z,,Friday Morning HIIT,Workout,,2395,2395,,,,Strava App (Apple Watch Series 8),,False,False,everyone,,,1,0,Activity,2026-10-26T02:41:17+00:00
+20706822298,23119791,Meng Wee,Meng,2026-10-23T23:59:54Z,,Morning Run,Run,11570.0,4500,4555,6:30 /km,,,Garmin Forerunner 970,,False,False,everyone,Northeast,,9,0,Activity,2026-10-26T02:41:17+00:00
+20688233207,23119791,Meng Wee,Meng,2026-10-22T11:54:42Z,,climbs,RockClimbing,,6780,6828,,10.0,,Strava App,,False,False,everyone,Northeast,,5,0,Activity,2026-10-26T02:41:17+00:00
+20706036918,24255160,Tedmund Tan,Tedmund,2026-10-23T16:00:01Z,,Morning Run,Run,3030.0,1135,1135,6:14 /km,,,Garmin Forerunner 970,,False,False,everyone,Central,,5,0,Activity,2026-10-26T02:41:17+00:00
+20708925535,27799486,Joseph Soh Jun Ming,Joseph,2026-10-24T07:40:11Z,,Afternoon Run,Run,5050.0,1738,1770,5:44 /km,,,Garmin Forerunner 970,,False,False,everyone,Southeast,Outdoor!,17,0,Activity,2026-10-26T02:41:17+00:00
+20706764376,27799486,Joseph Soh Jun Ming,Joseph,2026-10-23T22:37:39Z,,Morning Run,Run,27000.0,8760,8986,5:25 /km,,,Garmin Forerunner 970,,False,False,everyone,,,30,0,Activity,2026-10-26T02:41:17+00:00
+20719680346,29786655,Jo_ Sama,Jo_,2026-10-24T21:09:34Z,,Morning Ride,Ride,81600.0,10080,16150,,706.0,,Garmin Edge 530,,False,False,everyone,Southwest,,10,0,Activity,2026-10-26T02:41:17+00:00
+20707552911,29786655,Jo_ Sama,Jo_,2026-10-23T21:41:58Z,,Morning Ride,Ride,140050.0,15180,20788,,846.0,,Garmin Edge 530,,False,False,everyone,Southwest,,12,0,Activity,2026-10-26T02:41:17+00:00
+20696798189,29786655,Jo_ Sama,Jo_,2026-10-22T21:59:35Z,,Morning Run,Run,10010.0,3840,3948,6:24 /km,,,Garmin Instinct 2 Solar,,False,False,everyone,Southwest,,6,0,Activity,2026-10-26T02:41:17+00:00
+20682568931,319830493,Tan Chun Chong,Tan,2026-10-21T23:55:51Z,,Morning Workout,Workout,,2157,2157,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20712403696,32097458,Lim Bor Lian,Lim,2026-10-24T12:14:08Z,,Evening Run,Run,5260.0,1600,1611,5:04 /km,,,Garmin Forerunner 570,,False,False,everyone,Southwest,,6,0,Activity,2026-10-26T02:41:17+00:00
+20697042685,342021277,Muhd Farhat,Muhd,2026-10-22T11:46:51Z,,Evening Walk,Walk,3810.0,3379,5898,,,8514,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20685491967,363624620,Dylan Chin,Dylan,2026-10-22T09:51:10Z,,Afternoon Workout,Workout,,346,346,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20697109631,39804426,Sean Yeo,Sean,2026-10-23T06:14:41Z,,Afternoon Walk,Walk,1320.0,2250,2250,,,1718,Apple Watch Ultra 2,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20695893899,40554265,Soh Tarcisius,Soh,2026-10-21T23:45:53Z,,DI,Run,2390.0,1182,1391,,49.0,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20720347386,428335349,Heng Jin wen,Heng,2026-10-20T23:32:19Z,,Morning Run,Run,2980.0,1167,1183,6:31 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20720347535,428335349,Heng Jin wen,Heng,2026-10-18T23:42:20Z,,Morning Run,Run,2410.0,1115,1127,7:43 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20685487435,447368714,Miqael Nor Haqeem,Miqael,2026-10-22T09:51:10Z,,Afternoon Workout,Workout,,346,346,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20688253373,447368714,Miqael Nor Haqeem,Miqael,2026-10-22T09:31:56Z,,Afternoon Workout,Workout,,1330,1330,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20681491254,447368714,Miqael Nor Haqeem,Miqael,2026-10-21T22:41:47Z,,Morning Workout,Workout,,2480,2480,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20707306669,457061847,marcus Wee,marcus,2026-10-24T02:05:36Z,,Morning Run,Run,3620.0,1138,1263,5:14 /km,,,Polar Pacer,,False,False,everyone,Southeast,,1,0,Activity,2026-10-26T02:41:17+00:00
+20707306988,457061847,marcus Wee,marcus,2026-10-22T23:47:17Z,,Morning Workout,Workout,,3720,3731,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20682023784,457061847,marcus Wee,marcus,2026-10-21T23:52:18Z,,Morning Workout,Workout,,1582,1582,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20681404998,457061847,marcus Wee,marcus,2026-10-21T08:51:34Z,,Afternoon Workout,Workout,,2464,2464,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20707824419,50087178,Jm C,Jm,2026-10-24T04:36:58Z,2026-10-24T12:36:58Z,5kg SABI fastgame run,Run,3560.0,1414,2006,6:37 /km,,,Polar Pacer,,False,False,everyone,Central,Idk what im doing tbh,2,0,GroupActivity,2026-10-26T02:41:17+00:00
+20697316472,50087178,Jm C,Jm,2026-10-23T00:02:09Z,,Morning Run,Run,2840.0,1273,1294,,57.0,,Polar Pacer,,False,False,everyone,Southwest,,4,0,Activity,2026-10-26T02:41:17+00:00
+20712695280,564463530,Benedict Leo,Benedict,2026-10-24T12:18:03Z,,Morning Run,Run,5770.0,2689,2900,7:45 /km,,,Garmin fēnix 5S Plus,,False,False,everyone,"Anaheim, USA",,0,0,Activity,2026-10-26T02:41:17+00:00
+20708050631,564463530,Benedict Leo,Benedict,2026-10-22T12:40:06Z,,Evening Run,Run,3460.0,1861,1861,8:58 /km,,,Garmin fēnix 5S Plus,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20681491563,576207038,Nasrulhaq Bin Mohamad Faizal,Nasrulhaq,2026-10-21T22:41:47Z,,Morning Workout,Workout,,1734,1734,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20685490218,578477417,Xavier Ong,Xavier,2026-10-22T09:51:10Z,,Afternoon Workout,Workout,,346,346,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20694459712,578477417,Xavier Ong,Xavier,2026-10-22T09:32:08Z,,Afternoon Workout,Workout,,1422,1422,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20711000200,619192671,Shawn Lim,Shawn,2026-10-24T10:13:23Z,,Evening Ride,Ride,6880.0,2033,2579,,33.0,,Strava App,,False,False,everyone,Northeast,Bike broke,0,0,Activity,2026-10-26T02:41:17+00:00
+20710379519,619192671,Shawn Lim,Shawn,2026-10-24T08:57:00Z,,Afternoon Walk,Walk,5070.0,4020,4534,,,7000,Strava App,,False,False,everyone,Northeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20698598842,64081356,Anuj Pathak,Anuj,2026-10-21T23:31:18Z,,Morning Run,Run,3070.0,1725,2128,,72.0,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20677071706,64081356,Anuj Pathak,Anuj,2026-10-18T23:44:24Z,,Morning Walk,Walk,4280.0,3255,4404,,,7928,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20707328600,65548123,Sim Rui Ming,Sim,2026-10-24T02:24:11Z,,Morning Ride,Ride,5040.0,805,1061,,30.0,,Garmin Edge 550,,False,False,everyone,Central,,6,0,Activity,2026-10-26T02:41:17+00:00
+20707328698,65548123,Sim Rui Ming,Sim,2026-10-23T21:25:30Z,2026-10-24T05:25:30Z,Morning Ride,Ride,76190.0,9060,14570,,393.0,,Garmin Edge 550,,False,False,everyone,Central,,16,0,GroupActivity,2026-10-26T02:41:17+00:00
+20700695392,65548123,Sim Rui Ming,Sim,2026-10-23T13:16:02Z,,Night Run,Run,2400.0,892,1414,6:11 /km,,,Garmin epix Pro (Gen 2) 51mm,,False,False,everyone,Central,,8,0,Activity,2026-10-26T02:41:17+00:00
+20731978148,666291145,Oliver Soon,Oliver,2026-10-23T00:09:52Z,,Morning Workout,Workout,,2824,2824,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20697829938,66688442,James Lee,James,2026-10-23T00:02:05Z,,Morning Run,Run,3390.0,1217,1248,,67.0,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20697829941,66688442,James Lee,James,2026-10-21T23:47:10Z,,Morning Run,Run,3430.0,1574,1574,,75.0,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20697829936,66688442,James Lee,James,2026-10-21T00:29:06Z,,Morning Workout,Workout,,549,549,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20724889988,66688442,James Lee,James,2026-10-21T00:35:22Z,,Morning Workout,Workout,,10,10,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20721291530,669150292,Benedict Sequerah,Benedict,2026-10-25T06:04:09Z,,Afternoon Badminton,Badminton,,6540,6557,,,,,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20708042988,669150292,Benedict Sequerah,Benedict,2026-10-24T03:03:35Z,,Lunch Badminton,Badminton,,11040,11054,,,,,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20707794437,69248105,Leong Meng Hin,Leong,2026-10-22T11:42:59Z,,Evening Walk,Walk,3850.0,3195,5600,,,9896,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20726577285,7099765,Enoch Tan,Enoch,2026-10-24T10:50:02Z,,Evening Weight Training,WeightTraining,,896,896,,,,Apple Watch Series 12,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20726577354,7099765,Enoch Tan,Enoch,2026-10-24T10:12:34Z,,Evening Run,Run,5580.0,2088,2158,,144.0,,Apple Watch Series 12,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20683672317,7099765,Enoch Tan,Enoch,2026-10-20T00:21:19Z,,Morning HIIT,HighIntensityIntervalTraining,,1789,1789,,,,Apple Watch Series 12,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20697721171,72823803,Jerrell Chua,Jerrell,2026-10-20T23:22:27Z,,Morning Run,Run,3220.0,1727,2658,8:55 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20713559738,728364162,Bryan Goh,Bryan,2026-10-24T12:19:13Z,,Evening Run,Run,7960.0,6720,6760,14:08 /km,,,Strava App,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20699826785,728364162,Bryan Goh,Bryan,2026-10-23T10:16:04Z,,Evening Run,Run,17080.0,6900,7245,6:45 /km,,,Strava App,,False,False,everyone,Central,,0,0,Activity,2026-10-26T02:41:17+00:00
+20698504116,728364162,Bryan Goh,Bryan,2026-10-23T00:22:13Z,,Morning Run,Run,2940.0,976,1060,5:32 /km,,,Strava App,,False,False,everyone,Central,,0,0,Activity,2026-10-26T02:41:17+00:00
+20711678950,73295637,tung tung,tung,2026-10-24T10:56:48Z,,Evening Walk,Walk,1380.0,2068,2068,,,,Fitbit Air,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20709545570,73295637,tung tung,tung,2026-10-24T05:05:11Z,,Afternoon Run,Run,19760.0,6360,6398,5:24 /km,,,Fitbit Air,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20707674014,73295637,tung tung,tung,2026-10-24T01:02:17Z,,Morning Walk,Walk,2380.0,2008,2008,,,,Fitbit Air,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20700406859,73295637,tung tung,tung,2026-10-23T11:31:56Z,,Evening Run,Run,6630.0,2114,2114,5:19 /km,,,Fitbit Air,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20698504301,73295637,tung tung,tung,2026-10-23T09:38:46Z,,Afternoon Walk,Walk,420.0,1018,1018,,,,Fitbit Air,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20697777353,73295637,tung tung,tung,2026-10-23T04:13:38Z,,Lunch Walk,Walk,1200.0,1933,1933,,,,Fitbit Air,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20707226686,75965267,Aaron You,Aaron,2026-10-23T13:18:44Z,,Night Run,Run,9150.0,3296,3296,6:00 /km,,,COROS PACE 4,,False,False,everyone,,"69 Training Load
+-- from COROS",0,0,Activity,2026-10-26T02:41:17+00:00
+20700205970,769156342,Arman Rusli,Arman,2026-10-21T23:44:33Z,,Morning Run,Run,2560.0,893,1440,,56.0,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732033584,77513735,Riyan Quyri,Riyan,2026-10-22T11:44:27Z,,Evening Walk,Walk,3880.0,3366,5668,,,10584,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20707087949,77749742,Ivan Lim,Ivan,2026-10-24T01:33:43Z,,Morning Run,Run,2510.0,1565,1600,10:22 /km,,,Garmin fēnix 7x,,False,False,everyone,Southwest,,1,0,Activity,2026-10-26T02:41:17+00:00
+20696682237,79214730,Rayner Tan,Rayner,2026-10-23T00:10:49Z,,Morning Workout,Workout,,3380,3380,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20731979063,79214730,Rayner Tan,Rayner,2026-10-23T00:09:52Z,,Morning Workout,Workout,,2824,2824,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20696682542,79214730,Rayner Tan,Rayner,2026-10-21T23:51:42Z,,Morning Run,Run,860.0,252,1891,4:50 /km,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20696682815,79214730,Rayner Tan,Rayner,2026-10-21T08:53:50Z,,Afternoon Workout,Workout,,2185,2185,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20713686640,79481786,Joshua low,Joshua,2026-10-24T13:49:15Z,,Le calm,Run,4570.0,1815,1835,6:36 /km,,,Strava App,,False,False,everyone,Southeast,,1,0,Activity,2026-10-26T02:41:17+00:00
+20710542502,79730738,brandon hoh,brandon,2026-10-24T09:56:20Z,,Afternoon Run,Run,4000.0,1567,1588,6:31 /km,,,Garmin Forerunner 165,,False,False,everyone,Southeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20708105552,79730738,brandon hoh,brandon,2026-10-21T23:56:29Z,,Morning Workout,Workout,,2045,2045,,,,Garmin Forerunner 165,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20696685016,798417968,Danial Ahmad,Danial,2026-10-23T05:20:25Z,,Afternoon Workout,Workout,,1000,1000,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20715761297,79881725,2214 REC  Jefmirza,2214 REC ,2026-10-23T00:02:04Z,,Morning Run,Run,2430.0,566,1727,,53.0,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20715761739,79881725,2214 REC  Jefmirza,2214 REC ,2026-10-20T09:07:16Z,,Afternoon Run,Run,2200.0,1165,1210,8:50 /km,,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20725795814,80095220,Ong Kah Sheng,Ong,2026-10-20T23:48:39Z,,Morning Run,Run,2730.0,1105,1934,,55.0,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20723649596,80356918,junyi Andric,junyi,2026-10-25T10:06:04Z,,Evening Ride,Ride,7410.0,2421,3078,,33.0,,Strava App,,False,False,everyone,Southeast,,2,0,Activity,2026-10-26T02:41:17+00:00
+20707732940,80643624,Anitha Natarajan Arunmozhi,Anitha Natarajan,2026-10-24T03:03:44Z,,Lunch Run,Run,14270.0,3720,6016,4:24 /km,,,Strava App,,False,False,everyone,Northwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20694557085,80962601,Nathan Ramesh,Nathan,2026-10-21T00:04:18Z,,Morning Workout,Workout,,1690,1690,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20707470191,82197781,Jamson Tan,Jamson,2026-10-24T01:54:26Z,,Morning Weight Training,WeightTraining,,5460,5506,,,,Garmin Forerunner 265,,False,False,everyone,,,3,0,Activity,2026-10-26T02:41:17+00:00
+20698402971,82197781,Jamson Tan,Jamson,2026-10-23T08:39:48Z,,Afternoon Weight Training,WeightTraining,,5040,5060,,,,Garmin Forerunner 265,,False,False,everyone,,,2,0,Activity,2026-10-26T02:41:17+00:00
+20732291177,82226994,Dhruv Ambaldhage,Dhruv,2026-10-25T23:48:34Z,,Night Workout,Workout,,2964,2964,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732003194,82226994,Dhruv Ambaldhage,Dhruv,2026-10-23T00:12:31Z,,Night Workout,Workout,,1878,1878,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20696486988,82226994,Dhruv Ambaldhage,Dhruv,2026-10-21T23:51:44Z,,Night Workout,Workout,,1732,1732,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20681410384,82226994,Dhruv Ambaldhage,Dhruv,2026-10-21T08:52:50Z,,Morning Workout,Workout,,2388,2388,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20720152638,83920919,Milton Ng,Milton,2026-10-25T02:50:13Z,,Morning Workout,Workout,,2304,2304,,,,Apple Watch SE,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20697153169,83920919,Milton Ng,Milton,2026-10-23T05:04:00Z,,Afternoon Walk,Walk,1800.0,1818,4733,,,2466,Apple Watch SE,,False,False,everyone,Southeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20694509088,83920919,Milton Ng,Milton,2026-10-22T22:42:57Z,,Morning Weight Training,WeightTraining,,2057,2057,,,,Apple Watch SE,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20706688015,84097989,Jachin Huang,Jachin,2026-10-23T22:58:27Z,,Morning Run,Run,8520.0,5160,7016,,686.0,,Garmin Forerunner 935,,False,False,everyone,Central,,0,0,Activity,2026-10-26T02:41:17+00:00
+20707509401,84341125,Jaren Cho,Jaren,2026-10-24T02:57:35Z,,Morning Run,Run,4970.0,1801,2358,6:02 /km,,,Polar Pacer,,False,False,everyone,Northwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20707426756,84341125,Jaren Cho,Jaren,2026-10-24T02:57:36Z,,Zone 2 warmup,Run,2080.0,1008,1077,8:04 /km,,,Strava App,,False,False,everyone,Northwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20687687426,84341125,Jaren Cho,Jaren,2026-10-22T00:17:35Z,,Morning Workout,Workout,,2063,2063,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20682121873,84341125,Jaren Cho,Jaren,2026-10-22T00:00:29Z,,Morning Weight Training,WeightTraining,,1880,1880,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20687687482,84341125,Jaren Cho,Jaren,2026-10-22T00:00:48Z,,Morning Workout,Workout,,976,976,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20699371263,85321513,jun xiang,jun,2026-10-23T11:18:54Z,,run,Run,3290.0,1006,1006,5:06 /km,,,Strava App,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20706491638,85641158,Wen Jing Oh,Wen Jing,2026-10-23T23:53:18Z,,Morning Run,Run,6000.0,2245,2249,6:14 /km,,,Garmin Instinct 3,,False,False,everyone,Southeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20654116691,85641158,Wen Jing Oh,Wen Jing,2026-10-19T23:05:02Z,,Morning Run,Run,4060.0,1207,1289,4:57 /km,,,Garmin Instinct 3,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20711569669,85736319,Zhe Hao loh,Zhe Hao,2026-10-24T11:21:37Z,,Evening Ride,Ride,1610.0,621,702,,11.0,,Strava App,,False,False,everyone,Northwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20706491694,85736624,Wayne Ho,Wayne,2026-10-23T23:53:17Z,,Morning Run,Run,6010.0,2241,2241,6:13 /km,,,Garmin fēnix 7 Pro (47mm),,False,False,everyone,Southeast,,1,0,Activity,2026-10-26T02:41:17+00:00
+20715345969,85932943,Kenny Ng,Kenny,2026-10-24T16:20:53Z,,GOWOD - Running Recovery,Yoga,,480,480,,,,,,False,False,everyone,,-&gt; 8 min Recovery protocol for Running,0,0,Activity,2026-10-26T02:41:17+00:00
+20713762655,85932943,Kenny Ng,Kenny,2026-10-24T14:25:01Z,,GOWOD - Running Activation,Yoga,,360,360,,,,,,False,False,everyone,,-&gt; 6 min Mobility Activation for Running,0,0,Activity,2026-10-26T02:41:17+00:00
+20701847118,85932943,Kenny Ng,Kenny,2026-10-23T15:29:48Z,,GOWOD - Sleep Flow,Yoga,,900,900,,,,,,False,False,everyone,,15 min sleep flow routine,0,0,Activity,2026-10-26T02:41:17+00:00
+20689776103,85932943,Kenny Ng,Kenny,2026-10-22T16:00:11Z,,GOWOD - Running Recovery,Yoga,,480,480,,,,,,False,False,everyone,,-&gt; 8 min Recovery protocol for Running,0,0,Activity,2026-10-26T02:41:17+00:00
+20676687344,85932943,Kenny Ng,Kenny,2026-10-21T16:10:12Z,,GOWOD - Running Recovery,Yoga,,480,480,,,,,,False,False,everyone,,-&gt; 8 min Recovery protocol for Running,0,0,Activity,2026-10-26T02:41:17+00:00
+20693380978,86838614,Jay Liew,Jay,2026-10-22T00:00:43Z,,Morning Workout,Workout,,6240,6280,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20682122395,86838614,Jay Liew,Jay,2026-10-22T00:00:29Z,,Morning Weight Training,WeightTraining,,1880,1880,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732200658,88039032,Yam Ho,Yam,2026-10-25T23:32:37Z,,Night Workout,Workout,,2836,2836,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20696977857,88039032,Yam Ho,Yam,2026-10-23T00:23:28Z,,Night Run,Run,3550.0,1685,1685,7:54 /km,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20685492268,88039032,Yam Ho,Yam,2026-10-22T09:51:17Z,,Morning Workout,Workout,,344,344,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20696978057,88039032,Yam Ho,Yam,2026-10-22T09:32:40Z,,Morning Workout,Workout,,1331,1331,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20696979029,88039032,Yam Ho,Yam,2026-10-20T23:23:44Z,,Morning Run,Run,4870.0,3840,4935,,124.0,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20696979590,88039032,Yam Ho,Yam,2026-10-19T08:31:31Z,,Afternoon Walk,Walk,3350.0,2308,4133,,79.0,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732321644,88220077,Adric Low,Adric,2026-10-25T23:51:53Z,,Night Workout,Workout,,3154,3154,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20696487781,88220077,Adric Low,Adric,2026-10-21T23:51:43Z,,Night Workout,Workout,,1732,1732,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20682312265,88220077,Adric Low,Adric,2026-10-21T08:51:41Z,,Morning Workout,Workout,,2330,2330,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20685491498,88234067,Radra Thepop,Radra,2026-10-22T09:51:17Z,,Afternoon Workout,Workout,,344,344,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20695292968,88234067,Radra Thepop,Radra,2026-10-22T09:37:35Z,,Afternoon Workout,Workout,,1082,1082,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20695292663,88234067,Radra Thepop,Radra,2026-10-20T23:47:20Z,,Morning Run,Run,3830.0,1068,1678,,79.0,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20685147568,88234067,Radra Thepop,Radra,2026-10-20T23:46:57Z,,Morning Workout,Workout,,1498,1498,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20700642231,88564393,Muhamad Rusyaidi,Muhamad,2026-10-23T13:06:28Z,,Night Run,Run,2170.0,864,1706,6:37 /km,,,Polar Pacer,,False,False,everyone,Southeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20697581634,89357728,Joshua Ng,Joshua,2026-10-23T06:21:53Z,,Afternoon Swim,Swim,525.0,1586,2406,5:02 /100m,,,Garmin Forerunner 170,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20697581656,89357728,Joshua Ng,Joshua,2026-10-23T06:16:52Z,,Afternoon Swim,Swim,50.0,167,270,5:34 /100m,,,Garmin Forerunner 170,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20689412830,904465008,Caleb Foo,Caleb,2026-10-21T23:59:19Z,,Morning Crossfit,Crossfit,,36660,36660,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732201740,90542247,Daaris Norman,Daaris,2026-10-25T23:28:21Z,,Night Workout,Workout,,3092,3092,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20706623019,91348499,Zickry Ryan Haq,Zickry Ryan,2026-10-20T23:38:57Z,,Morning Hike,Hike,3060.0,2365,3692,,12.0,,Garmin Forerunner 570,,False,False,everyone,Southwest,,1,0,Activity,2026-10-26T02:41:17+00:00
+20697018261,92466443,Jeremiah Lim,Jeremiah,2026-10-23T05:48:40Z,,Afternoon workout 💪,WeightTraining,,2918,2918,,,,Hevy,,False,False,everyone,,"Logged with hevyapp.com
+
+Iso-Lateral Row (Machine)
+Set 1: 65 kg x 8 
+Set 2: 65 kg x 9 
+Set 3: 65 kg x 7 
+
+Pull Up
+Set 1: 5 reps 
+Set 2: 4 reps 
+
+Single Arm Lat Pulldown
+Set 1: 47 kg x 5 
+Set 2: 40 kg x 8 
+
+Cable Fly Crossovers
+Set 1: 47 kg x 8 
+Set 2: 40 kg x 9 
+
+Triceps Pushdown
+Set 1: 68 kg x 7 
+Set 2: 61 kg x 8 
+Set 3: 61 kg x 7 
+
+Seated Incline Curl (Dumbbell)
+Set 1: 30 kg x 7 
+Set 2: 30 kg x 7 
+Set 3: 30 kg x 6 
+
+Hammer Curl (Dumbbell)
+Set 1: 25 kg x 8 
+Set 2: 25 kg x 7 
+Set 3: 25 kg x 6",0,0,Activity,2026-10-26T02:41:17+00:00
+20689212826,92466443,Jeremiah Lim,Jeremiah,2026-10-22T14:31:42Z,,Late night workout 🌙,WeightTraining,,2708,2708,,,,Hevy,,False,False,everyone,,"Logged with hevyapp.com
+
+Incline Bench Press (Barbell)
+Set 1: 60 kg x 10 
+Set 2: 77.5 kg x 7 
+Set 3: 80 kg x 5 
+Set 4: 80 kg x 4 
+
+Lat Pulldown (Cable)
+Set 1: 60 kg x 8 
+Set 2: 60 kg x 8 
+Set 3: 60 kg x 7 
+
+Butterfly (Pec Deck)
+Set 1: 70 kg x 8 
+Set 2: 70 kg x 6 
+Set 3: 62 kg x 2 
+
+Preacher Curl (Machine)
+Set 1: 45 kg x 9 
+Set 2: 35 kg x 3 
+Set 3: 40 kg x 8 
+Set 4: 30 kg x 3 
+Set 5: 30 kg x 8",0,0,Activity,2026-10-26T02:41:17+00:00
+20697357946,94747647,Kho Jin Yao,Kho,2026-10-23T07:04:37Z,,Evening Run,Run,4000.0,1439,1761,5:59 /km,,,Garmin Forerunner 955,,False,False,everyone,"Shire of Colac Otway, Australia",,2,0,Activity,2026-10-26T02:41:17+00:00
+20731745668,95485721,Hobin Lin,Hobin,2026-10-23T03:59:21Z,,Lunch Walk,Walk,11150.0,4440,12156,,281.0,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20731745734,95485721,Hobin Lin,Hobin,2026-10-23T01:28:25Z,,Morning Walk,Walk,690.0,566,627,,,1196,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20731746144,95485721,Hobin Lin,Hobin,2026-10-23T00:41:06Z,,Morning Walk,Walk,1020.0,506,591,,,1082,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20731746949,95485721,Hobin Lin,Hobin,2026-10-22T09:54:14Z,,Afternoon Walk,Walk,2000.0,1243,2659,,47.0,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20731747814,95485721,Hobin Lin,Hobin,2026-10-22T08:37:02Z,,Afternoon Walk,Walk,2030.0,1259,1955,,,3520,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20731747527,95485721,Hobin Lin,Hobin,2026-10-22T03:45:45Z,,Lunch Walk,Walk,400.0,344,344,,,598,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20731746522,95485721,Hobin Lin,Hobin,2026-10-22T01:00:47Z,,Morning Walk,Walk,2020.0,823,1093,,,2078,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20731748793,95485721,Hobin Lin,Hobin,2026-10-21T10:26:39Z,,Evening Walk,Walk,330.0,337,573,,,974,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20731748539,95485721,Hobin Lin,Hobin,2026-10-21T05:01:00Z,,Afternoon Walk,Walk,1330.0,1012,2876,,,4698,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20731749079,95485721,Hobin Lin,Hobin,2026-10-19T23:36:52Z,,Morning Walk,Walk,1380.0,1009,1291,,,2324,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20731749770,95485721,Hobin Lin,Hobin,2026-10-19T00:36:56Z,,Morning Walk,Walk,1050.0,834,2772,,,4714,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20710480527,95658913,Hurditya  Mukund,Hurditya ,2026-10-24T09:52:53Z,,"ended up walking abt 5k+, only 3 or so km recorded",Walk,2210.0,1415,1608,,,2616,Strava App,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20710083500,95658913,Hurditya  Mukund,Hurditya ,2026-10-24T09:15:30Z,,Strava bugged out,Run,950.0,513,2199,,18.0,,Strava App,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20727912458,95996878,Hafiz Amirul,Hafiz,2026-10-19T11:39:53Z,,Evening Run,Run,3780.0,1344,1347,,84.0,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20684938342,960965393,Javian Quek,Javian,2026-10-22T00:00:41Z,,Morning Workout,Workout,,3037,3037,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20682122573,960965393,Javian Quek,Javian,2026-10-22T00:00:29Z,,Morning Weight Training,WeightTraining,,1880,1880,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20712591799,96390978,Glenn Shaw,Glenn,2026-10-24T12:38:07Z,,Evening Run,Run,2550.0,1131,1137,7:23 /km,,,Apple Watch Series 10,,False,False,everyone,Northeast,,0,0,Activity,2026-10-26T02:41:17+00:00
+20694554002,964360293,Yik Heng Ng,Yik Heng,2026-10-21T00:04:18Z,,Morning Workout,Workout,,1690,1690,,,,Polar Pacer,,False,False,everyone,,,1,0,Activity,2026-10-26T02:41:17+00:00
+20696255119,972978970,Lee Zhi xiang,Lee,2026-10-23T00:02:00Z,,Morning Run,Run,2250.0,598,1461,,50.0,,Polar Pacer,,False,False,everyone,Southwest,,0,0,Activity,2026-10-26T02:41:17+00:00
+20694558833,972978970,Lee Zhi xiang,Lee,2026-10-20T23:46:22Z,,Morning Workout,Workout,,2652,2652,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732397808,115074455,David Teow,David,2026-10-26T00:38:28Z,,Morning Weight Training,WeightTraining,,1254,1254,,,,Garmin fēnix 7 Pro (47mm),,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732199178,117732295,Sean Toh,Sean,2026-10-25T23:47:57Z,,Morning Workout,Workout,,1916,1916,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732326763,1266885889,daisong gong,daisong,2026-10-26T00:05:43Z,,Morning Workout,Workout,,2346,2346,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732326272,1268235870,Neston Tan,Neston,2026-10-26T00:05:43Z,,Morning Workout,Workout,,2346,2346,,,,Polar Pacer,,False,False,everyone,,,1,0,Activity,2026-10-26T02:41:17+00:00
+20732200338,139521986,akiq .,akiq,2026-10-25T23:26:33Z,,Morning Workout,Workout,,3200,3200,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732201552,144740781,Brayden Loh,Brayden,2026-10-25T23:27:17Z,,Morning Workout,Workout,,3162,3162,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732199669,154154947,rayyan aniq,rayyan,2026-10-26T00:14:57Z,,Morning Workout,Workout,,296,296,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732296851,159220662,Jun Yu Goo,Jun Yu,2026-10-25T16:00:01Z,,Morning Workout,Workout,,3720,3720,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732201414,159549407,Jarett Tang,Jarett,2026-10-25T23:26:45Z,,Morning Workout,Workout,,3194,3194,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732199497,159549407,Jarett Tang,Jarett,2026-10-25T23:26:46Z,,Morning Workout,Workout,,3182,3182,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732200057,160633256,Jayden Tan,Jayden,2026-10-25T23:35:05Z,,Morning Workout,Workout,,2694,2694,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732199332,162695054,Kegan Chia,Kegan,2026-10-25T23:26:43Z,,Morning Workout,Workout,,3196,3196,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732328630,164845584,Gene Goh,Gene,2026-10-26T00:05:43Z,,Morning Workout,Workout,,2346,2346,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732199424,171954993,hrs inabus,hrs,2026-10-25T23:26:43Z,,Morning Workout,Workout,,3196,3196,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732200616,172978948,Ion Run,Ion,2026-10-25T23:26:51Z,,Morning Workout,Workout,,3188,3188,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732198886,1744500732,Alfovero Povero,Alfovero,2026-10-25T23:28:13Z,,Morning Workout,Workout,,3100,3100,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732199454,174687887,Jun Cai,Jun,2026-10-25T23:26:43Z,,Morning Workout,Workout,,3190,3190,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732200093,177200721,Julian Huan,Julian,2026-10-25T23:28:35Z,,Morning Workout,Workout,,3078,3078,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732291080,177789904,Kishore Senthil,Kishore,2026-10-25T23:48:34Z,,Morning Workout,Workout,,2964,2964,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732199853,181000486,Ninja Breadwinner,Ninja,2026-10-25T23:26:43Z,,Morning Workout,Workout,,3196,3196,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732200903,184714218,Hyrax 1208,Hyrax,2026-10-25T23:29:37Z,,Morning Workout,Workout,,3022,3022,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732323884,190439145,eugene k,eugene,2026-10-26T00:05:43Z,,Morning Workout,Workout,,2346,2346,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732199046,190658380,Corvin Redgrave ,Corvin,2026-10-25T23:28:43Z,,Morning Workout,Workout,,2882,2882,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732199708,1911026649,Jovan Ong,Jovan,2026-10-25T23:26:43Z,,Morning Workout,Workout,,3196,3196,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732201647,201644445,J J,J,2026-10-25T23:28:45Z,,Morning Workout,Workout,,3068,3068,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732325201,201962190,yd l,yd,2026-10-26T00:05:43Z,,Morning Workout,Workout,,2346,2346,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732323645,207082437,Ernest Chan,Ernest,2026-10-26T00:05:43Z,,Morning Workout,Workout,,2346,2346,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732329206,50087178,Jm C,Jm,2026-10-26T00:05:43Z,,Morning Workout,Workout,,2346,2346,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732199160,56189854,Marcus Cheong,Marcus,2026-10-25T23:26:57Z,,Morning Workout,Workout,,3182,3182,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732291311,624792231,B6HQ Rohan,B6HQ,2026-10-25T23:48:34Z,,Morning Workout,Workout,,2964,2964,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732324085,66688442,James Lee,James,2026-10-26T00:05:43Z,,Morning Workout,Workout,,2340,2340,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732201250,728364162,Bryan Goh,Bryan,2026-10-25T23:28:07Z,,Morning Workout,Workout,,3008,3008,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732199893,80095220,Ong Kah Sheng,Ong,2026-10-25T23:35:25Z,,Morning Workout,Workout,,2668,2668,,,,Polar Pacer,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
+20732313583,82197781,Jamson Tan,Jamson,2026-10-26T00:23:41Z,,Morning HIIT,HighIntensityIntervalTraining,950.0,1087,1087,,,,Garmin Forerunner 265,,False,False,everyone,,,0,0,Activity,2026-10-26T02:41:17+00:00
