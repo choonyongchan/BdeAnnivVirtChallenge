@@ -77,6 +77,29 @@ nav {
   border-radius: 6px; line-height: 1;
 }
 .announcement-close:hover { background: #f5f5f5; color: #555; }
+/* party popper: pops in, confetti bursts out, plays once */
+.announcement::before {
+  content: "🎉"; position: absolute; right: 48px; top: 50%; font-size: 1.6rem;
+  pointer-events: none; transform: translateY(-50%);
+  animation: popper-pop .9s ease-out;
+}
+.announcement::after {
+  content: ""; position: absolute; right: 64px; top: 50%; width: 6px; height: 6px;
+  border-radius: 50%; pointer-events: none; opacity: 0;
+  animation: confetti-burst 1.2s ease-out .15s;
+}
+@keyframes popper-pop {
+  0% { transform: translateY(-50%) scale(0) rotate(-30deg); }
+  60% { transform: translateY(-50%) scale(1.4) rotate(10deg); }
+  100% { transform: translateY(-50%) scale(1) rotate(0); }
+}
+@keyframes confetti-burst {
+  0% { opacity: 1; box-shadow: 0 0 #FC4C02, 0 0 #2e86de, 0 0 #f7b731, 0 0 #20bf6b, 0 0 #eb3b5a, 0 0 #a55eea; }
+  100% { opacity: 0; box-shadow: -50px -40px #FC4C02, -20px -55px #2e86de, 25px -50px #f7b731, -60px 10px #20bf6b, 30px 35px #eb3b5a, -35px 45px #a55eea; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .announcement::before, .announcement::after { animation: none; }
+}
 
 /* HEADER */
 .header { margin-bottom: 20px; }

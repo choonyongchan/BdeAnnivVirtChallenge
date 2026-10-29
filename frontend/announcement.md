@@ -1,2 +1,2 @@
 # Welcome Commander!
-Milestone 2 is in sight!
+Congratulations for achieving Milestone 3: 25,500km!
